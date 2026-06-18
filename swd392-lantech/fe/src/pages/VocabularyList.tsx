@@ -12,9 +12,15 @@ export default function VocabularyList() {
   const [activeTab, setActiveTab] = useState<CefrTab>("All");
   const [vocabularies, setVocabularies] = useState<VocabularyDto[]>([]);
   const [selectedWord, setSelectedWord] = useState<VocabularyDto | null>(null);
+  const [isPanelOpen, setIsPanelOpen] = useState(false);
+  const [relatedWords, setRelatedWords] = useState<VocabularyDto[]>([]);
+  const [isRelatedLoading, setIsRelatedLoading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isTogglingDeck, setIsTogglingDeck] = useState<Record<string, boolean>>({});
   const [userFlashcards, setUserFlashcards] = useState<FlashcardDto[]>([]);
+
+  const flashcardVocabIds = new Set(userFlashcards.map(fc => fc.vocabularyId));
+  const isWordInDeck = (wordId: string) => flashcardVocabIds.has(wordId);
 
   useEffect(() => {
     const fetchVocabsAndFlashcards = async () => {
@@ -47,20 +53,18 @@ export default function VocabularyList() {
   }, [activeTab, query]);
 
   const toggleDeck = async (id: string) => {
-    const word = vocabularies.find(v => v.id === id);
-    if (!word || isTogglingDeck[id]) return;
+    if (isTogglingDeck[id]) return;
 
     setIsTogglingDeck(prev => ({ ...prev, [id]: true }));
     try {
-      if (word.isInDeck) {
+      const inDeck = isWordInDeck(id);
+      if (inDeck) {
         await flashcardService.removeFlashcard(id);
-        setVocabularies(prev => prev.map(v => v.id === id ? { ...v, isInDeck: false } : v));
-        if (selectedWord?.id === id) setSelectedWord(prev => prev ? { ...prev, isInDeck: false } : null);
+        setUserFlashcards(prev => prev.filter(fc => fc.vocabularyId !== id));
         toast.success("Removed from your flashcard deck!");
       } else {
-        await flashcardService.addFlashcard(id);
-        setVocabularies(prev => prev.map(v => v.id === id ? { ...v, isInDeck: true } : v));
-        if (selectedWord?.id === id) setSelectedWord(prev => prev ? { ...prev, isInDeck: true } : null);
+        const newCard = await flashcardService.addFlashcard(id);
+        setUserFlashcards(prev => [...prev, newCard]);
         toast.success("Added to your flashcard deck!");
       }
     } catch (error) {
@@ -78,11 +82,38 @@ export default function VocabularyList() {
     }
   };
 
+  useEffect(() => {
+    if (!selectedWord) {
+      setRelatedWords([]);
+      return;
+    }
+    const fetchRelated = async () => {
+      setIsRelatedLoading(true);
+      try {
+        const data = await vocabularyService.getRelatedVocabularies(selectedWord.id);
+        setRelatedWords(data);
+      } catch (error) {
+        console.error("Failed to load related words:", error);
+      } finally {
+        setIsRelatedLoading(false);
+      }
+    };
+    fetchRelated();
+  }, [selectedWord?.id]);
+
+  const handleSelectWord = (word: VocabularyDto) => {
+    setSelectedWord(word);
+    setIsPanelOpen(true);
+  };
+
+  const handleSelectRelatedWord = (word: VocabularyDto) => {
+    setSelectedWord(word);
+  };
+
   const filtered = vocabularies;
-  const deckState = Object.fromEntries(vocabularies.map(v => [v.id, v.isInDeck]));
 
   return (
-    <div className="flex h-full min-h-screen text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
+    <div className="flex h-full min-h-screen text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)", overflowX: "hidden" }}>
       {/* Main list */}
       <div className="flex-1 overflow-y-auto px-8 py-7">
         <div className="flex items-center justify-between mb-6">
@@ -94,7 +125,7 @@ export default function VocabularyList() {
             className="px-4 py-2 rounded-full"
             style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 700, fontSize: 13 }}
           >
-            {Object.values(deckState).filter(Boolean).length} in your deck
+            {userFlashcards.length} in your deck
           </div>
         </div>
 
@@ -154,7 +185,7 @@ export default function VocabularyList() {
                 border: "2px solid var(--border)",
                 boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
               }}
-              onClick={() => setSelectedWord(word)}
+              onClick={() => handleSelectWord(word)}
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
@@ -196,7 +227,7 @@ export default function VocabularyList() {
                 >
                   {isTogglingDeck[word.id] ? (
                     <Loader2 size={11} className="animate-spin" />
-                  ) : word.isInDeck ? (
+                  ) : isWordInDeck(word.id) ? (
                     <><span>✓</span> In Deck</>
                   ) : (
                     <><Plus size={11} /> Add to Deck</>
@@ -217,70 +248,135 @@ export default function VocabularyList() {
       </div>
 
       {/* Word detail pane */}
-      {selectedWord && (
+      {/* Backdrop overlay */}
+      {isPanelOpen && (
         <div
-          className="shrink-0 border-l overflow-y-auto p-6 flex flex-col gap-5 transition-all duration-300"
-          style={{ width: 300, background: "var(--card)", borderColor: "var(--border)" }}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <div style={{ fontWeight: 900, fontSize: 24, color: "var(--foreground)" }}>{selectedWord.word}</div>
-              <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.ipa}</div>
-            </div>
-            <button onClick={() => setSelectedWord(null)} className="cursor-pointer border-none bg-transparent outline-none" style={{ color: "var(--muted-foreground)" }}>
-              <X size={18} />
-            </button>
-          </div>
-
-          <div
-            className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:bg-sky-100 transition-colors"
-            style={{ background: "#e0f2fe", width: "fit-content" }}
-            onClick={() => handleSpeak(selectedWord.word)}
-          >
-            <Volume2 size={14} style={{ color: "#0369a1" }} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0369a1" }}>Listen</span>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Definition</div>
-            <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.7 }}>{selectedWord.definition}</p>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Example</div>
-            <p
-              className="px-4 py-3 rounded-xl"
-              style={{ fontSize: 13.5, color: "var(--foreground)", lineHeight: 1.7, background: "var(--muted)", fontStyle: "italic" }}
-            >
-              "{selectedWord.exampleSentence}"
-            </p>
-          </div>
-
-          <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
-            <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{selectedWord.meaning}</p>
-          </div>
-
-          <div
-            className="px-3 py-1.5 rounded-full"
-            style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, fontSize: 12, width: "fit-content" }}
-          >
-            {selectedWord.cefrLevel} Level
-          </div>
-
-          <button
-            onClick={() => toggleDeck(selectedWord.id)}
-            type="button"
-            className="w-full py-3 rounded-xl cursor-pointer border-none outline-none font-bold text-sm text-white transition-all shadow-md"
-            style={{
-              background: deckState[selectedWord.id] ? "#fee2e2" : "var(--brand)",
-              color: deckState[selectedWord.id] ? "#dc2626" : "#fff",
-            }}
-          >
-            {deckState[selectedWord.id] ? "Remove from Deck" : "Add to Flashcard Deck"}
-          </button>
-        </div>
+          onClick={() => setIsPanelOpen(false)}
+          className="fixed inset-0 bg-black/40 z-40 transition-opacity duration-300"
+          style={{ cursor: "pointer" }}
+        />
       )}
+
+      {/* Right Slide-out Drawer Panel */}
+      <div
+        className="fixed top-0 right-0 h-full bg-white shadow-2xl z-50 flex flex-col transition-transform duration-300"
+        style={{
+          width: 380,
+          transform: isPanelOpen ? "translateX(0)" : "translateX(100%)",
+          fontFamily: "var(--font-family)",
+          borderLeft: "1px solid rgba(0,0,0,0.08)"
+        }}
+      >
+        {selectedWord && (
+          <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 text-left">
+            <div className="flex items-start justify-between">
+              <div>
+                <div style={{ fontWeight: 900, fontSize: 24, color: "#3c3c3c" }}>{selectedWord.word}</div>
+                <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.ipa}</div>
+              </div>
+              <button
+                onClick={() => setIsPanelOpen(false)}
+                className="cursor-pointer border-none bg-transparent outline-none p-1 hover:bg-slate-100 rounded-full"
+                style={{ color: "#aaa" }}
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Tags Badges */}
+            {selectedWord.tags && selectedWord.tags.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {selectedWord.tags.map(tag => (
+                  <span
+                    key={tag}
+                    className="px-3 py-1 rounded-full text-xs font-bold"
+                    style={{ background: "#e0f2fe", color: "#0369a1" }}
+                  >
+                    {tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div
+              className="flex items-center gap-2 px-3 py-2 rounded-xl cursor-pointer hover:bg-sky-100 transition-colors"
+              style={{ background: "#e0f2fe", width: "fit-content" }}
+              onClick={() => handleSpeak(selectedWord.word)}
+            >
+              <Volume2 size={14} style={{ color: "#0369a1" }} />
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0369a1" }}>Listen</span>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Definition</div>
+              <p style={{ fontSize: 14, color: "#3c3c3c", lineHeight: 1.7 }}>{selectedWord.definition}</p>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Example</div>
+              <p
+                className="px-4 py-3 rounded-xl"
+                style={{ fontSize: 13.5, color: "#3c3c3c", lineHeight: 1.7, background: "#f7f7f7", fontStyle: "italic" }}
+              >
+                "{selectedWord.exampleSentence}"
+              </p>
+            </div>
+
+            <div>
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
+              <p style={{ fontSize: 14, color: "#666" }}>{selectedWord.meaning}</p>
+            </div>
+
+            <div
+              className="px-3 py-1.5 rounded-full"
+              style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, fontSize: 12, width: "fit-content" }}
+            >
+              {selectedWord.cefrLevel} Level
+            </div>
+
+            <button
+              onClick={() => toggleDeck(selectedWord.id)}
+              type="button"
+              className="w-full py-3 rounded-xl cursor-pointer border-none outline-none font-bold text-sm text-white transition-all shadow-md"
+              style={{
+                background: isWordInDeck(selectedWord.id) ? "#fee2e2" : "var(--brand)",
+                color: isWordInDeck(selectedWord.id) ? "#dc2626" : "#fff",
+              }}
+            >
+              {isWordInDeck(selectedWord.id) ? "Remove from Deck" : "Add to Flashcard Deck"}
+            </button>
+
+            {/* Related Words section */}
+            <div className="border-t pt-5 mt-2">
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Related Words</div>
+              {isRelatedLoading ? (
+                <div className="flex justify-center py-4">
+                  <Loader2 className="animate-spin text-slate-400" size={20} />
+                </div>
+              ) : relatedWords.length > 0 ? (
+                <div className="flex flex-col gap-2">
+                  {relatedWords.map(rw => (
+                    <div
+                      key={rw.id}
+                      onClick={() => handleSelectRelatedWord(rw)}
+                      className="p-3 rounded-xl cursor-pointer transition-colors border-2 hover:bg-slate-50 flex flex-col gap-1"
+                      style={{ border: "2px solid rgba(0,0,0,0.04)" }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span style={{ fontWeight: 700, fontSize: 13.5, color: "#3c3c3c" }}>{rw.word}</span>
+                        <span style={{ fontSize: 10.5, color: "#aaa" }}>{rw.ipa}</span>
+                      </div>
+                      <span style={{ fontSize: 12, color: "#666" }} className="truncate">{rw.meaning}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-slate-400 italic">No related words found.</p>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

@@ -13,4 +13,5 @@ public class Vocabulary
     public string? ExampleSentence { get; set; }
     public ContentSource ContentSource { get; set; }
     public DateTime CreatedAt { get; set; }
+    public virtual ICollection<Tag> Tags { get; set; } = new List<Tag>();
 }
