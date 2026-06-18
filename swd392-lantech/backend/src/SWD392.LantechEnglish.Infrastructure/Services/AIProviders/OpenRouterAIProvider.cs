@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
 using System.Threading;
@@ -117,6 +119,128 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
 
         throw new AggregateException("All configured OpenRouter models failed to return a valid response.", errors);
+    }
+
+    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var modelsToTry = new List<string>();
+        if (!string.IsNullOrEmpty(_options.OpenRouterDefaultModel))
+        {
+            modelsToTry.Add(_options.OpenRouterDefaultModel);
+        }
+        else
+        {
+            modelsToTry.Add("google/gemini-2.5-pro");
+        }
+
+        if (_options.OpenRouterFallbackModels != null)
+        {
+            foreach (var fallbackModel in _options.OpenRouterFallbackModels)
+            {
+                if (!string.IsNullOrEmpty(fallbackModel) && !modelsToTry.Contains(fallbackModel))
+                {
+                    modelsToTry.Add(fallbackModel);
+                }
+            }
+        }
+
+        if (!modelsToTry.Contains("meta-llama/llama-3.1-70b-instruct:free"))
+        {
+            modelsToTry.Add("meta-llama/llama-3.1-70b-instruct:free");
+        }
+
+        var languageName = (sourceLanguageCode?.ToLower() ?? "vi") switch
+        {
+            "vi" => "Vietnamese",
+            "zh" => "Chinese",
+            "ja" => "Japanese",
+            "es" => "Spanish",
+            "fr" => "French",
+            _ => "Vietnamese"
+        };
+        
+        var systemPrompt = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
+
+        List<Exception> errors = new();
+        HttpResponseMessage? response = null;
+
+        foreach (var model in modelsToTry)
+        {
+            try
+            {
+                _logger.LogInformation("Attempting OpenRouter stream call using model: {Model}", model);
+
+                var payload = new
+                {
+                    model = model,
+                    messages = new[]
+                    {
+                        new { role = "system", content = systemPrompt },
+                        new { role = "user", content = message }
+                    },
+                    temperature = 0.7,
+                    stream = true
+                };
+
+                var request = new HttpRequestMessage(HttpMethod.Post, "chat/completions")
+                {
+                    Content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json")
+                };
+
+                var res = await _httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken);
+                if (!res.IsSuccessStatusCode)
+                {
+                    var errContent = await res.Content.ReadAsStringAsync(cancellationToken);
+                    throw new HttpRequestException($"OpenRouter Stream HTTP error {res.StatusCode}: {errContent}");
+                }
+
+                response = res;
+                break;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "OpenRouter stream attempt failed with model: {Model}. Trying next fallback if available.", model);
+                errors.Add(ex);
+            }
+        }
+
+        if (response == null)
+        {
+            throw new AggregateException("All configured OpenRouter models failed to return a valid stream response.", errors);
+        }
+
+        using (response)
+        {
+            using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
+            using var reader = new StreamReader(stream);
+
+            while (!reader.EndOfStream)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var line = await reader.ReadLineAsync(cancellationToken);
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                if (line.StartsWith("data: "))
+                {
+                    var data = line.Substring(6).Trim();
+                    if (data == "[DONE]") break;
+
+                    using var doc = JsonDocument.Parse(data);
+                    if (doc.RootElement.TryGetProperty("choices", out var choices) && choices.GetArrayLength() > 0)
+                    {
+                        var delta = choices[0].GetProperty("delta");
+                        if (delta.TryGetProperty("content", out var contentElement))
+                        {
+                            var content = contentElement.GetString();
+                            if (!string.IsNullOrEmpty(content))
+                            {
+                                yield return content;
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     public Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)

@@ -114,6 +114,38 @@ public class AIController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Chat with the customized AI Personal Tutor bot using SSE stream
+    /// </summary>
+    [HttpPost("chat-tutor-stream")]
+    public async Task ChatTutorStream([FromBody] ChatTutorRequest request, CancellationToken cancellationToken)
+    {
+        Response.ContentType = "text/event-stream";
+        Response.Headers.CacheControl = "no-cache";
+        Response.Headers.Connection = "keep-alive";
+
+        try
+        {
+            await foreach (var chunk in _aiService.ChatTutorStreamAsync(request.Message, request.SourceLanguageCode, cancellationToken))
+            {
+                await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { content = chunk })}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+        }
+        catch (Exception ex)
+        {
+            try
+            {
+                await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { error = ex.Message })}\n\n", cancellationToken);
+                await Response.Body.FlushAsync(cancellationToken);
+            }
+            catch
+            {
+                // Ignore writing errors on client disconnected
+            }
+        }
+    }
+
     public class VocabularyExamplesRequest
     {
         [Required]

@@ -15,70 +15,80 @@ using SWD392.LantechEnglish.Infrastructure.Configuration;
 
 namespace SWD392.LantechEnglish.Infrastructure.Services.AIProviders;
 
-public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
+public class ZenMuxAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 {
     private readonly HttpClient _httpClient;
     private readonly AiOptions _options;
-    private readonly ILogger<GroqAIProvider> _logger;
+    private readonly ILogger<ZenMuxAIProvider> _logger;
 
-    public GroqAIProvider(
+    public ZenMuxAIProvider(
         IHttpClientFactory httpClientFactory, 
         IOptions<AiOptions> options, 
-        ILogger<GroqAIProvider> logger)
+        ILogger<ZenMuxAIProvider> logger)
     {
-        _httpClient = httpClientFactory.CreateClient("GroqClient");
+        _httpClient = httpClientFactory.CreateClient("ZenMuxClient");
         _options = options.Value;
         _logger = logger;
 
-        _httpClient.BaseAddress = new Uri("https://api.groq.com/openai/v1/");
-        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.GroqApiKey);
+        var baseUrl = string.IsNullOrEmpty(_options.ZenMuxBaseUrl) ? "https://zenmux.ai/api/v1" : _options.ZenMuxBaseUrl;
+        _httpClient.BaseAddress = new Uri(baseUrl.EndsWith("/") ? baseUrl : baseUrl + "/");
+        _httpClient.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", _options.ZenMuxApiKey);
     }
 
     protected override async Task<string> CallChatCompletionsAsync(string systemPrompt, string userPrompt, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Attempting Groq call using Llama-3-70b");
+        if (string.IsNullOrEmpty(_options.ZenMuxApiKey))
+        {
+            throw new InvalidOperationException("ZenMux API key is not configured.");
+        }
+
+        var model = string.IsNullOrEmpty(_options.ZenMuxDefaultModel) ? "z-ai/glm-5.2-free" : _options.ZenMuxDefaultModel;
+        
+        _logger.LogInformation("Attempting ZenMux call using model: {Model}", model);
 
         var payload = new
         {
-            model = "llama3-70b-8192",
+            model = model,
             messages = new[]
             {
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = userPrompt }
             },
-            temperature = 0.5
+            temperature = 0.7
         };
 
-        var requestContent = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
-        var response = await _httpClient.PostAsync("chat/completions", requestContent, cancellationToken);
-        
+        var content = new StringContent(JsonSerializer.Serialize(payload), Encoding.UTF8, "application/json");
+        var response = await _httpClient.PostAsync("chat/completions", content, cancellationToken);
+
         if (!response.IsSuccessStatusCode)
         {
-            var error = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"Groq API Error {response.StatusCode}: {error}");
+            var errContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            throw new HttpRequestException($"ZenMux HTTP error {response.StatusCode}: {errContent}");
         }
 
         var responseBody = await response.Content.ReadAsStringAsync(cancellationToken);
-        
-        try
+        var doc = JsonDocument.Parse(responseBody);
+        var result = doc.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
+
+        // Validate if it is valid JSON if the prompt expects JSON output
+        if (systemPrompt.Contains("JSON") || userPrompt.Contains("JSON"))
         {
-            var document = JsonDocument.Parse(responseBody);
-            var content = document.RootElement.GetProperty("choices")[0].GetProperty("message").GetProperty("content").GetString() ?? string.Empty;
-            return content.Trim();
+            var cleaned = CleanJson(result);
+            using var tempDoc = JsonDocument.Parse(cleaned);
         }
-        catch (Exception ex)
-        {
-            throw new InvalidOperationException($"Invalid JSON format from Groq: {ex.Message}");
-        }
+
+        _logger.LogInformation("ZenMux call succeeded using model: {Model}", model);
+        return result;
     }
 
     public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrEmpty(_options.GroqApiKey))
+        if (string.IsNullOrEmpty(_options.ZenMuxApiKey))
         {
-            throw new InvalidOperationException("Groq API key is not configured.");
+            throw new InvalidOperationException("ZenMux API key is not configured.");
         }
 
+        var model = string.IsNullOrEmpty(_options.ZenMuxDefaultModel) ? "z-ai/glm-5.2-free" : _options.ZenMuxDefaultModel;
         var languageName = (sourceLanguageCode?.ToLower() ?? "vi") switch
         {
             "vi" => "Vietnamese",
@@ -91,17 +101,17 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         
         var systemPrompt = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
 
-        _logger.LogInformation("Attempting Groq stream call using Llama-3-70b");
+        _logger.LogInformation("Attempting ZenMux stream call using model: {Model}", model);
 
         var payload = new
         {
-            model = "llama3-70b-8192",
+            model = model,
             messages = new[]
             {
                 new { role = "system", content = systemPrompt },
                 new { role = "user", content = message }
             },
-            temperature = 0.5,
+            temperature = 0.7,
             stream = true
         };
 
@@ -115,7 +125,7 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         if (!response.IsSuccessStatusCode)
         {
             var errContent = await response.Content.ReadAsStringAsync(cancellationToken);
-            throw new HttpRequestException($"Groq Stream HTTP error {response.StatusCode}: {errContent}");
+            throw new HttpRequestException($"ZenMux Stream HTTP error {response.StatusCode}: {errContent}");
         }
 
         using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
@@ -149,28 +159,8 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
     }
 
-    public async Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
+    public Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
     {
-        // Simple evaluation logic for Pronunciation Result based on text comparison.
-        var expectedWords = targetText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-        var transcriptWords = transcriptText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
-
-        int matchedCount = 0;
-        foreach (var w in expectedWords)
-        {
-            if (Array.IndexOf(transcriptWords, w) >= 0) matchedCount++;
-        }
-
-        if (expectedWords.Length == 0) return new PronunciationResult { Score = 0, Accuracy = 0, Feedback = "No text provided." };
-        double score = ((double)matchedCount / expectedWords.Length * 100);
-        
-        return new PronunciationResult
-        {
-            Score = Math.Min(100, Math.Max(0, score)),
-            Accuracy = Math.Min(100, Math.Max(0, score)),
-            Fluency = 80, // Mocked fluency for text-only assessment
-            Completeness = Math.Min(100, Math.Max(0, score)),
-            Feedback = score >= 80 ? "Great job!" : "Keep practicing."
-        };
+        throw new NotImplementedException("ZenMux does not support native speech assessment in this environment.");
     }
 }

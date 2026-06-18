@@ -34,7 +34,7 @@ export default function ExerciseRoom() {
   }, [id]);
 
   const handleCheck = async () => {
-    if (!id || !currentIdx >= exercises.length) return;
+    if (!id || currentIdx >= exercises.length) return;
     
     setIsSubmitting(true);
     try {

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Volume2, X, Loader2 } from "lucide-react";
 import { vocabularyService, VocabularyDto } from "../services/vocabularyService";
-import { flashcardService } from "../services/flashcardService";
+import { flashcardService, FlashcardDto } from "../services/flashcardService";
 import { toast } from "sonner";
 
 const CEFR_TABS = ["All", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -87,8 +87,8 @@ export default function VocabularyList() {
       <div className="flex-1 overflow-y-auto px-8 py-7">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "#3c3c3c", marginBottom: 4 }}>Vocabulary Desk</h1>
-            <p style={{ fontSize: 13.5, color: "#888" }}>Browse, search, and add words to your flashcard deck</p>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)", marginBottom: 4 }}>Vocabulary Desk</h1>
+            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>Browse, search, and add words to your flashcard deck</p>
           </div>
           <div
             className="px-4 py-2 rounded-full"
@@ -101,18 +101,18 @@ export default function VocabularyList() {
         {/* Search bar */}
         <div
           className="flex items-center gap-3 px-4 py-3 rounded-2xl mb-5"
-          style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.08)" }}
+          style={{ background: "var(--card)", border: "2px solid var(--border)" }}
         >
-          <Search size={16} style={{ color: "#aaa", flexShrink: 0 }} />
+          <Search size={16} style={{ color: "var(--muted-foreground)", opacity: 0.7, flexShrink: 0 }} />
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
             placeholder="Search vocabulary..."
             className="flex-1 outline-none border-none bg-transparent"
-            style={{ fontSize: 14, color: "#3c3c3c", fontFamily: "var(--font-family)" }}
+            style={{ fontSize: 14, color: "var(--foreground)", fontFamily: "var(--font-family)" }}
           />
           {query && (
-            <button onClick={() => setQuery("")} className="cursor-pointer border-none bg-transparent" style={{ color: "#aaa" }}>
+            <button onClick={() => setQuery("")} className="cursor-pointer border-none bg-transparent" style={{ color: "var(--muted-foreground)" }}>
               <X size={14} />
             </button>
           )}
@@ -127,11 +127,11 @@ export default function VocabularyList() {
               type="button"
               className="px-4 py-1.5 rounded-full cursor-pointer shrink-0 transition-all outline-none border-none"
               style={{
-                background: activeTab === tab ? "var(--brand)" : "#fff",
-                color: activeTab === tab ? "#fff" : "#888",
+                background: activeTab === tab ? "var(--brand)" : "var(--card)",
+                color: activeTab === tab ? "#fff" : "var(--muted-foreground)",
                 fontWeight: 700,
                 fontSize: 13,
-                border: activeTab === tab ? "2px solid var(--brand)" : "2px solid #e5e7eb",
+                border: activeTab === tab ? "2px solid var(--brand)" : "2px solid var(--border)",
               }}
             >
               {tab}
@@ -150,15 +150,15 @@ export default function VocabularyList() {
               key={word.id}
               className="rounded-2xl p-5 cursor-pointer transition-all hover:scale-[1.01]"
               style={{
-                background: "#fff",
-                border: "2px solid rgba(0,0,0,0.06)",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.04)",
+                background: "var(--card)",
+                border: "2px solid var(--border)",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.02)",
               }}
               onClick={() => setSelectedWord(word)}
             >
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <div style={{ fontWeight: 800, fontSize: 17, color: "#3c3c3c" }}>{word.word}</div>
+                  <div style={{ fontWeight: 800, fontSize: 17, color: "var(--foreground)" }}>{word.word}</div>
                   <div style={{ fontSize: 12, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{word.ipa}</div>
                 </div>
                 <div className="flex items-center gap-2">
@@ -170,14 +170,14 @@ export default function VocabularyList() {
                   </span>
                 </div>
               </div>
-              <p style={{ fontSize: 12.5, color: "#666", lineHeight: 1.6, marginBottom: 12 }}>{word.definition}</p>
+              <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", lineHeight: 1.6, marginBottom: 12 }}>{word.definition}</p>
               <div className="flex items-center justify-between" onClick={e => e.stopPropagation()}>
                 <div className="flex gap-1.5">
                   {word.tags?.map(tag => (
                     <span
                       key={tag}
                       className="px-2 py-0.5 rounded-full"
-                      style={{ background: "#f3f4f6", color: "#888", fontSize: 10.5, fontWeight: 600 }}
+                      style={{ background: "var(--muted)", color: "var(--muted-foreground)", fontSize: 10.5, fontWeight: 600 }}
                     >
                       {tag}
                     </span>
@@ -188,8 +188,8 @@ export default function VocabularyList() {
                   type="button"
                   className="flex items-center gap-1 px-3 py-1.5 rounded-full cursor-pointer transition-all border-none outline-none"
                   style={{
-                    background: word.isInDeck ? "var(--brand-light)" : "#f3f4f6",
-                    color: word.isInDeck ? "var(--brand-dark)" : "#888",
+                    background: word.isInDeck ? "var(--brand-light)" : "var(--muted)",
+                    color: word.isInDeck ? "var(--brand-dark)" : "var(--muted-foreground)",
                     fontWeight: 700,
                     fontSize: 11.5,
                   }}
@@ -209,8 +209,8 @@ export default function VocabularyList() {
           {!isLoading && filtered.length === 0 && (
             <div className="col-span-2 text-center py-16">
               <div style={{ fontSize: 56, marginBottom: 12 }}>😴</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#aaa" }}>No words found</div>
-              <div style={{ fontSize: 13, color: "#ccc", marginTop: 4 }}>Try a different search or level filter</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--muted-foreground)" }}>No words found</div>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", opacity: 0.7, marginTop: 4 }}>Try a different search or level filter</div>
             </div>
           )}
         </div>
@@ -220,14 +220,14 @@ export default function VocabularyList() {
       {selectedWord && (
         <div
           className="shrink-0 border-l overflow-y-auto p-6 flex flex-col gap-5 transition-all duration-300"
-          style={{ width: 300, background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}
+          style={{ width: 300, background: "var(--card)", borderColor: "var(--border)" }}
         >
           <div className="flex items-start justify-between">
             <div>
-              <div style={{ fontWeight: 900, fontSize: 24, color: "#3c3c3c" }}>{selectedWord.word}</div>
-              <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.phoneme}</div>
+              <div style={{ fontWeight: 900, fontSize: 24, color: "var(--foreground)" }}>{selectedWord.word}</div>
+              <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.ipa}</div>
             </div>
-            <button onClick={() => setSelectedWord(null)} className="cursor-pointer border-none bg-transparent outline-none" style={{ color: "#aaa" }}>
+            <button onClick={() => setSelectedWord(null)} className="cursor-pointer border-none bg-transparent outline-none" style={{ color: "var(--muted-foreground)" }}>
               <X size={18} />
             </button>
           </div>
@@ -242,30 +242,30 @@ export default function VocabularyList() {
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Definition</div>
-            <p style={{ fontSize: 14, color: "#3c3c3c", lineHeight: 1.7 }}>{selectedWord.definition}</p>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Definition</div>
+            <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.7 }}>{selectedWord.definition}</p>
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Example</div>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Example</div>
             <p
               className="px-4 py-3 rounded-xl"
-              style={{ fontSize: 13.5, color: "#3c3c3c", lineHeight: 1.7, background: "#f7f7f7", fontStyle: "italic" }}
+              style={{ fontSize: 13.5, color: "var(--foreground)", lineHeight: 1.7, background: "var(--muted)", fontStyle: "italic" }}
             >
-              "{selectedWord.example}"
+              "{selectedWord.exampleSentence}"
             </p>
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
-            <p style={{ fontSize: 14, color: "#666" }}>{selectedWord.translation}</p>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{selectedWord.meaning}</p>
           </div>
 
           <div
             className="px-3 py-1.5 rounded-full"
             style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, fontSize: 12, width: "fit-content" }}
           >
-            {selectedWord.level} Level
+            {selectedWord.cefrLevel} Level
           </div>
 
           <button

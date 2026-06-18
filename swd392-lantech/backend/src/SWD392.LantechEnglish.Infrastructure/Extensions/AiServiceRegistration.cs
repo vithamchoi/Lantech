@@ -30,7 +30,17 @@ public static class AiServiceRegistration
             client.Timeout = TimeSpan.FromSeconds(30);
         });
 
+        services.AddHttpClient("ZenMuxClient", client =>
+        {
+            var url = string.IsNullOrEmpty(aiOptions.ZenMuxBaseUrl) ? "https://zenmux.ai/api/v1" : aiOptions.ZenMuxBaseUrl;
+            client.BaseAddress = new Uri(url.EndsWith("/") ? url : url + "/");
+            client.Timeout = TimeSpan.FromSeconds(30);
+        });
+
         // 2. Keyed scoped mappings for fallback sequence
+        services.AddKeyedScoped<IAIProvider, ZenMuxAIProvider>("ZenMux");
+        services.AddKeyedScoped<ISpeechAssessmentProvider, ZenMuxAIProvider>("ZenMux");
+
         services.AddKeyedScoped<IAIProvider, OpenRouterAIProvider>("OpenRouter");
         services.AddKeyedScoped<ISpeechAssessmentProvider, OpenRouterAIProvider>("OpenRouter");
 

@@ -18,6 +18,17 @@ export default function PageLayout({ children }: { children: React.ReactNode }) 
     }
   }, [darkMode]);
 
+  React.useEffect(() => {
+    const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = () => {
+      if (!localStorage.getItem("theme")) {
+        useAppStore.setState({ darkMode: mediaQuery.matches });
+      }
+    };
+    mediaQuery.addEventListener("change", handleChange);
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
   const handleLogout = () => {
     logout();
     navigate("/");

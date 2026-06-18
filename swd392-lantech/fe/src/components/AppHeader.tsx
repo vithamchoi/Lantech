@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAppStore } from "../store/appStore";
-import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic } from "lucide-react";
+import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic, Sun, Moon } from "lucide-react";
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: "#60a5fa",
@@ -20,7 +20,7 @@ const NOTIFICATIONS = [
 ];
 
 export default function AppHeader() {
-  const { user } = useAppStore();
+  const { user, darkMode, toggleDarkMode } = useAppStore();
   const [notifOpen, setNotifOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
@@ -46,15 +46,15 @@ export default function AppHeader() {
     <header
       className="flex items-center justify-between px-6 py-3 border-b shrink-0 transition-colors duration-300"
       style={{
-        background: "#ffffff",
-        borderColor: "rgba(0,0,0,0.08)",
+        background: "var(--card)",
+        borderColor: "var(--border)",
         minHeight: 60,
       }}
     >
       {/* Left: greeting */}
       <div>
-        <span style={{ fontSize: 13.5, color: "#888", fontWeight: 500 }}>
-          Welcome back, <strong style={{ color: "#3c3c3c" }}>{user.name.split(" ")[0]}</strong>!
+        <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500 }}>
+          Welcome back, <strong style={{ color: "var(--foreground)" }}>{user.name.split(" ")[0]}</strong>!
         </span>
       </div>
 
@@ -63,21 +63,27 @@ export default function AppHeader() {
         {/* Streak */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{ background: "#fff7ed", border: "2px solid #fed7aa" }}
+          style={{
+            background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
+            border: `2px solid ${darkMode ? "rgba(249,115,22,0.4)" : "#fed7aa"}`,
+          }}
           title="Day Streak"
         >
           <Flame size={15} style={{ color: "#f97316" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: "#c2410c" }}>{user.streak}</span>
+          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
         </div>
 
         {/* XP */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{ background: "#f0fdf4", border: "2px solid var(--brand-light)" }}
+          style={{
+            background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
+            border: `2px solid ${darkMode ? "rgba(88,204,2,0.4)" : "var(--brand-light)"}`,
+          }}
           title="Total XP"
         >
           <Sprout size={15} style={{ color: "var(--brand)" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: "var(--brand-dark)" }}>
+          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
             {user.xp.toLocaleString()} XP
           </span>
         </div>
@@ -97,14 +103,28 @@ export default function AppHeader() {
           {user.cefr}
         </div>
 
+        {/* Theme Toggle */}
+        <button
+          onClick={toggleDarkMode}
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer border-none outline-none"
+          style={{ background: "var(--muted)" }}
+          title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+        >
+          {darkMode ? (
+            <Sun size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
+          ) : (
+            <Moon size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
+          )}
+        </button>
+
         {/* Notification bell */}
         <div className="relative" ref={panelRef}>
           <button
             onClick={() => setNotifOpen(v => !v)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors relative cursor-pointer border-none outline-none"
-            style={{ background: notifOpen ? "#e5e7eb" : "#f3f4f6" }}
+            style={{ background: notifOpen ? "var(--secondary)" : "var(--muted)" }}
           >
-            <Bell size={15} style={{ color: "#555" }} />
+            <Bell size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
             {unreadCount > 0 && (
               <span
                 className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
@@ -118,16 +138,16 @@ export default function AppHeader() {
           {notifOpen && (
             <div
               className="absolute right-0 top-11 z-50 rounded-2xl shadow-2xl overflow-hidden"
-              style={{ width: 340, background: "#fff", border: "1.5px solid rgba(0,0,0,0.1)" }}
+              style={{ width: 340, background: "var(--card)", border: "1.5px solid var(--border)" }}
             >
               {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "#3c3c3c" }}>Notifications</div>
+              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>Notifications</div>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
                     className="flex items-center gap-1.5 cursor-pointer border-none outline-none bg-transparent"
-                    style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-dark)", padding: 0 }}
+                    style={{ fontSize: 12, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)", padding: 0 }}
                   >
                     <CheckCheck size={13} />
                     Mark all read
@@ -146,8 +166,8 @@ export default function AppHeader() {
                       onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
                       className="flex gap-3 px-5 py-4 cursor-pointer transition-colors"
                       style={{
-                        background: isUnread ? "#f9fffe" : "#fff",
-                        borderBottom: "1px solid rgba(0,0,0,0.05)",
+                        background: isUnread ? (darkMode ? "rgba(88, 204, 2, 0.15)" : "rgba(88, 204, 2, 0.08)") : "transparent",
+                        borderBottom: "1px solid var(--border)",
                       }}
                     >
                       <div
@@ -158,7 +178,7 @@ export default function AppHeader() {
                       </div>
                       <div className="flex-1 min-w-0 text-left">
                         <div className="flex items-start justify-between gap-2">
-                          <div style={{ fontSize: 13, fontWeight: isUnread ? 700 : 600, color: "#3c3c3c", lineHeight: 1.4 }}>{n.title}</div>
+                          <div style={{ fontSize: 13, fontWeight: isUnread ? 700 : 600, color: "var(--foreground)", lineHeight: 1.4 }}>{n.title}</div>
                           {isUnread && (
                             <span
                               className="w-2 h-2 rounded-full shrink-0 mt-1"
@@ -166,8 +186,8 @@ export default function AppHeader() {
                             />
                           )}
                         </div>
-                        <div style={{ fontSize: 12, color: "#888", lineHeight: 1.5, marginTop: 2 }}>{n.body}</div>
-                        <div style={{ fontSize: 11, color: "#bbb", marginTop: 4, fontWeight: 600 }}>{n.time}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5, marginTop: 2 }}>{n.body}</div>
+                        <div style={{ fontSize: 11, color: "var(--muted-foreground)", opacity: 0.6, marginTop: 4, fontWeight: 600 }}>{n.time}</div>
                       </div>
                     </div>
                   );
@@ -177,10 +197,10 @@ export default function AppHeader() {
               {/* Footer */}
               <div
                 className="px-5 py-3 text-center cursor-pointer border-t"
-                style={{ borderColor: "rgba(0,0,0,0.06)" }}
+                style={{ borderColor: "var(--border)" }}
                 onClick={() => setNotifOpen(false)}
               >
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--brand-dark)" }}>See all notifications</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>See all notifications</span>
               </div>
             </div>
           )}

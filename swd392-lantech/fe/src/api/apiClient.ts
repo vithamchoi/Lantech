@@ -37,9 +37,42 @@ apiClient.interceptors.response.use(
     return result; // Trả về trực tiếp trường 'result'
   },
   async (error) => {
-    if (error.response?.status === 401) {
+    const originalRequest = error.config;
+    
+    // Nếu gặp lỗi 401 (Unauthorized) và request chưa được retry lần nào
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      const refreshToken = localStorage.getItem('refresh_token');
+      
+      if (refreshToken) {
+        try {
+          // Gọi API refresh token bằng axios nguyên bản để tránh interceptor loop
+          const response = await axios.post(`${API_BASE_URL}/auth/refresh-token`, {
+            refreshToken: refreshToken
+          });
+          
+          const { code, result } = response.data;
+          
+          if (code === 200 && result?.accessToken) {
+            // Lưu token mới
+            localStorage.setItem('access_token', result.accessToken);
+            localStorage.setItem('refresh_token', result.refreshToken);
+            
+            // Cập nhật Header Authorization cho request cũ và gửi lại
+            originalRequest.headers.Authorization = `Bearer ${result.accessToken}`;
+            return apiClient(originalRequest);
+          }
+        } catch (refreshError) {
+          console.error("Token refresh failed:", refreshError);
+        }
+      }
+      
+      // Nếu không có refresh token hoặc gọi API refresh thất bại, xóa token và đăng xuất
       localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      window.location.href = '/auth';
     }
+    
     return Promise.reject(error);
   }
 );

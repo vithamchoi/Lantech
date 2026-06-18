@@ -27,6 +27,12 @@ const GRADE_COLORS = {
   neutral: { bg: "#f3f4f6", text: "#6b7280", border: "#e5e7eb" },
 };
 
+const GRADE_LABELS = {
+  excellent: "✓ Excellent",
+  weak: "~ Weak",
+  incorrect: "✗ Incorrect",
+};
+
 export default function PronunciationClinic() {
   const [selectedPhrase, setSelectedPhrase] = useState<Phrase | null>(null);
   const [isRecording, setIsRecording] = useState(false);
@@ -85,7 +91,7 @@ export default function PronunciationClinic() {
     }
   };
 
-  const overallScore = feedback ? feedback.overallScore : null;
+  const overallScore = feedback ? feedback.score : null;
 
   const getGrade = (score: number): "excellent" | "weak" | "incorrect" => {
     if (score >= 80) return "excellent";
@@ -98,10 +104,10 @@ export default function PronunciationClinic() {
       {/* Phrase list */}
       <div
         className="shrink-0 border-r overflow-y-auto px-5 py-6 hidden md:block"
-        style={{ width: 300, background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}
+        style={{ width: 300, background: "var(--card)", borderColor: "var(--border)" }}
       >
-        <h2 style={{ fontSize: 17, fontWeight: 900, color: "#3c3c3c", marginBottom: 4 }}>Pronunciation Hub</h2>
-        <p style={{ fontSize: 12.5, color: "#888", marginBottom: 16 }}>Select a phrase and practice your accent</p>
+        <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)", marginBottom: 4 }}>Pronunciation Hub</h2>
+        <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", marginBottom: 16 }}>Select a phrase and practice your accent</p>
 
         {/* Category filter */}
         <div className="flex gap-1.5 flex-wrap mb-4">
@@ -112,8 +118,8 @@ export default function PronunciationClinic() {
               type="button"
               className="px-3 py-1 rounded-full cursor-pointer border-none outline-none"
               style={{
-                background: activeCategory === cat ? "var(--brand)" : "#f3f4f6",
-                color: activeCategory === cat ? "#fff" : "#888",
+                background: activeCategory === cat ? "var(--brand)" : "var(--muted)",
+                color: activeCategory === cat ? "#fff" : "var(--muted-foreground)",
                 fontWeight: 700,
                 fontSize: 11.5,
               }}
@@ -129,15 +135,15 @@ export default function PronunciationClinic() {
             { label: "Sessions", value: 18, icon: "🎤" },
             { label: "Avg Score", value: "78%", icon: "📊" },
           ].map(s => (
-            <div key={s.label} className="rounded-xl px-3 py-3 text-center animate-fade-in" style={{ background: "#fafafa", border: "1px solid rgba(0,0,0,0.05)" }}>
+            <div key={s.label} className="rounded-xl px-3 py-3 text-center animate-fade-in" style={{ background: "var(--background)", border: "1px solid var(--border)" }}>
               <div style={{ fontSize: 16 }}>{s.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 15, color: "#3c3c3c" }}>{s.value}</div>
-              <div style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>{s.label}</div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>{s.value}</div>
+              <div style={{ fontSize: 11, color: "var(--muted-foreground)", fontWeight: 600 }}>{s.label}</div>
             </div>
           ))}
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 8 }}>
           Practice Phrases
         </div>
 
@@ -149,8 +155,8 @@ export default function PronunciationClinic() {
               type="button"
               className="text-left px-4 py-3 rounded-xl cursor-pointer transition-all w-full outline-none"
               style={{
-                background: selectedPhrase?.id === phrase.id ? "var(--brand-light)" : "#fafafa",
-                border: `2px solid ${selectedPhrase?.id === phrase.id ? "var(--brand)" : "rgba(0,0,0,0.06)"}`,
+                background: selectedPhrase?.id === phrase.id ? "var(--brand-light)" : "var(--card)",
+                border: `2px solid ${selectedPhrase?.id === phrase.id ? "var(--brand)" : "var(--border)"}`,
               }}
             >
               <div className="flex items-center justify-between mb-1">
@@ -160,9 +166,9 @@ export default function PronunciationClinic() {
                 >
                   {phrase.difficulty}
                 </span>
-                <span style={{ fontSize: 10.5, color: "#aaa", fontWeight: 600 }}>{phrase.category}</span>
+                <span style={{ fontSize: 10.5, color: "var(--muted-foreground)", fontWeight: 600 }}>{phrase.category}</span>
               </div>
-              <div style={{ fontSize: 13, fontWeight: 600, color: "#3c3c3c", lineHeight: 1.5 }}>{phrase.text}</div>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "var(--foreground)", lineHeight: 1.5 }}>{phrase.text}</div>
             </button>
           ))}
         </div>
@@ -173,7 +179,7 @@ export default function PronunciationClinic() {
         {!selectedPhrase ? (
           <div className="h-full flex flex-col items-center justify-center text-center">
             <div style={{ fontSize: 72, marginBottom: 16 }}>🎤</div>
-            <h2 style={{ fontSize: 22, fontWeight: 800, color: "#3c3c3c", marginBottom: 8 }}>Select a phrase to begin</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 800, color: "var(--foreground)", marginBottom: 8 }}>Select a phrase to begin</h2>
             <p style={{ fontSize: 14, color: "#aaa" }}>
               Choose a phrase from the left panel, then record yourself speaking it out loud.
             </p>
@@ -193,7 +199,7 @@ export default function PronunciationClinic() {
             {/* Phrase card */}
             <div
               className="rounded-3xl p-7 mb-7"
-              style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)" }}
+              style={{ background: "var(--card)", border: "2px solid var(--border)" }}
             >
               <div className="flex items-start justify-between mb-4">
                 <div>
@@ -214,7 +220,7 @@ export default function PronunciationClinic() {
                 </button>
               </div>
 
-              <div style={{ fontSize: 24, fontWeight: 800, color: "#3c3c3c", lineHeight: 1.6, marginBottom: 8 }}>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.6, marginBottom: 8 }}>
                 "{selectedPhrase.text}"
               </div>
               <div style={{ fontSize: 14, color: "#1CB0F6", fontWeight: 600 }}>{selectedPhrase.phonetic}</div>
@@ -278,20 +284,21 @@ export default function PronunciationClinic() {
                 {/* Color-coded phoneme breakdown */}
                 <div
                   className="rounded-2xl p-6"
-                  style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)" }}
+                  style={{ background: "var(--card)", border: "2px solid var(--border)" }}
                 >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
                     Word-by-word Analysis
                   </div>
                   <div className="flex flex-wrap gap-2 mb-5">
-                    {feedback.map((f, i) => {
-                      const colors = GRADE_COLORS[f.grade];
+                    {(feedback.wordLevelFeedback || []).map((f, i) => {
+                      const grade = getGrade(f.accuracyScore);
+                      const colors = GRADE_COLORS[grade];
                       return (
                         <div
                           key={i}
                           className="px-3 py-1.5 rounded-xl border"
                           style={{ background: colors.bg, borderColor: colors.border, color: colors.text, fontWeight: 700, fontSize: 14 }}
-                          title={`${f.score}% — ${GRADE_LABELS[f.grade]}`}
+                          title={`${f.accuracyScore}% — ${GRADE_LABELS[grade]}`}
                         >
                           {f.word}
                         </div>
@@ -303,7 +310,7 @@ export default function PronunciationClinic() {
                   <div className="flex gap-4 flex-wrap">
                     {(["excellent", "weak", "incorrect"] as const).map(g => {
                       const colors = GRADE_COLORS[g];
-                      const count = feedback.filter(f => f.grade === g).length;
+                      const count = (feedback.wordLevelFeedback || []).filter(f => getGrade(f.accuracyScore) === g).length;
                       return (
                         <div key={g} className="flex items-center gap-2">
                           <div
@@ -326,12 +333,12 @@ export default function PronunciationClinic() {
                 >
                   <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8", marginBottom: 6 }}>💡 Improvement Tips</div>
                   <ul className="flex flex-col gap-1.5">
-                    {feedback.filter(f => f.grade !== "excellent").map((f, i) => (
+                    {(feedback.wordLevelFeedback || []).filter(f => getGrade(f.accuracyScore) !== "excellent").map((f, i) => (
                       <li key={i} style={{ fontSize: 13, color: "#1e40af" }}>
-                        • Focus on pronouncing <strong>"{f.word}"</strong> — it scored {f.score}%
+                        • Focus on pronouncing <strong>"{f.word}"</strong> — it scored {f.accuracyScore}%
                       </li>
                     ))}
-                    {feedback.every(f => f.grade === "excellent") && (
+                    {(feedback.wordLevelFeedback || []).every(f => getGrade(f.accuracyScore) === "excellent") && (
                       <li style={{ fontSize: 13, color: "var(--brand-dark)" }}>🎉 Excellent pronunciation! Keep it up!</li>
                     )}
                   </ul>

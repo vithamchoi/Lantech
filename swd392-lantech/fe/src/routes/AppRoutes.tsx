@@ -74,7 +74,8 @@ export default function AppRoutes() {
         try {
           const user = await authService.getMe();
           const mappedRole = user.role === 'Admin' ? 'Admin' : 'Student';
-          login(mappedRole, user, token);
+          const refreshToken = localStorage.getItem('refresh_token') || undefined;
+          login(mappedRole, user, token, refreshToken);
         } catch (error) {
           console.error("Failed to re-authenticate", error);
           logout();

@@ -4,7 +4,7 @@ import { useAppStore } from "../store/appStore";
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { role, login } = useAppStore();
+  const { role, login, darkMode } = useAppStore();
 
   const handleEnterAuth = (mode: "login" | "register", selectRole?: "student" | "ranger") => {
     if (selectRole === "ranger") {
@@ -18,7 +18,10 @@ export default function LandingPage() {
   return (
     <div
       className="min-h-screen w-full flex flex-col transition-colors duration-300"
-      style={{ background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 50%, #fef9c3 100%)", fontFamily: "var(--font-family)" }}
+      style={{
+        background: "var(--background)",
+        fontFamily: "var(--font-family)",
+      }}
     >
       {/* Top nav */}
       <nav className="flex items-center justify-between px-8 py-4">
@@ -30,7 +33,7 @@ export default function LandingPage() {
             <span style={{ fontSize: 20 }}>🌱</span>
           </div>
           <div>
-            <span style={{ fontWeight: 900, fontSize: 20, color: "#3c3c3c" }}>Lantech</span>
+            <span style={{ fontWeight: 900, fontSize: 20, color: "var(--foreground)" }}>Lantech</span>
             <span style={{ fontWeight: 900, fontSize: 20, color: "var(--brand)" }}> English</span>
           </div>
         </div>
@@ -82,7 +85,7 @@ export default function LandingPage() {
           </div>
           <div
             className="absolute -bottom-1 -left-3 w-10 h-10 rounded-full flex items-center justify-center shadow-md"
-            style={{ background: "#e0f2fe", fontSize: 18 }}
+            style={{ background: darkMode ? "#1e293b" : "#e0f2fe", fontSize: 18 }}
           >
             🌿
           </div>
@@ -93,7 +96,7 @@ export default function LandingPage() {
           style={{
             fontSize: 48,
             fontWeight: 900,
-            color: "#3c3c3c",
+            color: "var(--foreground)",
             lineHeight: 1.15,
             maxWidth: 640,
           }}
@@ -102,7 +105,7 @@ export default function LandingPage() {
           <span style={{ color: "var(--brand)" }}>One Quest at a Time</span>
         </h1>
         <p
-          style={{ fontSize: 18, color: "#666", fontWeight: 500, maxWidth: 520, lineHeight: 1.7 }}
+          style={{ fontSize: 18, color: "var(--muted-foreground)", fontWeight: 500, maxWidth: 520, lineHeight: 1.7 }}
           className="mb-10"
         >
           Level up your English skills through gamified grammar quests, speaking challenges, and spaced-repetition vocabulary — all in one vibrant learning orchard.
@@ -128,12 +131,12 @@ export default function LandingPage() {
             onClick={() => handleEnterAuth("login")}
             className="px-10 py-4 rounded-2xl cursor-pointer transition-all"
             style={{
-              background: "#ffffff",
-              color: "#3c3c3c",
+              background: "var(--card)",
+              color: "var(--foreground)",
               fontWeight: 700,
               fontSize: 17,
-              border: "2px solid rgba(0,0,0,0.1)",
-              boxShadow: "0 4px 0 rgba(0,0,0,0.1)",
+              border: "2px solid var(--border)",
+              boxShadow: darkMode ? "none" : "0 4px 0 rgba(0,0,0,0.1)",
             }}
           >
             Enter the Study
@@ -154,14 +157,14 @@ export default function LandingPage() {
               key={i}
               className="rounded-2xl p-5 text-center"
               style={{
-                background: "#ffffff",
-                border: "2px solid rgba(0,0,0,0.06)",
-                boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                background: "var(--card)",
+                border: "2px solid var(--border)",
+                boxShadow: darkMode ? "none" : "0 2px 12px rgba(0,0,0,0.05)",
               }}
             >
               <div style={{ fontSize: 32, marginBottom: 10 }}>{f.icon}</div>
-              <div style={{ fontWeight: 800, fontSize: 14, color: "#3c3c3c", marginBottom: 6 }}>{f.title}</div>
-              <div style={{ fontSize: 12.5, color: "#888", lineHeight: 1.6 }}>{f.desc}</div>
+              <div style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)", marginBottom: 6 }}>{f.title}</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted-foreground)", lineHeight: 1.6 }}>{f.desc}</div>
             </div>
           ))}
         </div>
@@ -170,9 +173,9 @@ export default function LandingPage() {
       {/* Footer */}
       <footer
         className="px-8 py-5 flex items-center justify-between"
-        style={{ borderTop: "1px solid rgba(0,0,0,0.07)", background: "rgba(255,255,255,0.5)" }}
+        style={{ borderTop: "1px solid var(--border)", background: "var(--card)" }}
       >
-        <div style={{ fontSize: 12.5, color: "#aaa", fontWeight: 600 }}>
+        <div style={{ fontSize: 12.5, color: "var(--muted-foreground)", fontWeight: 600 }}>
           © 2026 Lantech English. All rights reserved.
         </div>
         <div className="flex items-center gap-4">
@@ -188,7 +191,7 @@ export default function LandingPage() {
               className="w-2 h-2 rounded-full inline-block"
               style={{ background: "var(--brand)" }}
             />
-            <span style={{ fontSize: 12.5, color: "#888", fontWeight: 600 }}>Orchard Server: Stable</span>
+            <span style={{ fontSize: 12.5, color: "var(--muted-foreground)", fontWeight: 600 }}>Orchard Server: Stable</span>
           </div>
         </div>
       </footer>

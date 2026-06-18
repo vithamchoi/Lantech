@@ -213,16 +213,7 @@ public class AuthService : IAuthService
         var refreshToken = _jwtService.GenerateRefreshToken();
 
         // Save refresh token
-        var refreshTokenEntity = new RefreshToken
-        {
-            Id = Guid.NewGuid(),
-            TokenHash = _passwordHasher.HashPassword(refreshToken),
-            UserId = user.Id,
-            CreatedAt = DateTime.UtcNow,
-            ExpiresAt = DateTime.UtcNow.AddDays(7)
-        };
-        _context.RefreshTokens.Add(refreshTokenEntity);
-        await _context.SaveChangesAsync(cancellationToken);
+        await _jwtService.CreateRefreshTokenAsync(user.Id, refreshToken, cancellationToken);
 
         return new AuthResponse
         {
