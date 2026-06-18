@@ -267,7 +267,10 @@ public class AdminService : IAdminService
                 Word = v.Word,
                 Phoneme = v.Ipa ?? "",
                 Level = v.CefrLevel.ToString(),
-                Definition = v.ExampleSentence ?? "",
+                Definition = _context.VocabularyTranslations
+                    .Where(t => t.VocabularyId == v.Id && t.LanguageCode == "vi")
+                    .Select(t => t.Meaning)
+                    .FirstOrDefault() ?? "",
                 Added = v.CreatedAt.ToString("yyyy-MM-dd")
             })
             .ToListAsync(cancellationToken);
