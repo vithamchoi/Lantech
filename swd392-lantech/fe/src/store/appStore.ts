@@ -19,7 +19,7 @@ interface AppState {
   user: UserProfile | null;
   setRole: (role: UserRole) => void;
   setUser: (user: UserProfile | null) => void;
-  login: (role: UserRole, user: any, token: string) => void;
+  login: (role: UserRole, user: any, accessToken: string, refreshToken: string) => void;
   logout: () => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
@@ -34,8 +34,9 @@ export const useAppStore = create<AppState>()(
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
       setRole: (role) => set({ role }),
       setUser: (user) => set({ user }),
-      login: (role, user, token) => {
-        localStorage.setItem('access_token', token);
+      login: (role, user, accessToken, refreshToken) => {
+        localStorage.setItem('access_token', accessToken);
+        localStorage.setItem('refresh_token', refreshToken);
         const profile: UserProfile = {
           id: user.id,
           name: user.fullName,
@@ -50,6 +51,7 @@ export const useAppStore = create<AppState>()(
       },
       logout: () => {
         localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
         set({ role: 'Visitor', user: null });
       },
       toggleDarkMode: () => {
@@ -61,7 +63,7 @@ export const useAppStore = create<AppState>()(
     {
       name: 'lantech-app-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ role: state.role, user: state.user, darkMode: state.darkMode }),
+      partialize: (state) => ({ role: state.role, user: state.user }),
     }
   )
 );

@@ -39,12 +39,12 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       className="flex flex-col shrink-0 border-r h-full transition-all duration-300"
       style={{
         width: 220,
-        background: "#ffffff",
-        borderColor: "rgba(0,0,0,0.08)",
+        background: "var(--sidebar)",
+        borderColor: "var(--sidebar-border)",
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-5 py-5 border-b" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
+      <div className="flex items-center gap-2 px-5 py-5 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
           style={{ background: "var(--brand)" }}
@@ -53,11 +53,11 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           <span style={{ fontSize: 18 }}>🌱</span>
         </div>
         <div>
-          <div style={{ fontWeight: 800, fontSize: 15, color: "#3c3c3c", lineHeight: 1.1 }}>Lantech</div>
+          <div style={{ fontWeight: 800, fontSize: 15, color: "var(--sidebar-foreground)", lineHeight: 1.1 }}>Lantech</div>
           <div style={{ fontSize: 10, color: "var(--brand)", fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>English</div>
         </div>
       </div>
-
+ 
       {/* Nav items */}
       <nav className="flex-1 py-3 px-3 flex flex-col gap-1 overflow-y-auto">
         {navItems.map(({ path, label, icon: Icon }) => {
@@ -69,43 +69,45 @@ export default function Sidebar({ onLogout }: SidebarProps) {
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left w-full cursor-pointer border-none outline-none"
               style={{
                 background: isActive ? "var(--brand-light)" : "transparent",
-                color: isActive ? "var(--brand-dark)" : "#777",
+                color: isActive ? "var(--brand-dark)" : "var(--sidebar-foreground)",
+                opacity: isActive ? 1 : 0.7,
                 fontWeight: isActive ? 700 : 500,
                 fontSize: 13.5,
               }}
             >
               <Icon
                 size={18}
-                style={{ color: isActive ? "var(--brand)" : "#aaa", flexShrink: 0 }}
+                style={{ color: isActive ? "var(--brand)" : "var(--sidebar-foreground)", opacity: isActive ? 1 : 0.5, flexShrink: 0 }}
               />
               {label}
             </button>
           );
         })}
-
+ 
         {/* Ranger Console link if student role but has admin privileges or shortcut */}
         {role === "Student" && user.email.includes("ranger") && (
           <>
-            <div style={{ height: 1, background: "rgba(0,0,0,0.06)", margin: "8px 4px" }} />
+            <div style={{ height: 1, background: "var(--sidebar-border)", margin: "8px 4px" }} />
             <button
               onClick={() => navigate("/ranger")}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all text-left w-full cursor-pointer border-none outline-none"
               style={{
                 background: "transparent",
-                color: "#aaa",
+                color: "var(--sidebar-foreground)",
+                opacity: 0.6,
                 fontWeight: 500,
                 fontSize: 13.5,
               }}
             >
-              <ShieldCheck size={18} style={{ color: "#aaa", flexShrink: 0 }} />
+              <ShieldCheck size={18} style={{ color: "var(--sidebar-foreground)", opacity: 0.5, flexShrink: 0 }} />
               Ranger Hub
             </button>
           </>
         )}
       </nav>
-
+ 
       {/* Bottom: user info + logout */}
-      <div className="px-3 py-3 border-t" style={{ borderColor: "rgba(0,0,0,0.06)" }}>
+      <div className="px-3 py-3 border-t" style={{ borderColor: "var(--sidebar-border)" }}>
         <div className="flex items-center gap-3 px-2 py-2 mb-1">
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
@@ -114,10 +116,10 @@ export default function Sidebar({ onLogout }: SidebarProps) {
             {user.name.substring(0, 2).toUpperCase()}
           </div>
           <div className="min-w-0 flex-1">
-            <div style={{ fontSize: 12.5, fontWeight: 700, color: "#3c3c3c", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+            <div style={{ fontSize: 12.5, fontWeight: 700, color: "var(--sidebar-foreground)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {user.name}
             </div>
-            <div style={{ fontSize: 11, color: "#aaa", fontWeight: 600 }}>
+            <div style={{ fontSize: 11, color: "var(--sidebar-foreground)", opacity: 0.6, fontWeight: 600 }}>
               {role === "Admin" ? "⚔️ Ranger" : "🌱 Student"}
             </div>
           </div>
@@ -126,7 +128,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           onClick={onLogout}
           className="flex items-center gap-2.5 w-full px-3 py-2 rounded-xl cursor-pointer transition-all border-none outline-none"
           style={{ background: "transparent", color: "#f87171", fontSize: 13, fontWeight: 600 }}
-          onMouseEnter={e => (e.currentTarget.style.background = "#fff1f2")}
+          onMouseEnter={e => (e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)")}
           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         >
           <LogOut size={15} style={{ color: "#f87171" }} />

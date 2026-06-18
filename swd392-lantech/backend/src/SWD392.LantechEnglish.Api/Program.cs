@@ -4,6 +4,7 @@ using Microsoft.OpenApi.Models;
 using System.Text;
 using SWD392.LantechEnglish.Infrastructure;
 using SWD392.LantechEnglish.Infrastructure.Data;
+using SWD392.LantechEnglish.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,9 +73,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend", policy =>
     {
-        policy.AllowAnyOrigin()
+        policy.WithOrigins(allowedOrigins)
               .AllowAnyMethod()
-              .AllowAnyHeader();
+              .AllowAnyHeader()
+              .AllowCredentials();
     });
 });
 
@@ -118,6 +120,8 @@ using (var scope = app.Services.CreateScope())
 }
 
 // Configure the HTTP request pipeline
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();

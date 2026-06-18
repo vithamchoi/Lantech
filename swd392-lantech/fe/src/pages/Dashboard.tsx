@@ -57,8 +57,8 @@ export default function Dashboard() {
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
           <div
-            className="rounded-2xl p-5"
-            style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)" }}
+            className="rounded-2xl p-5 transition-colors duration-300"
+            style={{ background: "var(--card)", border: "2px solid var(--border)" }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div
@@ -67,12 +67,12 @@ export default function Dashboard() {
               >
                 <TrendingUp size={16} style={{ color: "var(--brand)" }} />
               </div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#888" }}>Trail Progress</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)" }}>Trail Progress</span>
             </div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#3c3c3c" }}>{progressPercent}%</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: "var(--foreground)" }}>{progressPercent}%</div>
             <div
               className="mt-2 rounded-full overflow-hidden"
-              style={{ height: 6, background: "#e5e7eb" }}
+              style={{ height: 6, background: "var(--muted)" }}
             >
               <div
                 className="h-full rounded-full"
@@ -94,24 +94,24 @@ export default function Dashboard() {
           </div>
 
           <div
-            className="rounded-2xl p-5"
-            style={{ background: "#eff6ff", border: "2px solid #bfdbfe" }}
+            className="rounded-2xl p-5 transition-colors duration-300"
+            style={{ background: "var(--brand-sky-light)", border: "2px solid var(--brand-sky)" }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "#dbeafe" }}
+                style={{ background: "var(--brand-sky-light)", opacity: 0.8 }}
               >
-                <Zap size={16} style={{ color: "#3b82f6" }} />
+                <Zap size={16} style={{ color: "var(--brand-sky)" }} />
               </div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#888" }}>Next Lesson</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--brand-sky)" }}>Next Lesson</span>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "#1d4ed8" }}>{activeLesson?.title || "All done!"}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-sky)" }}>{activeLesson?.title || "All done!"}</div>
             {activeLesson && (
               <button
                 onClick={() => handleNodeAction(activeLesson.id)}
                 className="mt-2 flex items-center gap-1 cursor-pointer border-none outline-none bg-transparent"
-                style={{ fontSize: 12, fontWeight: 700, color: "#3b82f6", padding: 0 }}
+                style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-sky)", padding: 0 }}
               >
                 Continue <ChevronRight size={13} />
               </button>
@@ -121,10 +121,10 @@ export default function Dashboard() {
 
         {/* Trail heading */}
         <div className="text-left">
-          <h2 style={{ fontSize: 19, fontWeight: 900, color: "#3c3c3c", marginBottom: 6 }}>
+          <h2 style={{ fontSize: 19, fontWeight: 900, color: "var(--foreground)", marginBottom: 6 }}>
             Your Learning Trail
           </h2>
-          <p style={{ fontSize: 13.5, color: "#888", marginBottom: 28 }}>
+          <p style={{ fontSize: 13.5, color: "var(--muted-foreground)", marginBottom: 28 }}>
             Complete each quest node to unlock the next adventure!
           </p>
         </div>
@@ -204,16 +204,16 @@ export default function Dashboard() {
                       <div
                         className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg shadow-sm border transition-all"
                         style={{
-                          background: "#fff",
-                          borderColor: isNodeActive ? "var(--brand)" : "rgba(0,0,0,0.06)",
+                          background: "var(--card)",
+                          borderColor: isNodeActive ? "var(--brand)" : "var(--border)",
                           opacity: isHovered ? 1 : 0.8,
                           transform: isHovered ? "translate(-50%, -4px)" : "translate(-50%, 0)",
                         }}
                       >
-                        <div style={{ fontSize: 13, fontWeight: 800, color: "#3c3c3c" }}>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)" }}>
                           {node.title}
                         </div>
-                        <div style={{ fontSize: 11, fontWeight: 600, color: "#888" }}>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)" }}>
                           {node.topic || node.skill} • {node.xpReward} XP
                         </div>
                       </div>

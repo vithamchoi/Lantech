@@ -27,7 +27,7 @@ export default function AuthEntrance() {
       if (activeTab === "login") {
         const data = await authService.login(email, password);
         const role = data.user.role === "Admin" ? "Admin" : "Student";
-        login(role, data.user, data.accessToken);
+        login(role, data.user, data.accessToken, data.refreshToken);
         
         toast.success("Login successful!");
         
@@ -45,7 +45,7 @@ export default function AuthEntrance() {
           return;
         }
         const data = await authService.register(email, password, name);
-        login("Student", data.user, data.accessToken);
+        login("Student", data.user, data.accessToken, data.refreshToken);
         
         toast.success("Account created successfully!");
         setTimeout(() => {
@@ -68,7 +68,7 @@ export default function AuthEntrance() {
     try {
       const data = await authService.googleLogin(credentialResponse.credential);
       const role = data.user.role === "Admin" ? "Admin" : "Student";
-      login(role, data.user, data.accessToken);
+      login(role, data.user, data.accessToken, data.refreshToken);
       
       toast.success("Google Login successful!");
       setTimeout(() => {
@@ -93,7 +93,7 @@ export default function AuthEntrance() {
     try {
       const data = await authService.login(demoEmail, demoPassword);
       const role = data.user.role === "Admin" ? "Admin" : "Student";
-      login(role, data.user, data.accessToken);
+      login(role, data.user, data.accessToken, data.refreshToken);
       
       toast.success(`Logged in as ${role}`);
       
