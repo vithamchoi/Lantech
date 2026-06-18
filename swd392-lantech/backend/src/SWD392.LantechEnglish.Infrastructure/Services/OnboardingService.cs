@@ -38,13 +38,35 @@ public class OnboardingService : IOnboardingService
         var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
         if (user == null) throw new KeyNotFoundException("User not found");
 
-        if (!Enum.TryParse<CefrLevel>(request.OverallLevel, true, out var overall) ||
-            !Enum.TryParse<CefrLevel>(request.ListeningLevel, true, out var listening) ||
-            !Enum.TryParse<CefrLevel>(request.SpeakingLevel, true, out var speaking) ||
-            !Enum.TryParse<CefrLevel>(request.ReadingLevel, true, out var reading) ||
-            !Enum.TryParse<CefrLevel>(request.WritingLevel, true, out var writing))
+        var levelStr = request.TargetLevel ?? request.OverallLevel;
+        if (string.IsNullOrEmpty(levelStr))
+        {
+            throw new InvalidOperationException("Target level must be provided.");
+        }
+
+        var overallStr = levelStr;
+        var listeningStr = request.ListeningLevel ?? levelStr;
+        var speakingStr = request.SpeakingLevel ?? levelStr;
+        var readingStr = request.ReadingLevel ?? levelStr;
+        var writingStr = request.WritingLevel ?? levelStr;
+
+        if (!Enum.TryParse<CefrLevel>(overallStr, true, out var overall) ||
+            !Enum.TryParse<CefrLevel>(listeningStr, true, out var listening) ||
+            !Enum.TryParse<CefrLevel>(speakingStr, true, out var speaking) ||
+            !Enum.TryParse<CefrLevel>(readingStr, true, out var reading) ||
+            !Enum.TryParse<CefrLevel>(writingStr, true, out var writing))
         {
             throw new InvalidOperationException("Invalid CEFR Level values provided.");
+        }
+
+        // Update User profile source language if provided
+        if (!string.IsNullOrEmpty(request.NativeLanguageCode))
+        {
+            var language = await _context.Languages.FirstOrDefaultAsync(l => l.Code == request.NativeLanguageCode && l.IsSourceSupported, cancellationToken);
+            if (language != null)
+            {
+                user.SourceLanguageCode = request.NativeLanguageCode;
+            }
         }
 
         // Create UserSkillProfile

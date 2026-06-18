@@ -1,5 +1,33 @@
 import apiClient from '../api/apiClient';
 
+export interface CreateLessonRequest {
+  cefrLevel: string;
+  title: string;
+  description: string;
+  skill: string;
+  topic?: string;
+  contentSource?: string;
+  orderIndex: number;
+  estimatedMinutes?: number;
+  xpReward?: number;
+  isPublished?: boolean;
+}
+
+export interface CreateExerciseRequest {
+  lessonId: string;
+  type: string;
+  prompt: string;
+  instruction?: string;
+  sourceLanguageCode?: string;
+  targetText?: string;
+  options?: string[];
+  correctAnswer: string;
+  explanation?: string;
+  difficulty?: number;
+  xpReward?: number;
+  orderIndex: number;
+}
+
 export interface AdminVocabularyTranslationRequest {
   languageCode: string;
   meaning: string;
@@ -92,6 +120,14 @@ export interface AdminBadgeDto {
   holders: number;
 }
 
+export interface AdminPronunciationPhraseDto {
+  id?: string;
+  text: string;
+  phonetic: string;
+  category: string;
+  tags: string[];
+}
+
 export const adminService = {
   getOverviewStats: async (): Promise<AdminStatsDto> => {
     return await apiClient.get('/admin/overview');
@@ -112,10 +148,28 @@ export const adminService = {
   getLessons: async (): Promise<AdminLessonDto[]> => {
     return await apiClient.get('/admin/lessons');
   },
+  createLesson: async (dto: CreateLessonRequest): Promise<any> => {
+    return await apiClient.post('/admin/lessons', dto);
+  },
+  updateLesson: async (id: string, dto: CreateLessonRequest): Promise<any> => {
+    return await apiClient.put(`/admin/lessons/${id}`, dto);
+  },
+  deleteLesson: async (id: string): Promise<void> => {
+    return await apiClient.delete(`/admin/lessons/${id}`);
+  },
 
   // Questions
   getQuestions: async (): Promise<AdminQuestionDto[]> => {
     return await apiClient.get('/admin/questions');
+  },
+  createQuestion: async (dto: CreateExerciseRequest): Promise<any> => {
+    return await apiClient.post('/admin/questions', dto);
+  },
+  updateQuestion: async (id: string, dto: CreateExerciseRequest): Promise<any> => {
+    return await apiClient.put(`/admin/questions/${id}`, dto);
+  },
+  deleteQuestion: async (id: string): Promise<void> => {
+    return await apiClient.delete(`/admin/questions/${id}`);
   },
 
   // Vocabulary
@@ -135,5 +189,19 @@ export const adminService = {
   // Badges
   getBadges: async (): Promise<AdminBadgeDto[]> => {
     return await apiClient.get('/admin/badges');
+  },
+
+  // Pronunciation Phrases
+  getPronunciationPhrases: async (): Promise<AdminPronunciationPhraseDto[]> => {
+    return await apiClient.get('/pronunciation/phrases');
+  },
+  createPronunciationPhrase: async (dto: AdminPronunciationPhraseDto): Promise<AdminPronunciationPhraseDto> => {
+    return await apiClient.post('/pronunciation/phrases', dto);
+  },
+  updatePronunciationPhrase: async (id: string, dto: AdminPronunciationPhraseDto): Promise<AdminPronunciationPhraseDto> => {
+    return await apiClient.put(`/pronunciation/phrases/${id}`, dto);
+  },
+  deletePronunciationPhrase: async (id: string): Promise<void> => {
+    return await apiClient.delete(`/pronunciation/phrases/${id}`);
   }
 };

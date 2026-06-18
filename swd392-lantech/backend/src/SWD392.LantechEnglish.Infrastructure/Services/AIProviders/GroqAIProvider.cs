@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -72,7 +73,7 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
     }
 
-    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(_options.GroqApiKey))
         {
@@ -83,14 +84,22 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 
         _logger.LogInformation("Attempting Groq stream call using Llama-3-70b");
 
+        var messagesList = new List<object>();
+        messagesList.Add(new { role = "system", content = systemPrompt });
+        if (history != null)
+        {
+            foreach (var h in history)
+            {
+                var role = h.Role == "tutor" || h.Role == "assistant" ? "assistant" : "user";
+                messagesList.Add(new { role = role, content = h.Content });
+            }
+        }
+        messagesList.Add(new { role = "user", content = message });
+
         var payload = new
         {
             model = "llama-3.3-70b-versatile",
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = message }
-            },
+            messages = messagesList,
             temperature = 0.5,
             stream = true
         };
@@ -139,8 +148,9 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
     }
 
-    public async Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
+    public async Task<PronunciationResult> AssessPronunciationAsync(string targetText, byte[] audioData, CancellationToken cancellationToken = default)
     {
+        string transcriptText = targetText;
         // Simple evaluation logic for Pronunciation Result based on text comparison.
         var expectedWords = targetText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
         var transcriptWords = transcriptText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
@@ -151,7 +161,7 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             if (Array.IndexOf(transcriptWords, w) >= 0) matchedCount++;
         }
 
-        if (expectedWords.Length == 0) return new PronunciationResult { Score = 0, Accuracy = 0, Feedback = "No text provided." };
+        if (expectedWords.Length == 0) return new PronunciationResult { Score = 0, Accuracy = 0, Feedback = "No text provided.", TranscriptText = string.Empty };
         double score = ((double)matchedCount / expectedWords.Length * 100);
         
         return new PronunciationResult
@@ -160,7 +170,8 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             Accuracy = Math.Min(100, Math.Max(0, score)),
             Fluency = 80, // Mocked fluency for text-only assessment
             Completeness = Math.Min(100, Math.Max(0, score)),
-            Feedback = score >= 80 ? "Great job!" : "Keep practicing."
+            Feedback = score >= 80 ? "Great job!" : "Keep practicing.",
+            TranscriptText = transcriptText
         };
     }
 }

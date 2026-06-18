@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Enums;
 using System.Text.Json;
@@ -13,7 +14,7 @@ public class MockAIProvider : IAIProvider
         var response = sourceLanguageCode.ToLower() switch
         {
             "vi" => $"[Mock AI] Giải thích cho câu hỏi: '{question}' về câu '{targetText}':\n\nĐây là cấu trúc thông dụng trong tiếng Anh. Ở đây, ta dùng thì Hiện tại hoàn thành tiếp diễn để nhấn mạnh tính liên tục của hành động kéo dài từ quá khứ đến hiện tại.",
-            "ja" => $"[Mock AI] 質問: '{question}' (対象: '{targetText}'):\n\nこれは英語の一般的な表現です。現在完了進行形は、過去から現在まで継続している動作の継続性を強調するために使用されます。",
+            "ja" => $"[Mock AI] 質問: '{question}' (対象: '{targetText}'):\n\nこれは英語の一般的な表現です。現在完了進行形は、過去から現在まで継続している動作の継続性を 강조するために使用されます。",
             "ko" => $"[Mock AI] 질문: '{question}' (대상: '{targetText}'):\n\n이것은 영어의 일반적인 구조입니다. 현재 완료 진행형은 과거부터 현재까지 지속되는 행동의 연속성을 강조합니다.",
             "zh" => $"[Mock AI] 问题: '{question}' (针对: '{targetText}'):\n\n这是英语中的常用结构。这里使用现在完成进行时来强调动作从过去持续到现在的连续性。",
             _ => $"[Mock AI] Explanation for: '{question}' on '{targetText}':\n\nThis is a common English structure using the Present Perfect Continuous tense to emphasize the ongoing nature of the action starting from the past up to the present."
@@ -75,7 +76,7 @@ public class MockAIProvider : IAIProvider
         return Task.FromResult(JsonSerializer.Serialize(result));
     }
 
-    public Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
         var reply = sourceLanguageCode.ToLower() switch
         {
@@ -88,7 +89,7 @@ public class MockAIProvider : IAIProvider
         return Task.FromResult(reply);
     }
 
-    public async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var reply = sourceLanguageCode.ToLower() switch
         {
@@ -172,5 +173,10 @@ public class MockAIProvider : IAIProvider
         }
         catch { }
         return Array.Empty<byte>();
+    }
+
+    public Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult($"/{text.ToLower()}/");
     }
 }

@@ -4,19 +4,21 @@ import { Clock, ChevronRight, Mic, MicOff, Loader2 } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { assessmentService, AssessmentDetailDto, AssessmentQuestionDto, AssessmentAnswerItem } from "../services/assessmentService";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Section = "listening" | "reading" | "writing" | "speaking";
 
-const SECTIONS: { id: Section; label: string; emoji: string; color: string }[] = [
-  { id: "listening", label: "Listening", emoji: "👂", color: "#1CB0F6" },
-  { id: "reading", label: "Reading", emoji: "📖", color: "#8b5cf6" },
-  { id: "writing", label: "Writing", emoji: "✍️", color: "#f97316" },
-  { id: "speaking", label: "Speaking", emoji: "🎤", color: "var(--brand)" },
+const SECTIONS: { id: Section; labelKey: string; emoji: string; color: string }[] = [
+  { id: "listening", labelKey: "listeningSection", emoji: "👂", color: "#1CB0F6" },
+  { id: "reading", labelKey: "readingSection", emoji: "📖", color: "#8b5cf6" },
+  { id: "writing", labelKey: "writingSection", emoji: "✍️", color: "#f97316" },
+  { id: "speaking", labelKey: "speakingSection", emoji: "🎤", color: "var(--brand)" },
 ];
 
 export default function AssessmentRoom() {
   const navigate = useNavigate();
   const { user } = useAppStore();
+  const { t } = useTranslation();
   
   const [assessment, setAssessment] = useState<AssessmentDetailDto | null>(null);
   const [started, setStarted] = useState(false);
@@ -46,11 +48,11 @@ export default function AssessmentRoom() {
   const handleStart = async () => {
     setIsLoading(true);
     try {
-      const data = await assessmentService.startAssessment();
+      const data = await assessmentService.startAssessment(user?.nativeLang || 'vi');
       setAssessment(data);
       setStarted(true);
     } catch (error: any) {
-      toast.error(error.response?.data?.message || "Failed to start assessment");
+      toast.error(error.response?.data?.message || t("failedStartAssessment"));
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +87,7 @@ export default function AssessmentRoom() {
         navigate("/assessment-results", { state: { result: finalResult } });
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || `Failed to submit ${currentSection} section`);
+      toast.error(error.response?.data?.message || t("failedSubmitSection"));
     } finally {
       setIsSubmitting(false);
     }
@@ -104,10 +106,10 @@ export default function AssessmentRoom() {
         >
           <div style={{ fontSize: 64, marginBottom: 16 }}>🎯</div>
           <h1 style={{ fontSize: 26, fontWeight: 900, color: "#3c3c3c", marginBottom: 8 }}>
-            English Diagnostic Test
+            {t("assessmentIntroTitle")}
           </h1>
           <p style={{ fontSize: 14.5, color: "#888", lineHeight: 1.7, marginBottom: 28 }}>
-            This 45-minute test covers Listening, Reading, Writing, and Speaking to determine your current English level. Your results will generate a personalized learning trail.
+            {t("assessmentIntroDesc")}
           </p>
 
           <div className="grid grid-cols-2 gap-3 mb-8">
@@ -118,8 +120,8 @@ export default function AssessmentRoom() {
                 style={{ background: "#fafafa", border: "2px solid rgba(0,0,0,0.06)" }}
               >
                 <div style={{ fontSize: 24, marginBottom: 6 }}>{s.emoji}</div>
-                <div style={{ fontWeight: 700, fontSize: 13, color: "#3c3c3c" }}>{s.label}</div>
-                <div style={{ fontSize: 11.5, color: "#aaa" }}>~10 min</div>
+                <div style={{ fontWeight: 700, fontSize: 13, color: "#3c3c3c" }}>{t(s.labelKey)}</div>
+                <div style={{ fontSize: 11.5, color: "#aaa" }}>~10 {t("minutes")}</div>
               </div>
             ))}
           </div>
@@ -129,7 +131,7 @@ export default function AssessmentRoom() {
             style={{ background: "#fff7ed", border: "2px solid #fde68a" }}
           >
             <Clock size={14} style={{ color: "#f97316" }} />
-            <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>Total duration: 45 minutes</span>
+            <span style={{ fontSize: 13, fontWeight: 600, color: "#92400e" }}>{t("assessmentDuration")}</span>
           </div>
 
           <button
@@ -140,7 +142,7 @@ export default function AssessmentRoom() {
             style={{ background: "var(--brand)", boxShadow: "0 4px 0 var(--brand-dark)", opacity: isLoading ? 0.7 : 1 }}
           >
             {isLoading && <Loader2 className="animate-spin" size={20} />}
-            Begin Diagnostic Test →
+            {t("beginTest")}
           </button>
         </div>
       </div>
@@ -166,7 +168,7 @@ export default function AssessmentRoom() {
             >
               <span style={{ fontSize: 13 }}>{s.emoji}</span>
               <span style={{ fontSize: 12, fontWeight: 700, color: sectionDone.includes(s.id) ? "var(--brand-dark)" : currentSection === s.id ? s.color : "#aaa" }}>
-                {s.label}
+                {t(s.labelKey)}
               </span>
               {sectionDone.includes(s.id) && <span style={{ color: "var(--brand)" }}>✓</span>}
             </div>
@@ -206,8 +208,8 @@ export default function AssessmentRoom() {
             <div className="flex items-center gap-3 mb-6">
               <span style={{ fontSize: 28 }}>👂</span>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 900, color: "#3c3c3c" }}>Listening Section</h2>
-                <p style={{ fontSize: 13, color: "#888" }}>Listen to each audio clip and choose the correct answer.</p>
+                <h2 style={{ fontSize: 20, fontWeight: 900, color: "#3c3c3c" }}>{t("listeningHeader")}</h2>
+                <p style={{ fontSize: 13, color: "#888" }}>{t("listeningDesc")}</p>
               </div>
             </div>
             
@@ -229,8 +231,8 @@ export default function AssessmentRoom() {
                       <span style={{ fontSize: 22, color: "#fff", marginLeft: 4 }}>▶</span>
                     </div>
                     <div className="flex-1">
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>Listen to Question {qi + 1}</div>
-                      <p style={{ fontSize: 12, color: "#60a5fa" }}>{q.instruction || "Click play to listen"}</p>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{t("listenToQuestion", { index: String(qi + 1) })}</div>
+                      <p style={{ fontSize: 12, color: "#60a5fa" }}>{q.instruction || t("clickPlayToListen")}</p>
                     </div>
                   </div>
                 )}
@@ -277,7 +279,7 @@ export default function AssessmentRoom() {
               style={{ background: "var(--brand)", opacity: isSubmitting ? 0.7 : 1 }}
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              Submit Listening <ChevronRight size={14} />
+              {t("submitListening")} <ChevronRight size={14} />
             </button>
           </div>
         )}
@@ -290,18 +292,18 @@ export default function AssessmentRoom() {
             >
               <div className="flex items-center gap-2 mb-5">
                 <span style={{ fontSize: 24 }}>📖</span>
-                <h2 style={{ fontSize: 18, fontWeight: 900, color: "#3c3c3c" }}>Reading Passage</h2>
+                <h2 style={{ fontSize: 18, fontWeight: 900, color: "#3c3c3c" }}>{t("readingHeader")}</h2>
               </div>
               <div
                 className="rounded-2xl p-6"
                 style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)", lineHeight: 2, fontSize: 14.5, color: "#3c3c3c" }}
               >
-                <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 16 }}>Reading Section</h3>
-                <div style={{ whiteSpace: 'pre-wrap' }}>{currentQuestions[0]?.passageText || "No passage text available."}</div>
+                <h3 style={{ fontSize: 17, fontWeight: 800, marginBottom: 16 }}>{t("readingSectionHeader")}</h3>
+                <div style={{ whiteSpace: 'pre-wrap' }}>{currentQuestions[0]?.passageText || t("noPassageText")}</div>
               </div>
             </div>
             <div className="shrink-0 overflow-y-auto px-7 py-7" style={{ width: "100%", maxWidth: 380 }}>
-              <h2 style={{ fontSize: 18, fontWeight: 900, color: "#3c3c3c", marginBottom: 16 }}>Questions</h2>
+              <h2 style={{ fontSize: 18, fontWeight: 900, color: "#3c3c3c", marginBottom: 16 }}>{t("questionsHeader")}</h2>
               {currentQuestions.map((q, qi) => (
                 <div key={q.id} className="mb-6">
                   <div style={{ fontSize: 14, fontWeight: 700, color: "#3c3c3c", marginBottom: 10, lineHeight: 1.6 }}>
@@ -344,7 +346,7 @@ export default function AssessmentRoom() {
                 style={{ background: "#8b5cf6", opacity: isSubmitting ? 0.7 : 1 }}
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                Submit Reading <ChevronRight size={14} />
+                {t("submitReading")} <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -355,8 +357,8 @@ export default function AssessmentRoom() {
             <div className="flex items-center gap-3 mb-6">
               <span style={{ fontSize: 28 }}>✍️</span>
               <div>
-                <h2 style={{ fontSize: 20, fontWeight: 900, color: "#3c3c3c" }}>Writing Section</h2>
-                <p style={{ fontSize: 13, color: "#888" }}>Respond to the prompt below. Your response will be analyzed by AI.</p>
+                <h2 style={{ fontSize: 20, fontWeight: 900, color: "#3c3c3c" }}>{t("writingHeader")}</h2>
+                <p style={{ fontSize: 13, color: "#888" }}>{t("writingDesc")}</p>
               </div>
             </div>
 
@@ -364,7 +366,7 @@ export default function AssessmentRoom() {
               className="rounded-2xl p-6 mb-6"
               style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)" }}
             >
-              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#3c3c3c", marginBottom: 12 }}>Prompt:</h3>
+              <h3 style={{ fontSize: 16, fontWeight: 800, color: "#3c3c3c", marginBottom: 12 }}>{t("promptLabel")}</h3>
               <p style={{ fontSize: 14.5, lineHeight: 1.7, color: "#3c3c3c" }}>
                 {currentQuestions[0]?.writingPrompt || currentQuestions[0]?.questionText}
               </p>
@@ -373,7 +375,7 @@ export default function AssessmentRoom() {
             <textarea
               value={essayText}
               onChange={(e) => setEssayText(e.target.value)}
-              placeholder="Start writing here..."
+              placeholder={t("writingPlaceholder")}
               className="w-full h-64 rounded-2xl p-6 border outline-none transition-all resize-none"
               style={{
                 background: "#fafafa",
@@ -386,7 +388,7 @@ export default function AssessmentRoom() {
 
             <div className="flex items-center justify-between mt-4">
               <span style={{ fontSize: 12, fontWeight: 700, color: "#aaa" }}>
-                Word count: {essayText.trim() === "" ? 0 : essayText.trim().split(/\s+/).length} words
+                {t("wordCountLabel", { count: String(essayText.trim() === "" ? 0 : essayText.trim().split(/\s+/).length) })}
               </span>
               <button
                 onClick={handleSectionComplete}
@@ -399,11 +401,11 @@ export default function AssessmentRoom() {
                 }}
               >
                 {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                Submit Writing <ChevronRight size={14} />
+                {t("submitWriting")} <ChevronRight size={14} />
               </button>
             </div>
             {essayText.trim().length < 50 && !isSubmitting && (
-              <p className="mt-2 text-xs text-orange-500 font-bold">Please write at least 50 words to submit.</p>
+              <p className="mt-2 text-xs text-orange-500 font-bold">{t("writingLimitWarning")}</p>
             )}
           </div>
         )}
@@ -418,8 +420,8 @@ export default function AssessmentRoom() {
                 <span style={{ fontSize: 32 }}>🎤</span>
               </div>
               <div>
-                <h2 style={{ fontSize: 22, fontWeight: 900, color: "#3c3c3c" }}>Speaking Section</h2>
-                <p style={{ fontSize: 14, color: "#888" }}>Read the prompt and record your response clearly.</p>
+                <h2 style={{ fontSize: 22, fontWeight: 900, color: "#3c3c3c" }}>{t("speakingHeader")}</h2>
+                <p style={{ fontSize: 14, color: "#888" }}>{t("speakingDesc")}</p>
               </div>
             </div>
 
@@ -427,7 +429,7 @@ export default function AssessmentRoom() {
               className="rounded-3xl p-8 mb-10 shadow-sm"
               style={{ background: "#fff", border: "2px solid rgba(0,0,0,0.06)" }}
             >
-              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#aaa", textTransform: "uppercase", marginBottom: 12 }}>Record this prompt:</h3>
+              <h3 style={{ fontSize: 15, fontWeight: 700, color: "#aaa", textTransform: "uppercase", marginBottom: 12 }}>{t("recordPromptLabel")}</h3>
               <p style={{ fontSize: 18, fontWeight: 800, color: "#3c3c3c", lineHeight: 1.6 }}>
                 "{currentQuestions[0]?.speakingPrompt || currentQuestions[0]?.questionText}"
               </p>
@@ -451,7 +453,7 @@ export default function AssessmentRoom() {
                   {formatTime(recordingTime)}
                 </span>
                 <span style={{ fontSize: 12, fontWeight: 700, color: "#aaa" }}>
-                  {isRecording ? "Recording in progress..." : "Click to start recording"}
+                  {isRecording ? t("recordingInProgress") : t("clickToRecord")}
                 </span>
               </div>
             </div>
@@ -464,7 +466,7 @@ export default function AssessmentRoom() {
               style={{ background: "var(--brand)", opacity: (isSubmitting || recordingTime === 0) ? 0.7 : 1 }}
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              Submit Speaking & Finish Test <ChevronRight size={14} />
+              {t("submitSpeaking")} <ChevronRight size={14} />
             </button>
           </div>
         )}

@@ -4,20 +4,19 @@ namespace SWD392.LantechEnglish.Application.DTOs.Onboarding;
 
 public class SelfSelectLevelRequest
 {
-    [Required]
-    public string OverallLevel { get; set; } = null!;
+    public string? OverallLevel { get; set; }
     
-    [Required]
-    public string ListeningLevel { get; set; } = null!;
+    public string? TargetLevel { get; set; }
     
-    [Required]
-    public string SpeakingLevel { get; set; } = null!;
+    public string? NativeLanguageCode { get; set; }
     
-    [Required]
-    public string ReadingLevel { get; set; } = null!;
+    public string? ListeningLevel { get; set; }
     
-    [Required]
-    public string WritingLevel { get; set; } = null!;
+    public string? SpeakingLevel { get; set; }
+    
+    public string? ReadingLevel { get; set; }
+    
+    public string? WritingLevel { get; set; }
 
     public string? LearningGoal { get; set; }
     public List<string>? PreferredTopics { get; set; }

@@ -8,7 +8,7 @@ public class PronunciationAttemptRequest
     public string TargetText { get; set; } = null!;
     
     [Required]
-    public string TranscriptText { get; set; } = null!;
+    public string AudioBase64 { get; set; } = null!;
 
     public Guid? ExerciseId { get; set; }
 }

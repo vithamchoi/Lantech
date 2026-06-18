@@ -49,6 +49,7 @@ public static class AiServiceRegistration
 
         services.AddKeyedScoped<IAIProvider, MockAIProvider>("Mock");
         services.AddKeyedScoped<ISpeechAssessmentProvider, MockSpeechAssessmentProvider>("Mock");
+        services.AddKeyedScoped<ISpeechAssessmentProvider, AzureSpeechAssessmentProvider>("AzureSpeech");
 
         // 3. Fallback AI Provider handles the orchestrating logic
         services.AddScoped<IAIProvider, FallbackAIProvider>();

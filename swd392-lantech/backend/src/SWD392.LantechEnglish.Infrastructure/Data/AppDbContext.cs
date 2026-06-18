@@ -26,6 +26,7 @@ public class AppDbContext : DbContext
     public DbSet<Flashcard> Flashcards => Set<Flashcard>();
     public DbSet<FlashcardReview> FlashcardReviews => Set<FlashcardReview>();
     public DbSet<PronunciationAttempt> PronunciationAttempts => Set<PronunciationAttempt>();
+    public DbSet<PronunciationPhrase> PronunciationPhrases => Set<PronunciationPhrase>();
     public DbSet<Badge> Badges => Set<Badge>();
     public DbSet<UserBadge> UserBadges => Set<UserBadge>();
     public DbSet<XpTransaction> XpTransactions => Set<XpTransaction>();

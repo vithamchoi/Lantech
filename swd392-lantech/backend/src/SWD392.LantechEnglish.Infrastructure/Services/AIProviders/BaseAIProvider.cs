@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using System.Text.Json;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Enums;
@@ -65,13 +66,13 @@ public abstract class BaseAIProvider : IAIProvider
         return prompt;
     }
 
-    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
         var sys = GetChatTutorSystemPrompt(sourceLanguageCode);
         return await CallChatCompletionsAsync(sys, message, cancellationToken);
     }
 
-    public virtual IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public virtual IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException("Streaming is not supported by this provider.");
     }
@@ -125,6 +126,13 @@ public abstract class BaseAIProvider : IAIProvider
     public virtual Task<byte[]> GenerateAudioAsync(string text, string voice = "alloy", CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException("Provider does not support TTS");
+    }
+
+    public async Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default)
+    {
+        var sys = "You are a linguistic expert. Given an English word or sentence, output ONLY its IPA (International Phonetic Alphabet) transcription. Do not include any other text, notes, or markdown. Output just the plain IPA symbols enclosed in slashes, e.g., /ɪnˈvaɪrənmənt/ or /heˈləʊ ˈwɜːld/.";
+        var usr = $"Provide the IPA phonetic transcription for: '{text}'";
+        return (await CallChatCompletionsAsync(sys, usr, cancellationToken)).Trim().Trim('`').Trim();
     }
 
     protected string CleanJson(string content)

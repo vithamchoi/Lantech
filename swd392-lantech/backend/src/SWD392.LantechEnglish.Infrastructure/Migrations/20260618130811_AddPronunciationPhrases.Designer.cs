@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using SWD392.LantechEnglish.Infrastructure.Data;
@@ -11,9 +12,11 @@ using SWD392.LantechEnglish.Infrastructure.Data;
 namespace SWD392.LantechEnglish.Infrastructure.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618130811_AddPronunciationPhrases")]
+    partial class AddPronunciationPhrases
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -731,25 +734,6 @@ namespace SWD392.LantechEnglish.Infrastructure.Migrations
                     b.ToTable("StudySessions");
                 });
 
-            modelBuilder.Entity("SWD392.LantechEnglish.Domain.Entities.Tag", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Name")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("character varying(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Name")
-                        .IsUnique();
-
-                    b.ToTable("Tags", (string)null);
-                });
-
             modelBuilder.Entity("SWD392.LantechEnglish.Domain.Entities.User", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1000,21 +984,6 @@ namespace SWD392.LantechEnglish.Infrastructure.Migrations
                     b.ToTable("XpTransactions");
                 });
 
-            modelBuilder.Entity("VocabularyTags", b =>
-                {
-                    b.Property<Guid>("VocabularyId")
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("TagId")
-                        .HasColumnType("uuid");
-
-                    b.HasKey("VocabularyId", "TagId");
-
-                    b.HasIndex("TagId");
-
-                    b.ToTable("VocabularyTags", (string)null);
-                });
-
             modelBuilder.Entity("SWD392.LantechEnglish.Domain.Entities.RefreshToken", b =>
                 {
                     b.HasOne("SWD392.LantechEnglish.Domain.Entities.User", "User")
@@ -1024,21 +993,6 @@ namespace SWD392.LantechEnglish.Infrastructure.Migrations
                         .IsRequired();
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("VocabularyTags", b =>
-                {
-                    b.HasOne("SWD392.LantechEnglish.Domain.Entities.Tag", null)
-                        .WithMany()
-                        .HasForeignKey("TagId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("SWD392.LantechEnglish.Domain.Entities.Vocabulary", null)
-                        .WithMany()
-                        .HasForeignKey("VocabularyId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
                 });
 #pragma warning restore 612, 618
         }

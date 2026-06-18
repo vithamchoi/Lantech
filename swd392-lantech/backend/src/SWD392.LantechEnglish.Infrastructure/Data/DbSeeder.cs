@@ -13,48 +13,54 @@ public static class DbSeeder
         var context = serviceProvider.GetRequiredService<AppDbContext>();
         var passwordHasher = serviceProvider.GetRequiredService<IPasswordHasher>();
 
-        // Seed Tags and link to Vocabulary (independent of Users seeded check)
-        if (!await context.Tags.AnyAsync())
+        // Seed Pronunciation Phrases regardless of users
+        var pronunciationPhrases = new List<PronunciationPhrase>
         {
-            var tagNature = new Tag { Id = Guid.NewGuid(), Name = "Nature & Environment" };
-            var tagFamily = new Tag { Id = Guid.NewGuid(), Name = "Family & Relationships" };
-            var tagAnimals = new Tag { Id = Guid.NewGuid(), Name = "Animals & Wildlife" };
-            var tagFood = new Tag { Id = Guid.NewGuid(), Name = "Food & Dining" };
-            var tagCognition = new Tag { Id = Guid.NewGuid(), Name = "Cognition & Mind" };
-            var tagActions = new Tag { Id = Guid.NewGuid(), Name = "Actions & Movement" };
-            var tagSociety = new Tag { Id = Guid.NewGuid(), Name = "Society & Business" };
+            new() { Id = Guid.NewGuid(), Text = "The weather is beautiful today.", Phonetic = "/ðə ˈwɛðər ɪz ˈbjuːtɪfəl təˈdeɪ/", Category = "Weather", Tags = "daily,weather,th-sound" },
+            new() { Id = Guid.NewGuid(), Text = "It is freezing cold and snowing heavily outside.", Phonetic = "/ɪt ɪz ˈfriːzɪŋ koʊld ænd ˈsnoʊɪŋ ˈhɛvɪli ˌaʊtˈsaɪd/", Category = "Weather", Tags = "weather,lifestyle,s-sound" },
+            new() { Id = Guid.NewGuid(), Text = "We should bring an umbrella in case it rains later.", Phonetic = "/wiː ʃʊd brɪŋ ən ʌmˈbrɛlə ɪn keɪs ɪt reɪnz ˈleɪtər/", Category = "Weather", Tags = "weather,daily,sh-sound" },
 
-            context.Tags.AddRange(tagNature, tagFamily, tagAnimals, tagFood, tagCognition, tagActions, tagSociety);
-            await context.SaveChangesAsync();
+            new() { Id = Guid.NewGuid(), Text = "She sells seashells by the seashore.", Phonetic = "/ʃiː sɛlz ˈsiːʃɛlz baɪ ðə ˈsiːʃɔːr/", Category = "Tongue Twister", Tags = "s-sound,sh-sound,fun" },
+            new() { Id = Guid.NewGuid(), Text = "The thought was thoroughly thought through.", Phonetic = "/ðə θɔːt wɒz ˈθɜːrəli θɔːt θruː/", Category = "Tongue Twister", Tags = "th-sound,r-sound,consonants" },
+            new() { Id = Guid.NewGuid(), Text = "How much wood would a woodchuck chuck if a woodchuck could chuck wood?", Phonetic = "/haʊ mʌtʃ wʊd wʊd ə ˈwʊdˌtʃʌk tʃʌk ɪf ə ˈwʊdˌtʃʌk kʊd tʃʌk wʊd/", Category = "Tongue Twister", Tags = "fun,consonants,long-words" },
 
-            var allVocabs = await context.Vocabularies.Include(v => v.Tags).ToListAsync();
-            var natureWords = new HashSet<string> { "tree", "sun", "ice", "landscape", "rapid", "variable", "hazard", "climate" };
-            var familyWords = new HashSet<string> { "hello", "goodbye", "thank you", "family", "mother", "love", "kinship", "invite", "join", "familiar", "jealous" };
-            var animalWords = new HashSet<string> { "cat", "dog", "fish", "bird", "wild" };
-            var foodWords = new HashSet<string> { "apple", "egg", "breakfast", "dinner", "eat", "satisfy" };
-            var cognitionWords = new HashSet<string> { "believe", "decide", "forget", "guess", "notice", "remember", "suggest", "debate", "negotiate", "deduce", "empirical", "imply", "notion", "qualitative", "abstract", "obscure", "cohere", "elaborate" };
-            var actionWords = new HashSet<string> { "jump", "play", "travel", "gather", "tackle", "participate", "simulate", "utilize", "abandon", "calculate", "damage", "educate" };
-            var societyWords = new HashSet<string> { "campaign", "facility", "maintain", "objective", "radical", "bureaucracy", "legislate", "jurisdiction", "revenue", "margin", "qualify", "abolish", "barrier" };
+            new() { Id = Guid.NewGuid(), Text = "I usually enjoy a cup of coffee in the morning.", Phonetic = "/aɪ ˈjuːʒuəli ɪnˈdʒɔɪ ə kʌp əv ˈkɒfi ɪn ðə ˈmɔːnɪŋ/", Category = "Daily Life", Tags = "daily,lifestyle" },
+            new() { Id = Guid.NewGuid(), Text = "Remember to turn off the lights before leaving the house.", Phonetic = "/rɪˈmɛmbər tuː tɜːn ɒf ðə laɪts bɪˈfɔːr ˈliːvɪŋ ðə haʊs/", Category = "Daily Life", Tags = "daily,lifestyle,r-sound" },
+            new() { Id = Guid.NewGuid(), Text = "Cooking healthy meals at home is a great way to stay fit.", Phonetic = "/ˈkʊkɪŋ ˈhɛlθi miːlz æt hoʊm ɪz ə ɡreɪt weɪ tuː steɪ fɪt/", Category = "Daily Life", Tags = "daily,lifestyle,th-sound" },
 
-            foreach (var vocab in allVocabs)
+            new() { Id = Guid.NewGuid(), Text = "Could you please explain that once more?", Phonetic = "/kʊd juː pliːz ɪkˈspleɪn ðæt wʌns mɔːr/", Category = "Polite Requests", Tags = "polite,questions" },
+            new() { Id = Guid.NewGuid(), Text = "Would you mind holding the door for me, please?", Phonetic = "/wʊd juː maɪnd ˈhoʊldɪŋ ðə dɔːr fɔːr miː pliːz/", Category = "Polite Requests", Tags = "polite,questions,r-sound" },
+            new() { Id = Guid.NewGuid(), Text = "I would appreciate it if you could send me the details.", Phonetic = "/aɪ wʊd əˈpriːʃieɪt ɪt ɪf juː kʊd sɛnd miː ðə ˈdiːteɪlz/", Category = "Polite Requests", Tags = "polite,formal,sh-sound" },
+
+            new() { Id = Guid.NewGuid(), Text = "Entrepreneurship requires extraordinary determination.", Phonetic = "/ˌɒntrəprəˈnɜːʃɪp rɪˈkwaɪərz ɪkˌstrɔːdɪˈnɛri dɪˌtɜːmɪˈneɪʃən/", Category = "Business", Tags = "advanced,business,long-words" },
+            new() { Id = Guid.NewGuid(), Text = "We need to schedule a follow-up meeting next week.", Phonetic = "/wiː niːd tu ˈskɛdʒuːl ə ˈfɒloʊˌʌp ˈmiːtɪŋ nɛkst wiːk/", Category = "Business", Tags = "business,workplace" },
+            new() { Id = Guid.NewGuid(), Text = "Our quarterly performance exceeded initial expectations.", Phonetic = "/ˈaʊər ˈkwɔːrtərli pərˈfɔːrməns ɪkˈsiːdɪd ɪˈnɪʃəl ˌɛkspɛkˈteɪʃənz/", Category = "Business", Tags = "advanced,business,formal" },
+
+            new() { Id = Guid.NewGuid(), Text = "Can you recommend a good local restaurant nearby?", Phonetic = "/kæn juː ˌrɛkəˈmɛnd ə ɡʊd ˈloʊkəl ˈrɛstəˌrɑnt ˈnɪrˌbaɪ/", Category = "Travel", Tags = "travel,food" },
+            new() { Id = Guid.NewGuid(), Text = "I would like to check in for my flight to London.", Phonetic = "/aɪ wʊd laɪk tu tʃɛk ɪn fɔːr maɪ flaɪt tu ˈlʌndən/", Category = "Travel", Tags = "travel,airport" },
+            new() { Id = Guid.NewGuid(), Text = "Could you tell me how to get to the train station?", Phonetic = "/kʊd juː tɛl miː haʊ tu ɡɛt tu ðə treɪn ˈsteɪʃən/", Category = "Travel", Tags = "travel,directions" },
+
+            new() { Id = Guid.NewGuid(), Text = "It is critical to analyze the data before making decisions.", Phonetic = "/ɪt ɪz ˈkrɪtɪkəl tu ˈænəlaɪz ðə ˈdeɪtə bɪˈfɔːr ˈmeɪkɪŋ dɪˈsɪʒənz/", Category = "Academic", Tags = "academic,formal" },
+            new() { Id = Guid.NewGuid(), Text = "The scientific hypothesis must be verified through experiments.", Phonetic = "/ðə ˌsaɪənˈtɪfɪk haɪˈpɒθɪsɪs mʌst biː ˈvɛrɪfaɪd θruː ɪkˈspɛrɪmənts/", Category = "Academic", Tags = "academic,formal,th-sound" },
+            new() { Id = Guid.NewGuid(), Text = "Academic writing requires clear structure and logical arguments.", Phonetic = "/ˌækəˈdɛmɪk ˈraɪtɪŋ rɪˈkwaɪərz klɪər ˈstrʌktʃər ænd ˈlɒdʒɪkəl ˈɑːɡjumənts/", Category = "Academic", Tags = "academic,formal,r-sound" },
+
+            new() { Id = Guid.NewGuid(), Text = "What are your key strengths and areas of improvement?", Phonetic = "/wɒt ɑːr jɔːr kiː strɛŋθs ænd ˈeəriəz ɒv ɪmˈpruːvmənt/", Category = "Job Interview", Tags = "career,interview" },
+            new() { Id = Guid.NewGuid(), Text = "I have three years of experience in software development.", Phonetic = "/aɪ hæv θriː jɪəz ɒv ɪkˈspɪərɪəns ɪn ˈsɒftweər dɪˈvɛləpmənt/", Category = "Job Interview", Tags = "career,interview,th-sound" },
+            new() { Id = Guid.NewGuid(), Text = "I am looking for opportunities to grow my professional skills.", Phonetic = "/aɪ æm ˈlʊkɪŋ fɔːr ˌɒpərˈtjuːnɪtiz tu ɡroʊ maɪ prəˈfɛʃənl skɪlz/", Category = "Job Interview", Tags = "career,interview,sh-sound" }
+        };
+
+        foreach (var phrase in pronunciationPhrases)
+        {
+            var exists = await context.PronunciationPhrases.AnyAsync(p => p.Text == phrase.Text);
+            if (!exists)
             {
-                var w = vocab.Word.ToLower();
-                if (natureWords.Contains(w)) vocab.Tags.Add(tagNature);
-                else if (familyWords.Contains(w)) vocab.Tags.Add(tagFamily);
-                else if (animalWords.Contains(w)) vocab.Tags.Add(tagAnimals);
-                else if (foodWords.Contains(w)) vocab.Tags.Add(tagFood);
-                else if (cognitionWords.Contains(w)) vocab.Tags.Add(tagCognition);
-                else if (actionWords.Contains(w)) vocab.Tags.Add(tagActions);
-                else if (societyWords.Contains(w)) vocab.Tags.Add(tagSociety);
-                else
-                {
-                    if (vocab.PartOfSpeech == "noun") vocab.Tags.Add(tagSociety);
-                    else if (vocab.PartOfSpeech == "verb") vocab.Tags.Add(tagActions);
-                    else vocab.Tags.Add(tagCognition);
-                }
+                context.PronunciationPhrases.Add(phrase);
             }
-            await context.SaveChangesAsync();
         }
+        await context.SaveChangesAsync();
+
+        // Seed Tags and link to Vocabulary (independent of Users seeded check)
+        await EnsureVocabularyTagsLinkedAsync(context);
 
         // Check if already seeded (for other entities)
         if (await context.Users.AnyAsync())
@@ -145,6 +151,8 @@ public static class DbSeeder
             Status = UserStatus.Active,
             SourceLanguageCode = "vi",
             TargetLanguageCode = "en",
+            CurrentCefrLevel = CefrLevel.B1,
+            LevelSource = LevelSource.SelfReported,
             Xp = 0,
             StreakCount = 0,
             CreatedAt = DateTime.UtcNow,
@@ -562,5 +570,68 @@ public static class DbSeeder
         };
         context.Exercises.AddRange(exercises);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureVocabularyTagsLinkedAsync(AppDbContext context)
+    {
+        // Seed tags if they don't exist
+        var tagNature = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Nature & Environment");
+        var tagFamily = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Family & Relationships");
+        var tagAnimals = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Animals & Wildlife");
+        var tagFood = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Food & Dining");
+        var tagCognition = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Cognition & Mind");
+        var tagActions = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Actions & Movement");
+        var tagSociety = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Society & Business");
+
+        bool tagsChanged = false;
+        if (tagNature == null) { tagNature = new Tag { Id = Guid.NewGuid(), Name = "Nature & Environment" }; context.Tags.Add(tagNature); tagsChanged = true; }
+        if (tagFamily == null) { tagFamily = new Tag { Id = Guid.NewGuid(), Name = "Family & Relationships" }; context.Tags.Add(tagFamily); tagsChanged = true; }
+        if (tagAnimals == null) { tagAnimals = new Tag { Id = Guid.NewGuid(), Name = "Animals & Wildlife" }; context.Tags.Add(tagAnimals); tagsChanged = true; }
+        if (tagFood == null) { tagFood = new Tag { Id = Guid.NewGuid(), Name = "Food & Dining" }; context.Tags.Add(tagFood); tagsChanged = true; }
+        if (tagCognition == null) { tagCognition = new Tag { Id = Guid.NewGuid(), Name = "Cognition & Mind" }; context.Tags.Add(tagCognition); tagsChanged = true; }
+        if (tagActions == null) { tagActions = new Tag { Id = Guid.NewGuid(), Name = "Actions & Movement" }; context.Tags.Add(tagActions); tagsChanged = true; }
+        if (tagSociety == null) { tagSociety = new Tag { Id = Guid.NewGuid(), Name = "Society & Business" }; context.Tags.Add(tagSociety); tagsChanged = true; }
+
+        if (tagsChanged)
+        {
+            await context.SaveChangesAsync();
+        }
+
+        var allVocabs = await context.Vocabularies.Include(v => v.Tags).ToListAsync();
+        bool vocabsChanged = false;
+
+        var natureWords = new HashSet<string> { "tree", "sun", "ice", "landscape", "rapid", "variable", "hazard", "climate" };
+        var familyWords = new HashSet<string> { "hello", "goodbye", "thank you", "family", "mother", "love", "kinship", "invite", "join", "familiar", "jealous" };
+        var animalWords = new HashSet<string> { "cat", "dog", "fish", "bird", "wild" };
+        var foodWords = new HashSet<string> { "apple", "egg", "breakfast", "dinner", "eat", "satisfy" };
+        var cognitionWords = new HashSet<string> { "believe", "decide", "forget", "guess", "notice", "remember", "suggest", "debate", "negotiate", "deduce", "empirical", "imply", "notion", "qualitative", "abstract", "obscure", "cohere", "elaborate" };
+        var actionWords = new HashSet<string> { "jump", "play", "travel", "gather", "tackle", "participate", "simulate", "utilize", "abandon", "calculate", "damage", "educate" };
+        var societyWords = new HashSet<string> { "campaign", "facility", "maintain", "objective", "radical", "bureaucracy", "legislate", "jurisdiction", "revenue", "margin", "qualify", "abolish", "barrier" };
+
+        foreach (var vocab in allVocabs)
+        {
+            if (vocab.Tags.Any()) continue;
+
+            var w = vocab.Word.ToLower();
+            if (natureWords.Contains(w)) vocab.Tags.Add(tagNature);
+            else if (familyWords.Contains(w)) vocab.Tags.Add(tagFamily);
+            else if (animalWords.Contains(w)) vocab.Tags.Add(tagAnimals);
+            else if (foodWords.Contains(w)) vocab.Tags.Add(tagFood);
+            else if (cognitionWords.Contains(w)) vocab.Tags.Add(tagCognition);
+            else if (actionWords.Contains(w)) vocab.Tags.Add(tagActions);
+            else if (societyWords.Contains(w)) vocab.Tags.Add(tagSociety);
+            else
+            {
+                if (vocab.PartOfSpeech == "noun") vocab.Tags.Add(tagSociety);
+                else if (vocab.PartOfSpeech == "verb") vocab.Tags.Add(tagActions);
+                else vocab.Tags.Add(tagCognition);
+            }
+            vocabsChanged = true;
+        }
+
+        if (vocabsChanged)
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }

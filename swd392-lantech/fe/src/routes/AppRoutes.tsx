@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import PageLayout from '../layouts/PageLayout';
 import { authService } from '../services/authService';
@@ -23,18 +23,24 @@ import ProfileCabin from '../pages/ProfileCabin';
 
 // Admin CMS pages
 import AdminDashboard from '../pages/AdminDashboard';
-import AdminTranslations from '../pages/AdminTranslations';
-import AdminUsers from '../pages/AdminUsers';
-import AdminCurriculum from '../pages/AdminCurriculum';
-import AdminVocabularyBadges from '../pages/AdminVocabularyBadges';
 import SystemGateways from '../pages/SystemGateways';
 
 // Route guard for Students
 function StudentGuard({ children }: { children: React.ReactNode }) {
-  const { role } = useAppStore();
+  const { role, user } = useAppStore();
+  const location = useLocation();
+
   if (role === 'Visitor') {
     return <Navigate to="/auth" replace />;
   }
+
+  // Force onboarding if student has not completed it (cefr is 'N/A', 'None' or falsy)
+  const isOnboardingOrAssessment = ["/onboarding", "/assessment", "/assessment-results"].includes(location.pathname);
+  const isCefrIncomplete = !user?.cefr || user.cefr === 'N/A' || user.cefr === 'None';
+  if (role === 'Student' && isCefrIncomplete && !isOnboardingOrAssessment) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
   return <>{children}</>;
 }
 
@@ -47,15 +53,15 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
         <div className="w-16 h-16 bg-rose-50 text-rose-600 flex items-center justify-center rounded-full mx-auto text-2xl font-bold">
           🛡️
         </div>
-        <h2 className="text-xl font-bold text-slate">Access Denied</h2>
+        <h2 className="text-xl font-bold text-slate">Truy Cập Bị Từ Chối</h2>
         <p className="text-sm text-slate-500">
-          This workspace is gated to Ranger Administrators only.
+          Khu vực này chỉ dành riêng cho Quản Trị Viên Ranger.
         </p>
         <button 
           onClick={() => window.history.back()}
-          className="px-4 py-2 bg-slate text-white text-xs font-semibold rounded-control"
+          className="px-4 py-2 bg-slate text-white text-xs font-semibold rounded-control cursor-pointer"
         >
-          Go Back
+          Quay Lại
         </button>
       </div>
     );
@@ -119,10 +125,10 @@ export default function AppRoutes() {
 
         {/* Admin Ranger Pages */}
         <Route path="/ranger" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
-        <Route path="/ranger/translations" element={<AdminGuard><AdminTranslations /></AdminGuard>} />
-        <Route path="/ranger/users" element={<AdminGuard><AdminUsers /></AdminGuard>} />
-        <Route path="/ranger/curriculum" element={<AdminGuard><AdminCurriculum /></AdminGuard>} />
-        <Route path="/ranger/vocabulary-badges" element={<AdminGuard><AdminVocabularyBadges /></AdminGuard>} />
+        <Route path="/ranger/translations" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/ranger/users" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/ranger/curriculum" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
+        <Route path="/ranger/vocabulary-badges" element={<AdminGuard><AdminDashboard /></AdminGuard>} />
 
         {/* Fallback Catch-all */}
         <Route path="*" element={<Navigate to="/" replace />} />

@@ -5,10 +5,12 @@ import { Edit2, LogOut, Calendar, Award, Save, Loader2 } from "lucide-react";
 import { profileService } from "../services/profileService";
 import { gamificationService, UserBadgeDto, XpTransactionDto } from "../services/gamificationService";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function ProfileCabin() {
   const navigate = useNavigate();
   const { user, setUser, logout, role, darkMode } = useAppStore();
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [tempName, setTempName] = useState(user?.name || "");
   const [activeTab, setActiveTab] = useState<"achievements" | "xp-log">("achievements");
@@ -49,9 +51,9 @@ export default function ProfileCabin() {
       await profileService.updateProfile({ fullName: tempName });
       setUser({ ...user, name: tempName });
       setEditing(false);
-      toast.success("Profile updated!");
+      toast.success(t("profileUpdated"));
     } catch (error) {
-      toast.error("Failed to update profile");
+      toast.error(t("failedToUpdateProfile"));
     } finally {
       setIsSubmitting(false);
     }
@@ -117,17 +119,17 @@ export default function ProfileCabin() {
             className="mt-3 px-4 py-1.5 rounded-full"
             style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 700, fontSize: 13 }}
           >
-            {role === "Admin" ? "⚔️ Ranger" : "🌱 Student"}
+            {role === "Admin" ? t("roleAdmin") : t("roleStudent")}
           </div>
         </div>
 
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           {[
-            { label: "Day Streak", value: user.streak, icon: "🔥", color: "#f97316" },
-            { label: "Total XP", value: user.xp.toLocaleString(), icon: "⭐", color: "#f59e0b" },
-            { label: "Level", value: user.cefr, icon: "🎓", color: "#8b5cf6" },
-            { label: "Badges", value: badges.length, icon: "🏅", color: "var(--brand)" },
+            { label: t("dayStreakLabel"), value: user.streak, icon: "🔥", color: "#f97316" },
+            { label: t("totalXp"), value: user.xp.toLocaleString(), icon: "⭐", color: "#f59e0b" },
+            { label: t("levelLabel"), value: user.cefr, icon: "🎓", color: "#8b5cf6" },
+            { label: t("badgesLabel"), value: badges.length, icon: "🏅", color: "var(--brand)" },
           ].map(s => (
             <div
               key={s.label}
@@ -145,10 +147,10 @@ export default function ProfileCabin() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Calendar size={14} style={{ color: "var(--brand)" }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#3c3c3c" }}>Streak Calendar</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#3c3c3c" }}>{t("streakCalendarLabel")}</span>
           </div>
           <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
-            {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
+            {t("weekDays").split(",").map((d, i) => (
               <div key={i} className="text-center" style={{ fontSize: 9, fontWeight: 700, color: "#aaa", paddingBottom: 2 }}>{d}</div>
             ))}
             {streakCalendar.map((day, i) => (
@@ -158,18 +160,18 @@ export default function ProfileCabin() {
                 style={{
                   background: day.studied ? "var(--brand-light)" : "#f3f4f6",
                 }}
-                title={day.studied ? `Studied on ${day.date}` : "No activity"}
+                title={day.studied ? `${t("studiedLabel")} (${day.date})` : ""}
               />
             ))}
           </div>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ background: "var(--brand)" }} />
-              <span style={{ fontSize: 10.5, color: "#888" }}>Today</span>
+              <span style={{ fontSize: 10.5, color: "#888" }}>{t("todayLabel")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ background: "var(--brand-light)" }} />
-              <span style={{ fontSize: 10.5, color: "#888" }}>Studied</span>
+              <span style={{ fontSize: 10.5, color: "#888" }}>{t("studiedLabel")}</span>
             </div>
           </div>
         </div>
@@ -182,7 +184,7 @@ export default function ProfileCabin() {
           style={{ background: "#dc2626" }}
         >
           <LogOut size={15} />
-          Sign Out
+          {t("signOutLabel")}
         </button>
       </div>
 
@@ -190,7 +192,7 @@ export default function ProfileCabin() {
       <div className="flex-1 overflow-y-auto px-7 py-7">
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
-          {([["achievements", "🏅 Achievements"], ["xp-log", "⭐ XP History"]] as [typeof activeTab, string][]).map(([tab, label]) => (
+          {([["achievements", t("achievementsTab")], ["xp-log", t("xpHistoryTab")]] as [typeof activeTab, string][]).map(([tab, label]) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -211,9 +213,9 @@ export default function ProfileCabin() {
           <>
             <div className="flex items-center gap-2 mb-5">
               <Award size={16} style={{ color: "#f59e0b" }} />
-              <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)" }}>Achievements Shelf</h2>
+              <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)" }}>{t("achievementsShelf")}</h2>
               <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--muted-foreground)" }}>
-                {badges.length} unlocked
+                {t("unlockedCount", { count: badges.length.toString() })}
               </span>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -239,12 +241,12 @@ export default function ProfileCabin() {
                     className="px-2 py-0.5 rounded-full"
                     style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontSize: 10, fontWeight: 700 }}
                   >
-                    Unlocked ✓
+                    {t("unlockedLabel")} ✓
                   </div>
                 </div>
               ))}
               {!isLoadingData && badges.length === 0 && (
-                <div className="col-span-4 text-center py-10 text-slate-400">No badges earned yet. Keep studying!</div>
+                <div className="col-span-4 text-center py-10 text-slate-400">{t("keepStudying")}</div>
               )}
             </div>
           </>
@@ -252,7 +254,7 @@ export default function ProfileCabin() {
 
         {activeTab === "xp-log" && (
           <>
-            <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)", marginBottom: 20 }}>XP History</h2>
+            <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)", marginBottom: 20 }}>{t("xpHistoryTab")}</h2>
             <div
               className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between"
               style={{
@@ -261,7 +263,7 @@ export default function ProfileCabin() {
               }}
             >
               <div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>Total XP Earned</div>
+                <div style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>{t("totalXpEarned")}</div>
                 <div style={{ fontSize: 28, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp.toLocaleString()} XP</div>
               </div>
               <div style={{ fontSize: 40 }}>⭐</div>

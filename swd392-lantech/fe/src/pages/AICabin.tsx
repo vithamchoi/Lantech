@@ -4,6 +4,7 @@ import { aiService } from "../services/aiService";
 import { useAppStore } from "../store/appStore";
 import { toast } from "sonner";
 import { parseMarkdownToHtml } from "../utils/markdown";
+import { useTranslation } from "../hooks/useTranslation";
 
 interface Message {
   id: string;
@@ -21,11 +22,11 @@ const INITIAL_MESSAGES: Message[] = [
   },
 ];
 
-const QUICK_PROMPTS = [
-  "Giải thích sự khác biệt giữa 'since' và 'for'",
-  "Cho tôi ví dụ về động từ khuyết thiếu (modal verbs)",
-  "Thế nào là câu bị động (passive voice)?",
-  "Hướng dẫn tôi cách dùng cụm động từ (phrasal verbs)",
+const QUICK_PROMPTS_KEYS = [
+  "quickPrompt1",
+  "quickPrompt2",
+  "quickPrompt3",
+  "quickPrompt4"
 ];
 
 const ANALYZER_LANGUAGE_OPTIONS = [
@@ -38,7 +39,20 @@ const ANALYZER_LANGUAGE_OPTIONS = [
 
 export default function AICabin() {
   const { user } = useAppStore();
-  const [messages, setMessages] = useState<Message[]>(INITIAL_MESSAGES);
+  const { t, language } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const currentUser = useAppStore.getState().user;
+    const key = `lantech_chat_messages_${currentUser?.id || "guest"}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved chat messages", e);
+      }
+    }
+    return [];
+  });
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [analyzerSentence, setAnalyzerSentence] = useState("");
@@ -47,6 +61,29 @@ export default function AICabin() {
   const [analyzing, setAnalyzing] = useState(false);
   const [activeTab, setActiveTab] = useState<"chat" | "analyzer">("chat");
   const endRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    setMessages(prev => {
+      if (prev.length === 0) {
+        return [
+          {
+            id: "0",
+            role: "tutor",
+            text: t("aiCabinWelcome"),
+            time: "now",
+          }
+        ];
+      }
+      return prev.map(m => m.id === "0" ? { ...m, text: t("aiCabinWelcome") } : m);
+    });
+  }, [language]);
+
+  useEffect(() => {
+    const key = `lantech_chat_messages_${user?.id || "guest"}`;
+    if (messages.length > 0) {
+      localStorage.setItem(key, JSON.stringify(messages));
+    }
+  }, [messages, user?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -66,9 +103,17 @@ export default function AICabin() {
     let addedPlaceholder = false;
 
     try {
+      const history = messages
+        .filter(m => m.id !== "0")
+        .map(m => ({
+          role: (m.role === "tutor" ? "assistant" : "user") as "assistant" | "user",
+          content: m.text
+        }));
+
       await aiService.chatTutorStream(
         text,
         analyzerLang,
+        history,
         (chunk) => {
           setIsTyping(false);
           accumulatedText += chunk;
@@ -84,13 +129,13 @@ export default function AICabin() {
         },
         (error) => {
           console.error("Streaming error:", error);
-          toast.error("Hệ thống AI đang gặp sự cố. Vui lòng thử lại!");
+          toast.error(t("aiSystemError"));
           setIsTyping(false);
           if (!addedPlaceholder) {
             const errorMsg: Message = { 
               id: tutorMsgId, 
               role: "tutor", 
-              text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!", 
+              text: t("aiTutorOfflineMsg"), 
               time: "now" 
             };
             setMessages(prev => [...prev, errorMsg]);
@@ -98,7 +143,7 @@ export default function AICabin() {
             setMessages(prev =>
               prev.map(m =>
                 m.id === tutorMsgId
-                  ? { ...m, text: accumulatedText + "\n\n⚠️ *[Lỗi kết nối giữa chừng]*" }
+                  ? { ...m, text: accumulatedText + "\n\n⚠️ *[Connection Error]*" }
                   : m
               )
             );
@@ -106,13 +151,13 @@ export default function AICabin() {
         }
       );
     } catch (error: any) {
-      toast.error("Failed to get response from AI Tutor");
+      toast.error(t("failedToGetAiResponse"));
       setIsTyping(false);
       if (!addedPlaceholder) {
         const errorMsg: Message = { 
           id: tutorMsgId, 
           role: "tutor", 
-          text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!", 
+          text: t("aiTutorOfflineMsg"), 
           time: "now" 
         };
         setMessages(prev => [...prev, errorMsg]);
@@ -131,7 +176,7 @@ export default function AICabin() {
       const result = await aiService.explainSentence(analyzerSentence, "", analyzerLang);
       setAnalysis(result);
     } catch (error: any) {
-      toast.error("Failed to analyze sentence");
+      toast.error(t("failedToAnalyzeSentence"));
     } finally {
       setAnalyzing(false);
     }
@@ -157,7 +202,7 @@ export default function AICabin() {
               <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>AI Tutor Hoot</div>
               <div className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--brand)" }} />
-                <span style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>Online — always ready to help</span>
+                <span style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{t("aiCabinStatus")}</span>
               </div>
             </div>
           </div>
@@ -175,9 +220,9 @@ export default function AICabin() {
                 fontSize: 13,
                 boxShadow: activeTab === "chat" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
               }}
-              title="Nhấp để trò chuyện học tiếng Anh tự do với AI Tutor"
+              title={t("chatTabTitle")}
             >
-              💬 Trò chuyện
+              {t("chatTabLabel")}
             </button>
             <button
               onClick={() => setActiveTab("analyzer")}
@@ -190,23 +235,23 @@ export default function AICabin() {
                 fontSize: 13,
                 boxShadow: activeTab === "analyzer" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
               }}
-              title="Nhấp để phân tích lỗi chính tả và ngữ pháp câu tiếng Anh"
+              title={t("analyzerTabTitle")}
             >
-              ⚡ Phân tích câu
+              {t("analyzerTabLabel")}
             </button>
           </div>
 
           <div className="flex items-center gap-3">
             <button
               onClick={() => {
-                if (window.confirm("Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện?")) {
-                  setMessages(INITIAL_MESSAGES);
+                if (window.confirm(t("refreshChatConfirm"))) {
+                  setMessages([{ id: "0", role: "tutor", text: t("aiCabinWelcome"), time: "now" }]);
                 }
               }}
               type="button"
               className="cursor-pointer border-none outline-none bg-transparent hover:opacity-80 transition-opacity p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
               style={{ color: "#aaa" }}
-              title="Làm mới cuộc trò chuyện"
+              title={t("refreshChatTitle")}
             >
               <RotateCcw size={15} />
             </button>
@@ -281,17 +326,20 @@ export default function AICabin() {
 
             {/* Quick prompts */}
             <div className="px-5 pb-2 flex gap-2 overflow-x-auto shrink-0">
-              {QUICK_PROMPTS.map(p => (
-                <button
-                  key={p}
-                  onClick={() => sendMessage(p)}
-                  type="button"
-                  className="shrink-0 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
-                  style={{ background: "#f5f3ff", border: "1.5px solid #ddd6fe", color: "#7c3aed", fontWeight: 600, fontSize: 12 }}
-                >
-                  {p}
-                </button>
-              ))}
+              {QUICK_PROMPTS_KEYS.map(key => {
+                const promptText = t(key);
+                return (
+                  <button
+                    key={key}
+                    onClick={() => sendMessage(promptText)}
+                    type="button"
+                    className="shrink-0 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
+                    style={{ background: "#f5f3ff", border: "1.5px solid #ddd6fe", color: "#7c3aed", fontWeight: 600, fontSize: 12 }}
+                  >
+                    {promptText}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Input */}
@@ -303,7 +351,7 @@ export default function AICabin() {
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-                placeholder="Ask Hoot anything about English..."
+                placeholder={t("aiCabinPlaceholder")}
                 className="flex-1 px-4 py-2.5 rounded-2xl outline-none"
                 style={{
                   border: "2px solid var(--border)",
@@ -333,15 +381,15 @@ export default function AICabin() {
               <div className="p-6 rounded-2xl border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
                 <h3 className="m-0 mb-4 flex items-center gap-2" style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>
                   <Sparkles size={18} style={{ color: "var(--brand-orange)" }} />
-                  Phân tích ngữ pháp & chính tả
+                  {t("grammarAnalysisHeader")}
                 </h3>
                 <p className="m-0 mb-4" style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
-                  Nhập một câu tiếng Anh bất kỳ dưới đây. Hoot sẽ tự động kiểm tra xem câu của bạn có đúng ngữ pháp không, giải thích chi tiết các lỗi sai (nếu có) và hướng dẫn cấu trúc câu bằng tiếng Việt.
+                  {t("grammarAnalysisDesc")}
                 </p>
                 <textarea
                   value={analyzerSentence}
                   onChange={e => setAnalyzerSentence(e.target.value)}
-                  placeholder="Ví dụ: She have been studying since morning."
+                  placeholder={t("analyzerTextareaPlaceholder")}
                   className="w-full px-4 py-3 rounded-xl outline-none"
                   style={{
                     border: "2px solid var(--border)",
@@ -365,7 +413,7 @@ export default function AICabin() {
                   }}
                 >
                   <Sparkles size={16} />
-                  {analyzing ? "Đang phân tích..." : "Phân tích câu"}
+                  {analyzing ? t("analyzerBtnAnalyzing") : t("analyzerBtnAnalyze")}
                 </button>
               </div>
             </div>
@@ -375,7 +423,7 @@ export default function AICabin() {
               <div className="p-6 rounded-2xl border flex-1 flex flex-col justify-between" style={{ background: "var(--card)", borderColor: "var(--border)", minHeight: 300 }}>
                 <div>
                   <h3 className="m-0 mb-4" style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>
-                    Kết quả phân tích từ Hoot 🦉
+                    {t("analyzerResultHeader")}
                   </h3>
 
                   {analyzing && (
@@ -385,7 +433,7 @@ export default function AICabin() {
                           <div key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: "var(--brand-orange)", animationDelay: `${i * 0.15}s` }} />
                         ))}
                       </div>
-                      <div style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>Hoot đang phân tích câu của bạn...</div>
+                      <div style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>{t("analyzerAnalyzingStatus")}</div>
                     </div>
                   )}
 
@@ -403,7 +451,7 @@ export default function AICabin() {
                     <div className="text-center py-12 opacity-60">
                       <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>📝</span>
                       <p className="m-0" style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>
-                        Chưa có dữ liệu. Vui lòng nhập câu tiếng Anh ở bên trái để bắt đầu phân tích.
+                        {t("analyzerNoData")}
                       </p>
                     </div>
                   )}
@@ -414,27 +462,27 @@ export default function AICabin() {
                     <button
                       onClick={() => {
                         navigator.clipboard.writeText(analysis);
-                        toast.success("Đã sao chép kết quả phân tích!");
+                        toast.success(t("analysisCopied"));
                       }}
                       type="button"
                       className="flex-1 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-xs"
                       style={{ background: "transparent", borderColor: "var(--border)", color: "var(--foreground)" }}
                     >
-                      📋 Sao chép kết quả
+                      {t("btnCopyResult")}
                     </button>
                     <button
                       onClick={() => {
-                        const userMsg: Message = { id: Date.now().toString(), role: "user", text: `Phân tích ngữ pháp cho câu: "${analyzerSentence}"`, time: "now" };
+                        const userMsg: Message = { id: Date.now().toString(), role: "user", text: t("analyzerChatPrefix", { sentence: analyzerSentence }), time: "now" };
                         const tutorMsg: Message = { id: (Date.now() + 1).toString(), role: "tutor", text: analysis, time: "now" };
                         setMessages(prev => [...prev, userMsg, tutorMsg]);
                         setActiveTab("chat");
-                        toast.success("Đã lưu kết quả vào cuộc trò chuyện!");
+                        toast.success(t("analysisSavedToChat"));
                       }}
                       type="button"
                       className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs"
                       style={{ background: "var(--brand-purple)", color: "#fff" }}
                     >
-                      💬 Gửi vào Chat
+                      {t("btnSaveToChat")}
                     </button>
                   </div>
                 )}

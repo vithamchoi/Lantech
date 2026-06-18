@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -91,6 +92,7 @@ public class AIController : ControllerBase
         [Required]
         public string Message { get; set; } = null!;
         public string SourceLanguageCode { get; set; } = "vi";
+        public List<ChatMessageDto>? History { get; set; }
     }
 
     /// <summary>
@@ -105,7 +107,7 @@ public class AIController : ControllerBase
     {
         try
         {
-            var result = await _aiService.ChatTutorAsync(request.Message, request.SourceLanguageCode, cancellationToken);
+            var result = await _aiService.ChatTutorAsync(request.Message, request.SourceLanguageCode, request.History, cancellationToken);
             return Ok(ApiResponse<string>.SuccessResponse(result, "Tutor response generated"));
         }
         catch (Exception ex)
@@ -126,7 +128,7 @@ public class AIController : ControllerBase
 
         try
         {
-            await foreach (var chunk in _aiService.ChatTutorStreamAsync(request.Message, request.SourceLanguageCode, cancellationToken))
+            await foreach (var chunk in _aiService.ChatTutorStreamAsync(request.Message, request.SourceLanguageCode, request.History, cancellationToken))
             {
                 await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { content = chunk })}\n\n", cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);
@@ -251,6 +253,30 @@ public class AIController : ControllerBase
         {
             var result = await _aiService.GenerateLearningPathAsync(request.CefrLevel, request.SourceLanguageCode, request.WeakSkills, cancellationToken);
             return Ok(ApiResponse<string>.SuccessResponse(result, "Learning path suggestions generated successfully"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse.ErrorResponse(ex.Message));
+        }
+    }
+
+    public class GeneratePhoneticsRequest
+    {
+        [Required]
+        public string Text { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// Generate IPA phonetics for a word or sentence using AI
+    /// </summary>
+    [HttpPost("generate-phonetics")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GeneratePhonetics([FromBody] GeneratePhoneticsRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _aiService.GeneratePhoneticIpaAsync(request.Text, cancellationToken);
+            return Ok(ApiResponse<string>.SuccessResponse(result, "Phonetics generated successfully"));
         }
         catch (Exception ex)
         {

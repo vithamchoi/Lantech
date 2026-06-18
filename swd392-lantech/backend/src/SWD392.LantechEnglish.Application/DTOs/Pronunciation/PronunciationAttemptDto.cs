@@ -14,6 +14,7 @@ public class PronunciationAttemptDto
     public double? Completeness { get; set; }
     public string? Feedback { get; set; }
     public object? WordLevelFeedback { get; set; } // Deserialized array for easy consumption
+    public List<string> Suggestions { get; set; } = new();
     public string Provider { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
 }

@@ -2,35 +2,37 @@ import React from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
 import { Compass, BookOpen, Layers, Mic, Bot, Trophy, User, ShieldCheck, LogOut } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 
 interface SidebarProps {
   onLogout: () => void;
 }
 
-const studentNavItems = [
-  { path: "/dashboard", label: "Learning Trail", icon: Compass },
-  { path: "/vocabulary", label: "Vocabulary Desk", icon: BookOpen },
-  { path: "/flashcards", label: "Flashcard Box", icon: Layers },
-  { path: "/pronunciation", label: "Pronunciation Hub", icon: Mic },
-  { path: "/ai-cabin", label: "AI Tutor Chat", icon: Bot },
-  { path: "/leaderboard", label: "Leaderboard", icon: Trophy },
-  { path: "/profile", label: "My Profile", icon: User },
-];
-
-const adminNavItems = [
-  { path: "/ranger", label: "Ranger Console", icon: Compass },
-  { path: "/ranger/translations", label: "Translations CMS", icon: BookOpen },
-  { path: "/ranger/curriculum", label: "Curriculum CMS", icon: Layers },
-  { path: "/ranger/vocabulary-badges", label: "Vocabulary CMS", icon: Trophy },
-  { path: "/ranger/users", label: "User Accounts", icon: User },
-];
-
 export default function Sidebar({ onLogout }: SidebarProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, role } = useAppStore();
+  const { t } = useTranslation();
 
   if (!user) return null;
+
+  const studentNavItems = [
+    { path: "/dashboard", label: t("navDashboard"), icon: Compass },
+    { path: "/vocabulary", label: t("navVocabulary"), icon: BookOpen },
+    { path: "/flashcards", label: t("navFlashcards"), icon: Layers },
+    { path: "/pronunciation", label: t("navPronunciation"), icon: Mic },
+    { path: "/ai-cabin", label: t("navAiCabin"), icon: Bot },
+    { path: "/leaderboard", label: t("navLeaderboard"), icon: Trophy },
+    { path: "/profile", label: t("navProfile"), icon: User },
+  ];
+
+  const adminNavItems = [
+    { path: "/ranger", label: t("navAdminConsole"), icon: Compass },
+    { path: "/ranger/translations", label: t("navAdminTranslations"), icon: BookOpen },
+    { path: "/ranger/curriculum", label: t("navAdminCurriculum"), icon: Layers },
+    { path: "/ranger/vocabulary-badges", label: t("navAdminVocabulary"), icon: Trophy },
+    { path: "/ranger/users", label: t("navAdminUsers"), icon: User },
+  ];
 
   const navItems = role === "Admin" ? adminNavItems : studentNavItems;
 
@@ -103,7 +105,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
               }}
             >
               <ShieldCheck size={18} style={{ color: "var(--sidebar-foreground)", opacity: 0.5, flexShrink: 0 }} />
-              Ranger Hub
+              {t("navAdmin")}
             </button>
           </>
         )}
@@ -123,7 +125,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
               {user.name}
             </div>
             <div style={{ fontSize: 11, color: "var(--sidebar-foreground)", opacity: 0.6, fontWeight: 600 }}>
-              {role === "Admin" ? "⚔️ Ranger" : "🌱 Student"}
+              {role === "Admin" ? t("roleAdmin") : t("roleStudent")}
             </div>
           </div>
         </div>
@@ -135,7 +137,7 @@ export default function Sidebar({ onLogout }: SidebarProps) {
           onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
         >
           <LogOut size={15} style={{ color: "#f87171" }} />
-          Sign out
+          {t("navLogout")}
         </button>
       </div>
     </aside>

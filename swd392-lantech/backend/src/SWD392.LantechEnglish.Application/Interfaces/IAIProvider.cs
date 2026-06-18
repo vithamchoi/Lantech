@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using SWD392.LantechEnglish.Domain.Enums;
 
 namespace SWD392.LantechEnglish.Application.Interfaces;
@@ -12,9 +13,9 @@ public interface IAIProvider
     
     Task<string> AnalyzeWeaknessesAsync(string historySummaryJson, string sourceLanguageCode, CancellationToken cancellationToken = default);
     
-    Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default);
+    Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default);
     
-    IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default);
+    IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default);
     
     Task<string> GenerateLearningPathAsync(CefrLevel cefrLevel, string sourceLanguageCode, List<string> weakSkills, CancellationToken cancellationToken = default);
     
@@ -25,4 +26,6 @@ public interface IAIProvider
     Task<(double Score, string Feedback)> GradeSpeakingAsync(string prompt, string transcriptText, string targetText, string sourceLanguageCode, CancellationToken cancellationToken = default);
     
     Task<byte[]> GenerateAudioAsync(string text, string voice = "alloy", CancellationToken cancellationToken = default);
+
+    Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default);
 }

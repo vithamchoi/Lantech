@@ -68,4 +68,51 @@ public class PronunciationController : ControllerBase
     [HttpGet("{id:guid}")]
     public IActionResult GetPronunciationRecord(Guid id) => Ok(new { Message = "Record details" });
 
+    /// <summary>
+    /// Get all pronunciation practice phrases seeded in the database
+    /// </summary>
+    [HttpGet("phrases")]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<PronunciationPhraseDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPhrases(CancellationToken cancellationToken)
+    {
+        var result = await _pronunciationService.GetPhrasesAsync(cancellationToken);
+        return Ok(ApiResponse<IEnumerable<PronunciationPhraseDto>>.SuccessResponse(result, "Phrases fetched successfully"));
+    }
+
+    /// <summary>
+    /// Create a new pronunciation practice phrase (Admin only)
+    /// </summary>
+    [HttpPost("phrases")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(ApiResponse<PronunciationPhraseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> CreatePhrase([FromBody] PronunciationPhraseDto request, CancellationToken cancellationToken)
+    {
+        var result = await _pronunciationService.CreatePhraseAsync(request, cancellationToken);
+        return Ok(ApiResponse<PronunciationPhraseDto>.SuccessResponse(result, "Phrase created successfully"));
+    }
+
+    /// <summary>
+    /// Update an existing pronunciation practice phrase (Admin only)
+    /// </summary>
+    [HttpPut("phrases/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(ApiResponse<PronunciationPhraseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdatePhrase(Guid id, [FromBody] PronunciationPhraseDto request, CancellationToken cancellationToken)
+    {
+        var result = await _pronunciationService.UpdatePhraseAsync(id, request, cancellationToken);
+        return Ok(ApiResponse<PronunciationPhraseDto>.SuccessResponse(result, "Phrase updated successfully"));
+    }
+
+    /// <summary>
+    /// Delete a pronunciation practice phrase (Admin only)
+    /// </summary>
+    [HttpDelete("phrases/{id:guid}")]
+    [Authorize(Roles = "Admin")]
+    [ProducesResponseType(typeof(ApiResponse<bool>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> DeletePhrase(Guid id, CancellationToken cancellationToken)
+    {
+        var result = await _pronunciationService.DeletePhraseAsync(id, cancellationToken);
+        if (!result) return NotFound(ApiResponse.ErrorResponse("Phrase not found"));
+        return Ok(ApiResponse<bool>.SuccessResponse(true, "Phrase deleted successfully"));
+    }
 }

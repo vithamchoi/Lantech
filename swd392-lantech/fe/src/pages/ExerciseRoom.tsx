@@ -4,11 +4,13 @@ import { useAppStore } from '../store/appStore';
 import { ChevronLeft, Check, X, Award, ChevronRight, Loader2 } from 'lucide-react';
 import { exerciseService, ExerciseDto } from '../services/exerciseService';
 import { toast } from 'sonner';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function ExerciseRoom() {
   const navigate = useNavigate();
   const { id } = useParams();
   const { user, login } = useAppStore();
+  const { t } = useTranslation();
   const [exercises, setExercises] = useState<ExerciseDto[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState('');
@@ -25,7 +27,7 @@ export default function ExerciseRoom() {
         const data = await exerciseService.getExercisesByLesson(id);
         setExercises(data);
       } catch (error: any) {
-        toast.error("Failed to load exercises");
+        toast.error(t("failedToLoadExercises"));
       } finally {
         setIsLoading(false);
       }
@@ -50,7 +52,7 @@ export default function ExerciseRoom() {
         // Cập nhật lại user state từ backend sau khi xong session hoặc ở đây
       }
     } catch (error: any) {
-      toast.error("Failed to submit answer");
+      toast.error(t("failedToSubmitAnswer"));
     } finally {
       setIsSubmitting(false);
     }
@@ -63,7 +65,7 @@ export default function ExerciseRoom() {
     if (currentIdx < exercises.length - 1) {
       setCurrentIdx(currentIdx + 1);
     } else {
-      toast.success("Lesson completed!");
+      toast.success(t("exerciseCompleteToast"));
       navigate('/dashboard');
     }
   };
@@ -79,8 +81,8 @@ export default function ExerciseRoom() {
   if (exercises.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-screen gap-4">
-        <p className="text-slate-500 font-bold">No exercises found for this lesson.</p>
-        <button onClick={() => navigate('/dashboard')} className="px-6 py-2 bg-slate-800 text-white rounded-xl">Go Back</button>
+        <p className="text-slate-500 font-bold">{t("noExercisesFound")}</p>
+        <button onClick={() => navigate('/dashboard')} className="px-6 py-2 bg-slate-800 text-white rounded-xl">{t("goBackBtn")}</button>
       </div>
     );
   }
@@ -99,19 +101,23 @@ export default function ExerciseRoom() {
             <ChevronLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
           <div className="text-left">
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Exercise Room — Unit {id?.substring(0, 8)}</span>
-            <h1 className="text-xl font-bold text-slate dark:text-cream-50 font-outfit mt-0.5">{currentQuestion.type} Practice</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">
+              {t("exerciseRoomUnit", { id: id?.substring(0, 8) || "" })}
+            </span>
+            <h1 className="text-xl font-bold text-slate dark:text-cream-50 font-outfit mt-0.5">
+              {t("practiceHeader", { type: currentQuestion.type })}
+            </h1>
           </div>
         </div>
         <span className="text-sm font-semibold text-meadow dark:text-meadow-400">
-          Question {currentIdx + 1} of {exercises.length}
+          {t("questionProgress", { current: String(currentIdx + 1), total: String(exercises.length) })}
         </span>
       </div>
 
       {/* Question Card */}
       <div className="bg-white dark:bg-[#1E2522] p-8 rounded-card border border-sage dark:border-[#2C3531] shadow-diffuse space-y-6 transition-colors duration-300">
         <div className="text-left space-y-2">
-           <p className="text-xs font-bold text-meadow uppercase tracking-widest">{currentQuestion.instruction || "Select the correct answer"}</p>
+           <p className="text-xs font-bold text-meadow uppercase tracking-widest">{currentQuestion.instruction || t("selectCorrectOption")}</p>
            <h3 className="text-lg font-bold text-slate dark:text-cream-50">{currentQuestion.prompt}</h3>
         </div>
 
@@ -158,10 +164,10 @@ export default function ExerciseRoom() {
           {hasChecked && (
             <div className="text-left">
               <span className={`text-xs font-bold uppercase tracking-wider ${isCorrect ? 'text-meadow dark:text-meadow-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {isCorrect ? 'Correct Answer!' : 'Incorrect Answer'}
+                {isCorrect ? t("correctAnswerBanner") : t("incorrectAnswerBanner")}
               </span>
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
-                {isCorrect ? `+${currentQuestion.xpReward} XP Awarded` : feedback || `The correct answer was: ${currentQuestion.correctAnswer}`}
+                {isCorrect ? t("xpAwardedLabel", { xp: String(currentQuestion.xpReward) }) : feedback || t("correctAnswerWasMsg", { answer: currentQuestion.correctAnswer || "" })}
               </p>
             </div>
           )}
@@ -175,14 +181,14 @@ export default function ExerciseRoom() {
               className="px-8 py-3 bg-meadow disabled:opacity-50 hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all flex items-center gap-2"
             >
               {isSubmitting && <Loader2 size={14} className="animate-spin" />}
-              Check Answer
+              {t("checkAnswer")}
             </button>
           ) : (
             <button
               onClick={handleNext}
               className="px-8 py-3 bg-slate dark:bg-slate-800 hover:bg-slate-900 dark:hover:bg-slate-700 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all flex items-center gap-1"
             >
-              Next Question <ChevronRight className="w-4 h-4" />
+              {t("nextQuestion")} <ChevronRight className="w-4 h-4" />
             </button>
           )}
         </div>
