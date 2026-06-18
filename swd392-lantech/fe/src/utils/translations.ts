@@ -157,6 +157,8 @@ export const translations: Record<string, Record<string, string>> = {
     addedToDeckToast: "Đã thêm vào kho thẻ ghi nhớ!",
     failedToUpdateDeckToast: "Không thể cập nhật kho thẻ",
     failedToLoadVocabToast: "Không thể tải danh sách từ vựng",
+    relatedWordsTitle: "Từ liên quan",
+    noRelatedWords: "Không tìm thấy từ liên quan nào.",
 
     // Flashcard Deck
     flashcardTitle: "Ôn tập Flashcard",
@@ -564,6 +566,8 @@ export const translations: Record<string, Record<string, string>> = {
     addedToDeckToast: "フラッシュカードに追加しました！",
     failedToUpdateDeckToast: "デッキの更新に失敗しました",
     failedToLoadVocabToast: "単語リストの読み込みに失敗しました",
+    relatedWordsTitle: "関連語",
+    noRelatedWords: "関連語が見つかりません。",
 
     // Flashcard Deck
     flashcardTitle: "フラッシュカード学習",
@@ -971,6 +975,8 @@ export const translations: Record<string, Record<string, string>> = {
     addedToDeckToast: "플래시카드 덱에 추가되었습니다!",
     failedToUpdateDeckToast: "덱 업데이트 실패",
     failedToLoadVocabToast: "단어 목록을 불러오지 못했습니다",
+    relatedWordsTitle: "관련 단어",
+    noRelatedWords: "관련 단어를 찾을 수 없습니다.",
 
     // Flashcard Deck
     flashcardTitle: "플래시카드 학습",

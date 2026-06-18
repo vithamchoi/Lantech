@@ -15,20 +15,45 @@ export interface VocabularyDto {
   isInDeck: boolean;
 }
 
+const mapBackendVocabToFrontend = (vocab: any): VocabularyDto => {
+  const translation = vocab.translations?.find((t: any) => t.languageCode === 'vi') || vocab.translations?.[0] || {};
+  return {
+    id: vocab.id,
+    word: vocab.word,
+    ipa: vocab.ipa,
+    partOfSpeech: vocab.partOfSpeech,
+    cefrLevel: vocab.cefrLevel,
+    definition: translation.explanation || translation.meaning || '',
+    exampleSentence: vocab.exampleSentence,
+    meaning: translation.meaning || '',
+    explanation: translation.explanation || '',
+    exampleTranslation: translation.exampleTranslation || '',
+    tags: vocab.tags || [],
+    isInDeck: vocab.isInDeck ?? false,
+  };
+};
+
 export const vocabularyService = {
   getVocabularies: async (cefrLevel?: string, query?: string): Promise<VocabularyDto[]> => {
     let url = '/vocabularies';
     const params = new URLSearchParams();
-    if (cefrLevel && cefrLevel !== 'All') params.append('cefrLevel', cefrLevel);
-    if (query) params.append('query', query);
+    if (cefrLevel && cefrLevel !== 'All') params.append('level', cefrLevel);
+    if (query) params.append('search', query);
     
     const queryString = params.toString();
     if (queryString) url += `?${queryString}`;
 
-    return await apiClient.get(url);
+    const data: any[] = await apiClient.get(url);
+    return data.map(mapBackendVocabToFrontend);
   },
 
   getVocabularyById: async (id: string): Promise<VocabularyDto> => {
-    return await apiClient.get(`/vocabularies/${id}`);
+    const data = await apiClient.get(`/vocabularies/${id}`);
+    return mapBackendVocabToFrontend(data);
+  },
+
+  getRelatedVocabularies: async (id: string): Promise<VocabularyDto[]> => {
+    const data: any[] = await apiClient.get(`/vocabularies/${id}/related`);
+    return data.map(mapBackendVocabToFrontend);
   }
 };

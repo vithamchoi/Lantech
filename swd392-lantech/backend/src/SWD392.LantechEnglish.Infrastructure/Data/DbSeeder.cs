@@ -14,7 +14,6 @@ public static class DbSeeder
         var passwordHasher = serviceProvider.GetRequiredService<IPasswordHasher>();
 
         // Seed Pronunciation Phrases regardless of users
-        // Seed Pronunciation Phrases regardless of users
         var pronunciationPhrases = new List<PronunciationPhrase>
         {
             new() { Id = Guid.NewGuid(), Text = "The weather is beautiful today.", Phonetic = "/ðə ˈwɛðər ɪz ˈbjuːtɪfəl təˈdeɪ/", Category = "Weather", Tags = "daily,weather,th-sound" },
@@ -60,7 +59,50 @@ public static class DbSeeder
         }
         await context.SaveChangesAsync();
 
-        // Check if already seeded
+        // Seed Tags and link to Vocabulary (independent of Users seeded check)
+        if (!await context.Tags.AnyAsync())
+        {
+            var tagNature = new Tag { Id = Guid.NewGuid(), Name = "Nature & Environment" };
+            var tagFamily = new Tag { Id = Guid.NewGuid(), Name = "Family & Relationships" };
+            var tagAnimals = new Tag { Id = Guid.NewGuid(), Name = "Animals & Wildlife" };
+            var tagFood = new Tag { Id = Guid.NewGuid(), Name = "Food & Dining" };
+            var tagCognition = new Tag { Id = Guid.NewGuid(), Name = "Cognition & Mind" };
+            var tagActions = new Tag { Id = Guid.NewGuid(), Name = "Actions & Movement" };
+            var tagSociety = new Tag { Id = Guid.NewGuid(), Name = "Society & Business" };
+
+            context.Tags.AddRange(tagNature, tagFamily, tagAnimals, tagFood, tagCognition, tagActions, tagSociety);
+            await context.SaveChangesAsync();
+
+            var allVocabs = await context.Vocabularies.Include(v => v.Tags).ToListAsync();
+            var natureWords = new HashSet<string> { "tree", "sun", "ice", "landscape", "rapid", "variable", "hazard", "climate" };
+            var familyWords = new HashSet<string> { "hello", "goodbye", "thank you", "family", "mother", "love", "kinship", "invite", "join", "familiar", "jealous" };
+            var animalWords = new HashSet<string> { "cat", "dog", "fish", "bird", "wild" };
+            var foodWords = new HashSet<string> { "apple", "egg", "breakfast", "dinner", "eat", "satisfy" };
+            var cognitionWords = new HashSet<string> { "believe", "decide", "forget", "guess", "notice", "remember", "suggest", "debate", "negotiate", "deduce", "empirical", "imply", "notion", "qualitative", "abstract", "obscure", "cohere", "elaborate" };
+            var actionWords = new HashSet<string> { "jump", "play", "travel", "gather", "tackle", "participate", "simulate", "utilize", "abandon", "calculate", "damage", "educate" };
+            var societyWords = new HashSet<string> { "campaign", "facility", "maintain", "objective", "radical", "bureaucracy", "legislate", "jurisdiction", "revenue", "margin", "qualify", "abolish", "barrier" };
+
+            foreach (var vocab in allVocabs)
+            {
+                var w = vocab.Word.ToLower();
+                if (natureWords.Contains(w)) vocab.Tags.Add(tagNature);
+                else if (familyWords.Contains(w)) vocab.Tags.Add(tagFamily);
+                else if (animalWords.Contains(w)) vocab.Tags.Add(tagAnimals);
+                else if (foodWords.Contains(w)) vocab.Tags.Add(tagFood);
+                else if (cognitionWords.Contains(w)) vocab.Tags.Add(tagCognition);
+                else if (actionWords.Contains(w)) vocab.Tags.Add(tagActions);
+                else if (societyWords.Contains(w)) vocab.Tags.Add(tagSociety);
+                else
+                {
+                    if (vocab.PartOfSpeech == "noun") vocab.Tags.Add(tagSociety);
+                    else if (vocab.PartOfSpeech == "verb") vocab.Tags.Add(tagActions);
+                    else vocab.Tags.Add(tagCognition);
+                }
+            }
+            await context.SaveChangesAsync();
+        }
+
+        // Check if already seeded (for other entities)
         if (await context.Users.AnyAsync())
         {
             return;
@@ -564,12 +606,9 @@ public static class DbSeeder
                 Difficulty = 1,
                 XpReward = 10,
                 OrderIndex = 2,
-                IsAiGenerated = false,
-                CreatedAt = DateTime.UtcNow
             }
         };
         context.Exercises.AddRange(exercises);
-
         await context.SaveChangesAsync();
     }
 }

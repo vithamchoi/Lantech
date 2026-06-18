@@ -10,4 +10,5 @@ public interface IVocabularyService
     Task<IEnumerable<VocabularyTranslationDto>> GetTranslationsAsync(Guid vocabularyId, CancellationToken cancellationToken = default);
     Task<IEnumerable<VocabularyDto>> SearchVocabularyAsync(string query, CancellationToken cancellationToken = default);
     Task<IEnumerable<VocabularyDto>> GetVocabularyByLevelAsync(CefrLevel level, CancellationToken cancellationToken = default);
+    Task<IEnumerable<VocabularyDto>> GetRelatedVocabulariesAsync(Guid vocabularyId, CancellationToken cancellationToken = default);
 }

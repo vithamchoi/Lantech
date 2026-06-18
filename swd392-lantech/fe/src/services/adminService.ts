@@ -28,7 +28,7 @@ export interface CreateExerciseRequest {
   orderIndex: number;
 }
 
-export interface VocabularyTranslationRequest {
+export interface AdminVocabularyTranslationRequest {
   languageCode: string;
   meaning: string;
   explanation?: string;
@@ -43,7 +43,29 @@ export interface CreateVocabularyRequest {
   partOfSpeech?: string;
   exampleSentence?: string;
   contentSource?: string;
-  translations: VocabularyTranslationRequest[];
+  translations: AdminVocabularyTranslationRequest[];
+}
+
+export interface VocabularyTranslationDto {
+  id: string;
+  vocabularyId: string;
+  languageCode: string;
+  meaning: string;
+  explanation?: string;
+  exampleTranslation?: string;
+}
+
+export interface VocabularyDto {
+  id: string;
+  word: string;
+  ipa?: string;
+  audioUrl?: string;
+  cefrLevel: string;
+  partOfSpeech?: string;
+  exampleSentence?: string;
+  contentSource: string;
+  createdAt: string;
+  translations: VocabularyTranslationDto[];
 }
 
 export interface AdminStatsDto {
@@ -154,11 +176,11 @@ export const adminService = {
   getVocabularies: async (): Promise<AdminVocabularyDto[]> => {
     return await apiClient.get('/admin/vocabulary');
   },
-  createVocabulary: async (dto: CreateVocabularyRequest): Promise<any> => {
-    return await apiClient.post('/admin/vocabulary', dto);
+  createVocabulary: async (data: CreateVocabularyRequest): Promise<VocabularyDto> => {
+    return await apiClient.post('/admin/vocabulary', data);
   },
-  updateVocabulary: async (id: string, dto: CreateVocabularyRequest): Promise<any> => {
-    return await apiClient.put(`/admin/vocabulary/${id}`, dto);
+  updateVocabulary: async (id: string, data: CreateVocabularyRequest): Promise<VocabularyDto> => {
+    return await apiClient.put(`/admin/vocabulary/${id}`, data);
   },
   deleteVocabulary: async (id: string): Promise<void> => {
     return await apiClient.delete(`/admin/vocabulary/${id}`);

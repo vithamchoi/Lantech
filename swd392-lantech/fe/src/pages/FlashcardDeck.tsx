@@ -37,12 +37,13 @@ export default function FlashcardDeck() {
   }, []);
 
   const handleGrade = async (score: number) => {
-    if (!current) return;
+    const currentCard = dueCards[currentIndex];
+    if (!currentCard) return;
     
     setIsSubmitting(true);
     try {
-      await flashcardService.reviewFlashcard(current.id, score);
-      setGradedCards(prev => ({ ...prev, [current.id]: score }));
+      await flashcardService.reviewFlashcard(currentCard.id, score);
+      setGradedCards(prev => ({ ...prev, [currentCard.id]: score }));
       setIsFlipped(false);
       
       if (currentIndex < dueCards.length - 1) {

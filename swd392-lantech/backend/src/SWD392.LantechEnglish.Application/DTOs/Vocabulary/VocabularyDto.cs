@@ -12,4 +12,5 @@ public class VocabularyDto
     public string ContentSource { get; set; } = null!;
     public DateTime CreatedAt { get; set; }
     public List<VocabularyTranslationDto> Translations { get; set; } = new();
+    public List<string> Tags { get; set; } = new();
 }

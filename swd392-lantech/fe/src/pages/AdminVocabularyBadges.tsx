@@ -36,16 +36,84 @@ export default function AdminVocabularyBadges() {
   const [editingVocab, setEditingVocab] = useState<AdminVocabularyDto | null>(null);
 
   const handleSaveVocab = async () => {
-    if (editingVocab) {
-      setVocab(vocab.map(v => v.id === editingVocab.id ? editingVocab : v));
+    if (!editingVocab) return;
+    if (!editingVocab.word.trim()) {
+      toast.error("Word is required");
+      return;
+    }
+    if (!editingVocab.definition.trim()) {
+      toast.error("Translation is required");
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const payload = {
+        word: editingVocab.word,
+        ipa: editingVocab.phoneme,
+        cefrLevel: editingVocab.level,
+        partOfSpeech: "noun",
+        exampleSentence: "",
+        contentSource: "Curated",
+        translations: [
+          {
+            languageCode: "vi",
+            meaning: editingVocab.definition,
+            explanation: "",
+            exampleTranslation: ""
+          }
+        ]
+      };
+
+      if (editingVocab.id) {
+        // Edit mode
+        const updated = await adminService.updateVocabulary(editingVocab.id, payload);
+        setVocab(vocab.map(v => v.id === editingVocab.id ? {
+          id: updated.id,
+          word: updated.word,
+          phoneme: updated.ipa || '',
+          level: updated.cefrLevel,
+          definition: editingVocab.definition,
+          added: v.added
+        } : v));
+        toast.success("Vocabulary updated successfully");
+      } else {
+        // Create mode
+        const created = await adminService.createVocabulary(payload);
+        const newAdminVocab = {
+          id: created.id,
+          word: created.word,
+          phoneme: created.ipa || '',
+          level: created.cefrLevel,
+          definition: editingVocab.definition,
+          added: new Date().toISOString().split('T')[0]
+        };
+        setVocab([newAdminVocab, ...vocab]);
+        toast.success("Vocabulary created successfully");
+      }
       setEditingVocab(null);
-      toast.success("Đã cập nhật từ vựng cục bộ");
+    } catch (error) {
+      console.error("Failed to save vocabulary", error);
+      toast.error("Failed to save vocabulary");
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleDeleteVocab = async (id: string) => {
-     setVocab(vocab.filter(v => v.id !== id));
-     toast.success("Đã xóa từ vựng cục bộ");
+    if (!window.confirm("Are you sure you want to delete this word?")) return;
+
+    setIsLoading(true);
+    try {
+      await adminService.deleteVocabulary(id);
+      setVocab(vocab.filter(v => v.id !== id));
+      toast.success("Vocabulary deleted successfully");
+    } catch (error) {
+      console.error("Failed to delete vocabulary", error);
+      toast.error("Failed to delete vocabulary");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleDeleteBadge = async (id: string) => {
@@ -74,16 +142,14 @@ export default function AdminVocabularyBadges() {
           {activeTab === 'vocab' ? (
             <button
               onClick={() => {
-                const newItem: AdminVocabularyDto = {
-                  id: Date.now().toString(),
-                  word: 'New Word',
-                  definition: 'Bản dịch',
-                  phoneme: '/ipa/',
-                  level: 'B1',
-                  added: new Date().toISOString()
-                };
-                setVocab([newItem, ...vocab]);
-                setEditingVocab(newItem);
+                setEditingVocab({
+                  id: '',
+                  word: '',
+                  definition: '',
+                  phoneme: '',
+                  level: 'A1',
+                  added: ''
+                });
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all cursor-pointer"
             >
@@ -214,7 +280,9 @@ export default function AdminVocabularyBadges() {
         <div className="fixed inset-0 bg-slate/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
-              <h3 className="font-outfit font-bold text-lg text-slate">Chỉnh Sửa Từ Vựng</h3>
+              <h3 className="font-outfit font-bold text-lg text-slate">
+                {editingVocab.id ? "Edit Vocabulary Word" : "Add Vocabulary Word"}
+              </h3>
               <button 
                 onClick={() => setEditingVocab(null)}
                 className="p-1 hover:bg-cream-200 rounded"
