@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { useAppStore } from "../store/appStore";
 import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic, Sun, Moon } from "lucide-react";
+import { useTranslation } from "../hooks/useTranslation";
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: "#60a5fa",
@@ -11,24 +12,25 @@ const LEVEL_COLORS: Record<string, string> = {
   C2: "#ec4899",
 };
 
-const NOTIFICATIONS = [
-  { id: "1", icon: Trophy, iconColor: "#f59e0b", iconBg: "#fef9c3", title: "New achievement unlocked!", body: "You earned the \"Week Warrior\" badge for a 7-day streak.", time: "2m ago", unread: true },
-  { id: "2", icon: Zap, iconColor: "var(--brand)", iconBg: "var(--brand-light)", title: "Daily goal almost done!", body: "You need just 60 more XP to hit your 500 XP goal today.", time: "1h ago", unread: true },
-  { id: "3", icon: BookOpen, iconColor: "#3b82f6", iconBg: "#dbeafe", title: "New lesson available", body: "\"Past Adventures\" is now unlocked — keep your streak going!", time: "3h ago", unread: true },
-  { id: "4", icon: Mic, iconColor: "#8b5cf6", iconBg: "#ede9fe", title: "Pronunciation tip", body: "Practice the 'th' sound today — it's your weakest phoneme.", time: "Yesterday", unread: false },
-  { id: "5", icon: Trophy, iconColor: "#ec4899", iconBg: "#fce7f3", title: "Leaderboard update", body: "You climbed to #3 this week. Alex overtook Sarah!", time: "Yesterday", unread: false },
-];
-
 export default function AppHeader() {
   const { user, darkMode, toggleDarkMode } = useAppStore();
+  const { t } = useTranslation();
   const [notifOpen, setNotifOpen] = useState(false);
   const [readIds, setReadIds] = useState<Set<string>>(new Set());
   const panelRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
 
+  const notificationsList = [
+    { id: "1", icon: Trophy, iconColor: "#f59e0b", iconBg: "#fef9c3", title: t("notifTitle1"), body: t("notifBody1"), time: t("notifTime1"), unread: true },
+    { id: "2", icon: Zap, iconColor: "var(--brand)", iconBg: "var(--brand-light)", title: t("notifTitle2"), body: t("notifBody2"), time: t("notifTime2"), unread: true },
+    { id: "3", icon: BookOpen, iconColor: "#3b82f6", iconBg: "#dbeafe", title: t("notifTitle3"), body: t("notifBody3"), time: t("notifTime3"), unread: true },
+    { id: "4", icon: Mic, iconColor: "#8b5cf6", iconBg: "#ede9fe", title: t("notifTitle4"), body: t("notifBody4"), time: t("notifTime4"), unread: false },
+    { id: "5", icon: Trophy, iconColor: "#ec4899", iconBg: "#fce7f3", title: t("notifTitle5"), body: t("notifBody5"), time: t("notifTime5"), unread: false },
+  ];
+
   const levelColor = LEVEL_COLORS[user.cefr] || "#60a5fa";
-  const unreadCount = NOTIFICATIONS.filter(n => n.unread && !readIds.has(n.id)).length;
+  const unreadCount = notificationsList.filter(n => n.unread && !readIds.has(n.id)).length;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -40,7 +42,7 @@ export default function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [notifOpen]);
 
-  const markAllRead = () => setReadIds(new Set(NOTIFICATIONS.map(n => n.id)));
+  const markAllRead = () => setReadIds(new Set(notificationsList.map(n => n.id)));
 
   return (
     <header
@@ -55,7 +57,7 @@ export default function AppHeader() {
       {/* Left: greeting */}
       <div>
         <span style={{ fontSize: 13.5, color: "var(--muted-foreground)", fontWeight: 500 }}>
-          Welcome back, <strong style={{ color: "var(--foreground)" }}>{user.name.split(" ")[0]}</strong>!
+          {t("welcomeBack", { name: user.name.split(" ")[0] })}
         </span>
       </div>
 
@@ -68,7 +70,7 @@ export default function AppHeader() {
             background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
             border: `2px solid ${darkMode ? "rgba(249,115,22,0.4)" : "#fed7aa"}`,
           }}
-          title="Day Streak"
+          title={t("dayStreak")}
         >
           <Flame size={15} style={{ color: "#f97316" }} />
           <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
@@ -81,7 +83,7 @@ export default function AppHeader() {
             background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
             border: `2px solid ${darkMode ? "rgba(88,204,2,0.4)" : "var(--brand-light)"}`,
           }}
-          title="Total XP"
+          title={t("totalXp")}
         >
           <Sprout size={15} style={{ color: "var(--brand)" }} />
           <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
@@ -109,7 +111,7 @@ export default function AppHeader() {
           onClick={toggleDarkMode}
           className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer border-none outline-none"
           style={{ background: "var(--muted)" }}
-          title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          title={darkMode ? t("lightModeTitle") : t("darkModeTitle")}
         >
           {darkMode ? (
             <Sun size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
@@ -143,7 +145,7 @@ export default function AppHeader() {
             >
               {/* Header */}
               <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>Notifications</div>
+                <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>{t("notifications")}</div>
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllRead}
@@ -151,14 +153,14 @@ export default function AppHeader() {
                     style={{ fontSize: 12, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)", padding: 0 }}
                   >
                     <CheckCheck size={13} />
-                    Mark all read
+                    {t("markAllRead")}
                   </button>
                 )}
               </div>
 
               {/* List */}
               <div style={{ maxHeight: 380 }} className="overflow-y-auto">
-                {NOTIFICATIONS.map(n => {
+                {notificationsList.map(n => {
                   const isUnread = n.unread && !readIds.has(n.id);
                   const Icon = n.icon;
                   return (
@@ -201,7 +203,7 @@ export default function AppHeader() {
                 style={{ borderColor: "var(--border)" }}
                 onClick={() => setNotifOpen(false)}
               >
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>See all notifications</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>{t("seeAllNotif")}</span>
               </div>
             </div>
           )}

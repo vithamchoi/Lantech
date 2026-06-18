@@ -2,8 +2,7 @@ import apiClient from '../api/apiClient';
 
 export interface PronunciationAttemptRequest {
   targetText: string;
-  transcriptText: string;
-  audioUrl?: string;
+  audioBase64: string;
 }
 
 export interface WordFeedbackDto {
@@ -23,7 +22,16 @@ export interface PronunciationAttemptDto {
   completeness?: number;
   feedback?: string;
   wordLevelFeedback?: WordFeedbackDto[];
+  suggestions?: string[];
   createdAt: string;
+}
+
+export interface PronunciationPhraseDto {
+  id: string;
+  text: string;
+  phonetic: string;
+  category: string;
+  tags: string[];
 }
 
 export const pronunciationService = {
@@ -33,5 +41,9 @@ export const pronunciationService = {
 
   getHistory: async (limit: number = 10): Promise<PronunciationAttemptDto[]> => {
     return await apiClient.get(`/pronunciation/history?limit=${limit}`);
+  },
+
+  getPhrases: async (): Promise<PronunciationPhraseDto[]> => {
+    return await apiClient.get('/pronunciation/phrases');
   }
 };

@@ -70,9 +70,25 @@ namespace SWD392.LantechEnglish.Api.Controllers
             return Ok(ApiResponse<object>.SuccessResponse(questions));
         }
         [HttpGet("questions/{id}")] public IActionResult GetQuestion(Guid id) => Ok();
-        [HttpPost("questions")] public IActionResult CreateQuestion() => Ok();
-        [HttpPut("questions/{id}")] public IActionResult UpdateQuestion(Guid id) => Ok();
-        [HttpDelete("questions/{id}")] public IActionResult DeleteQuestion(Guid id) => Ok();
+        [HttpPost("questions")]
+        public async Task<IActionResult> CreateQuestion([FromBody] CreateExerciseRequest request)
+        {
+            var result = await _adminService.CreateExerciseAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Question created successfully"));
+        }
+        [HttpPut("questions/{id}")]
+        public async Task<IActionResult> UpdateQuestion(Guid id, [FromBody] CreateExerciseRequest request)
+        {
+            var result = await _adminService.UpdateExerciseAsync(id, request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Question updated successfully"));
+        }
+        [HttpDelete("questions/{id}")]
+        public async Task<IActionResult> DeleteQuestion(Guid id)
+        {
+            var result = await _adminService.DeleteExerciseAsync(id);
+            if (!result) return NotFound(ApiResponse<object>.ErrorResponse("Question not found"));
+            return Ok(ApiResponse<object>.SuccessResponse(true, "Question deleted successfully"));
+        }
 
         // 3. Lessons (5)
         [HttpGet("lessons")] 
@@ -82,9 +98,25 @@ namespace SWD392.LantechEnglish.Api.Controllers
             return Ok(ApiResponse<object>.SuccessResponse(lessons));
         }
         [HttpGet("lessons/{id}")] public IActionResult GetLesson(Guid id) => Ok();
-        [HttpPost("lessons")] public IActionResult CreateLesson() => Ok();
-        [HttpPut("lessons/{id}")] public IActionResult UpdateLesson(Guid id) => Ok();
-        [HttpDelete("lessons/{id}")] public IActionResult DeleteLesson(Guid id) => Ok();
+        [HttpPost("lessons")]
+        public async Task<IActionResult> CreateLesson([FromBody] CreateLessonRequest request)
+        {
+            var result = await _adminService.CreateLessonAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Lesson created successfully"));
+        }
+        [HttpPut("lessons/{id}")]
+        public async Task<IActionResult> UpdateLesson(Guid id, [FromBody] CreateLessonRequest request)
+        {
+            var result = await _adminService.UpdateLessonAsync(id, request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Lesson updated successfully"));
+        }
+        [HttpDelete("lessons/{id}")]
+        public async Task<IActionResult> DeleteLesson(Guid id)
+        {
+            var result = await _adminService.DeleteLessonAsync(id);
+            if (!result) return NotFound(ApiResponse<object>.ErrorResponse("Lesson not found"));
+            return Ok(ApiResponse<object>.SuccessResponse(true, "Lesson deleted successfully"));
+        }
 
         // 4. Exercises (5)
         [HttpGet("exercises")] public IActionResult GetExercises() => Ok();
@@ -101,9 +133,25 @@ namespace SWD392.LantechEnglish.Api.Controllers
             return Ok(ApiResponse<object>.SuccessResponse(vocabularies));
         }
         [HttpGet("vocabulary/{id}")] public IActionResult GetVocabulary(Guid id) => Ok();
-        [HttpPost("vocabulary")] public IActionResult CreateVocabulary() => Ok();
-        [HttpPut("vocabulary/{id}")] public IActionResult UpdateVocabulary(Guid id) => Ok();
-        [HttpDelete("vocabulary/{id}")] public IActionResult DeleteVocabulary(Guid id) => Ok();
+        [HttpPost("vocabulary")]
+        public async Task<IActionResult> CreateVocabulary([FromBody] CreateVocabularyRequest request)
+        {
+            var result = await _adminService.CreateVocabularyAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Vocabulary created successfully"));
+        }
+        [HttpPut("vocabulary/{id}")]
+        public async Task<IActionResult> UpdateVocabulary(Guid id, [FromBody] CreateVocabularyRequest request)
+        {
+            var result = await _adminService.UpdateVocabularyAsync(id, request);
+            return Ok(ApiResponse<object>.SuccessResponse(result, "Vocabulary updated successfully"));
+        }
+        [HttpDelete("vocabulary/{id}")]
+        public async Task<IActionResult> DeleteVocabulary(Guid id)
+        {
+            var result = await _adminService.DeleteVocabularyAsync(id);
+            if (!result) return NotFound(ApiResponse<object>.ErrorResponse("Vocabulary not found"));
+            return Ok(ApiResponse<object>.SuccessResponse(true, "Vocabulary deleted successfully"));
+        }
 
         // 6. Translations (4)
         [HttpGet("translations")] public IActionResult GetTranslations() => Ok();

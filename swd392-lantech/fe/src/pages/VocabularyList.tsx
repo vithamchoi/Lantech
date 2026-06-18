@@ -3,11 +3,13 @@ import { Search, Plus, Volume2, X, Loader2 } from "lucide-react";
 import { vocabularyService, VocabularyDto } from "../services/vocabularyService";
 import { flashcardService, FlashcardDto } from "../services/flashcardService";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 const CEFR_TABS = ["All", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
 type CefrTab = typeof CEFR_TABS[number];
 
 export default function VocabularyList() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState("");
   const [activeTab, setActiveTab] = useState<CefrTab>("All");
   const [vocabularies, setVocabularies] = useState<VocabularyDto[]>([]);
@@ -36,7 +38,7 @@ export default function VocabularyList() {
         
         setVocabularies(mappedVocabs);
       } catch (error) {
-        toast.error("Failed to load vocabulary list");
+        toast.error(t("failedToLoadVocabToast"));
       } finally {
         setIsLoading(false);
       }
@@ -56,15 +58,15 @@ export default function VocabularyList() {
         await flashcardService.removeFlashcard(id);
         setVocabularies(prev => prev.map(v => v.id === id ? { ...v, isInDeck: false } : v));
         if (selectedWord?.id === id) setSelectedWord(prev => prev ? { ...prev, isInDeck: false } : null);
-        toast.success("Removed from your flashcard deck!");
+        toast.success(t("removedFromDeckToast"));
       } else {
         await flashcardService.addFlashcard(id);
         setVocabularies(prev => prev.map(v => v.id === id ? { ...v, isInDeck: true } : v));
         if (selectedWord?.id === id) setSelectedWord(prev => prev ? { ...prev, isInDeck: true } : null);
-        toast.success("Added to your flashcard deck!");
+        toast.success(t("addedToDeckToast"));
       }
     } catch (error) {
-      toast.error("Failed to update deck");
+      toast.error(t("failedToUpdateDeckToast"));
     } finally {
       setIsTogglingDeck(prev => ({ ...prev, [id]: false }));
     }
@@ -87,14 +89,14 @@ export default function VocabularyList() {
       <div className="flex-1 overflow-y-auto px-8 py-7">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)", marginBottom: 4 }}>Vocabulary Desk</h1>
-            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>Browse, search, and add words to your flashcard deck</p>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)", marginBottom: 4 }}>{t("vocabTitle")}</h1>
+            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>{t("vocabSubtitle")}</p>
           </div>
           <div
             className="px-4 py-2 rounded-full"
             style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 700, fontSize: 13 }}
           >
-            {Object.values(deckState).filter(Boolean).length} in your deck
+            {t("inYourDeck", { count: Object.values(deckState).filter(Boolean).length.toString() })}
           </div>
         </div>
 
@@ -107,7 +109,7 @@ export default function VocabularyList() {
           <input
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Search vocabulary..."
+            placeholder={t("searchVocab")}
             className="flex-1 outline-none border-none bg-transparent"
             style={{ fontSize: 14, color: "var(--foreground)", fontFamily: "var(--font-family)" }}
           />
@@ -134,7 +136,7 @@ export default function VocabularyList() {
                 border: activeTab === tab ? "2px solid var(--brand)" : "2px solid var(--border)",
               }}
             >
-              {tab}
+              {tab === "All" ? t("all") : tab}
             </button>
           ))}
         </div>
@@ -197,9 +199,9 @@ export default function VocabularyList() {
                   {isTogglingDeck[word.id] ? (
                     <Loader2 size={11} className="animate-spin" />
                   ) : word.isInDeck ? (
-                    <><span>✓</span> In Deck</>
+                    <><span>✓</span> {t("inDeck")}</>
                   ) : (
-                    <><Plus size={11} /> Add to Deck</>
+                    <><Plus size={11} /> {t("addToDeck")}</>
                   )}
                 </button>
               </div>
@@ -209,8 +211,8 @@ export default function VocabularyList() {
           {!isLoading && filtered.length === 0 && (
             <div className="col-span-2 text-center py-16">
               <div style={{ fontSize: 56, marginBottom: 12 }}>😴</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--muted-foreground)" }}>No words found</div>
-              <div style={{ fontSize: 13, color: "var(--muted-foreground)", opacity: 0.7, marginTop: 4 }}>Try a different search or level filter</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "var(--muted-foreground)" }}>{t("noWordsFound")}</div>
+              <div style={{ fontSize: 13, color: "var(--muted-foreground)", opacity: 0.7, marginTop: 4 }}>{t("noWordsFoundSubtitle")}</div>
             </div>
           )}
         </div>
@@ -238,16 +240,16 @@ export default function VocabularyList() {
             onClick={() => handleSpeak(selectedWord.word)}
           >
             <Volume2 size={14} style={{ color: "#0369a1" }} />
-            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0369a1" }}>Listen</span>
+            <span style={{ fontSize: 12.5, fontWeight: 700, color: "#0369a1" }}>{t("listenBtnLabel")}</span>
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Definition</div>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("definitionLabel")}</div>
             <p style={{ fontSize: 14, color: "var(--foreground)", lineHeight: 1.7 }}>{selectedWord.definition}</p>
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Example</div>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("exampleLabelDetail")}</div>
             <p
               className="px-4 py-3 rounded-xl"
               style={{ fontSize: 13.5, color: "var(--foreground)", lineHeight: 1.7, background: "var(--muted)", fontStyle: "italic" }}
@@ -257,7 +259,7 @@ export default function VocabularyList() {
           </div>
 
           <div>
-            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
+            <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>{t("translationLabelDetail")}</div>
             <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{selectedWord.meaning}</p>
           </div>
 
@@ -265,7 +267,7 @@ export default function VocabularyList() {
             className="px-3 py-1.5 rounded-full"
             style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, fontSize: 12, width: "fit-content" }}
           >
-            {selectedWord.cefrLevel} Level
+            {t("levelLabelDetail", { level: selectedWord.cefrLevel })}
           </div>
 
           <button
@@ -277,7 +279,7 @@ export default function VocabularyList() {
               color: deckState[selectedWord.id] ? "#dc2626" : "#fff",
             }}
           >
-            {deckState[selectedWord.id] ? "Remove from Deck" : "Add to Flashcard Deck"}
+            {deckState[selectedWord.id] ? t("removeFromDeck") : t("addToFlashcardDeck")}
           </button>
         </div>
       )}

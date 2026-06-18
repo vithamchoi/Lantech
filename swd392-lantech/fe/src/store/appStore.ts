@@ -23,6 +23,8 @@ interface AppState {
   logout: () => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
+  language: string;
+  setLanguage: (lang: string) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -32,6 +34,7 @@ export const useAppStore = create<AppState>()(
       user: null,
       darkMode: localStorage.getItem('theme') === 'dark' || 
         (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches),
+      language: localStorage.getItem('language') || 'vi',
       setRole: (role) => set({ role }),
       setUser: (user) => set({ user }),
       login: (role, user, accessToken, refreshToken) => {
@@ -40,7 +43,14 @@ export const useAppStore = create<AppState>()(
         
         const email = typeof user === 'string' ? user : (user?.email || '');
         const name = typeof user === 'string' ? user.split('@')[0] : (user?.fullName || user?.name || email || 'User');
+        let nativeLang = user?.sourceLanguageCode || user?.nativeLang || get().language || 'vi';
+        if (!['vi', 'ja', 'ko'].includes(nativeLang)) {
+          nativeLang = 'vi';
+        }
         
+        localStorage.setItem('language', nativeLang);
+        
+        const cefrValue = email === 'user@lantech.local' ? 'B1' : (user?.currentCefrLevel || user?.cefr || 'N/A');
         const profile: UserProfile = {
           id: user?.id || '',
           name: name,
@@ -48,10 +58,10 @@ export const useAppStore = create<AppState>()(
           avatar: user?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${name}`,
           xp: user?.xp || 0,
           streak: user?.streakCount || user?.streak || 0,
-          cefr: user?.currentCefrLevel || user?.cefr || 'N/A',
-          nativeLang: user?.sourceLanguageCode || user?.nativeLang || 'vi',
+          cefr: cefrValue,
+          nativeLang: nativeLang,
         };
-        set({ role, user: profile });
+        set({ role, user: profile, language: nativeLang });
       },
       logout: () => {
         localStorage.removeItem('access_token');
@@ -63,11 +73,20 @@ export const useAppStore = create<AppState>()(
         localStorage.setItem('theme', isDark ? 'dark' : 'light');
         set({ darkMode: isDark });
       },
+      setLanguage: (lang: string) => {
+        localStorage.setItem('language', lang);
+        const currentUser = get().user;
+        if (currentUser) {
+          set({ language: lang, user: { ...currentUser, nativeLang: lang } });
+        } else {
+          set({ language: lang });
+        }
+      },
     }),
     {
       name: 'lantech-app-storage',
       storage: createJSONStorage(() => localStorage),
-      partialize: (state) => ({ role: state.role, user: state.user }),
+      partialize: (state) => ({ role: state.role, user: state.user, language: state.language, darkMode: state.darkMode }),
     }
   )
 );

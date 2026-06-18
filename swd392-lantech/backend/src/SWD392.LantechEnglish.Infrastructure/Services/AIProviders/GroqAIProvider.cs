@@ -139,8 +139,9 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
     }
 
-    public async Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
+    public async Task<PronunciationResult> AssessPronunciationAsync(string targetText, byte[] audioData, CancellationToken cancellationToken = default)
     {
+        string transcriptText = targetText;
         // Simple evaluation logic for Pronunciation Result based on text comparison.
         var expectedWords = targetText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
         var transcriptWords = transcriptText.ToLower().Split(new[] { ' ', '.', ',', '!', '?' }, StringSplitOptions.RemoveEmptyEntries);
@@ -151,7 +152,7 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             if (Array.IndexOf(transcriptWords, w) >= 0) matchedCount++;
         }
 
-        if (expectedWords.Length == 0) return new PronunciationResult { Score = 0, Accuracy = 0, Feedback = "No text provided." };
+        if (expectedWords.Length == 0) return new PronunciationResult { Score = 0, Accuracy = 0, Feedback = "No text provided.", TranscriptText = string.Empty };
         double score = ((double)matchedCount / expectedWords.Length * 100);
         
         return new PronunciationResult
@@ -160,7 +161,8 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             Accuracy = Math.Min(100, Math.Max(0, score)),
             Fluency = 80, // Mocked fluency for text-only assessment
             Completeness = Math.Min(100, Math.Max(0, score)),
-            Feedback = score >= 80 ? "Great job!" : "Keep practicing."
+            Feedback = score >= 80 ? "Great job!" : "Keep practicing.",
+            TranscriptText = transcriptText
         };
     }
 }

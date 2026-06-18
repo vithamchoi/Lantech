@@ -3,6 +3,7 @@ import { RotateCcw, ChevronLeft, ChevronRight, Volume2, Loader2 } from "lucide-r
 import { flashcardService, FlashcardDto } from "../services/flashcardService";
 import { useAppStore } from "../store/appStore";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 const GRADE_OPTIONS = [
   { score: 0, label: "Forgot", color: "#FF4B4B", bg: "#fee2e2", emoji: "😭" },
@@ -11,6 +12,7 @@ const GRADE_OPTIONS = [
 
 export default function FlashcardDeck() {
   const { darkMode } = useAppStore();
+  const { t } = useTranslation();
   const [dueCards, setDueCards] = useState<FlashcardDto[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -26,7 +28,7 @@ export default function FlashcardDeck() {
         const data = await flashcardService.getFlashcards();
         setDueCards(data);
       } catch (error) {
-        toast.error("Failed to load your cards for today");
+        toast.error(t("failedToLoadCardsToast"));
       } finally {
         setIsLoading(false);
       }
@@ -49,7 +51,7 @@ export default function FlashcardDeck() {
         setTimeout(() => setSessionDone(true), 300);
       }
     } catch (error) {
-      toast.error("Failed to record your review");
+      toast.error(t("failedToRecordReviewToast"));
     } finally {
       setIsSubmitting(false);
     }
@@ -77,9 +79,9 @@ export default function FlashcardDeck() {
       <div className="h-full min-h-screen flex items-center justify-center text-center p-4" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
         <div className="max-w-md">
           <div style={{ fontSize: 80, marginBottom: 16 }}>✨</div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>All Caught Up!</h2>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>{t("allCaughtUp")}</h2>
           <p style={{ fontSize: 15, color: "var(--muted-foreground)", marginBottom: 32 }}>
-            You have no cards due for review today. Great job staying consistent!
+            {t("noCardsDueSub")}
           </p>
         </div>
       </div>
@@ -117,19 +119,19 @@ export default function FlashcardDeck() {
       <div className="h-full min-h-screen flex items-center justify-center" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
         <div className="text-center max-w-md w-full px-4">
           <div style={{ fontSize: 80, marginBottom: 16 }}>🎉</div>
-          <h2 style={{ fontSize: 28, fontWeight: 900, color: "#3c3c3c", marginBottom: 8 }}>Session Complete!</h2>
-          <p style={{ fontSize: 15, color: "#888", marginBottom: 32 }}>
-            You reviewed {totalCount} cards today. Here's your insight:
+          <h2 style={{ fontSize: 28, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>{t("sessionComplete")}</h2>
+          <p style={{ fontSize: 15, color: "var(--muted-foreground)", marginBottom: 32 }}>
+            {t("reviewedInsight", { count: totalCount.toString() })}
           </p>
           
           <div className="flex gap-4 mb-8">
             <div className="flex-1 rounded-2xl p-4 text-center border-2 border-red-100 bg-red-50">
               <div style={{ fontWeight: 800, fontSize: 24, color: "#FF4B4B" }}>{forgotCount}</div>
-              <div style={{ fontSize: 13, color: "#FF4B4B", fontWeight: 600, marginTop: 4 }}>Forgot</div>
+              <div style={{ fontSize: 13, color: "#FF4B4B", fontWeight: 600, marginTop: 4 }}>{t("forgotLabel")}</div>
             </div>
             <div className="flex-1 rounded-2xl p-4 text-center border-2 border-green-100 bg-green-50">
               <div style={{ fontWeight: 800, fontSize: 24, color: "#22c55e" }}>{rememberedCount}</div>
-              <div style={{ fontSize: 13, color: "#22c55e", fontWeight: 600, marginTop: 4 }}>Remembered</div>
+              <div style={{ fontSize: 13, color: "#22c55e", fontWeight: 600, marginTop: 4 }}>{t("rememberedLabel")}</div>
             </div>
           </div>
 
@@ -144,7 +146,7 @@ export default function FlashcardDeck() {
             }}
           >
             <RotateCcw size={18} className="inline mr-2 -mt-1" />
-            {forgotCards.length > 0 ? `Review ${forgotCards.length} Forgotten Cards` : "Start New Session"}
+            {forgotCards.length > 0 ? t("reviewForgottenBtn", { count: forgotCards.length.toString() }) : t("startNewSessionBtn")}
           </button>
         </div>
       </div>
@@ -157,15 +159,15 @@ export default function FlashcardDeck() {
       <div className="px-8 py-6 border-b" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)" }}>Flashcard Box</h1>
-            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>Spaced Repetition Review Session</p>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)" }}>{t("flashcardBoxTitle")}</h1>
+            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>{t("spacedRepSubtitle")}</p>
           </div>
           <div
             className="px-4 py-2 rounded-full font-bold text-xs"
             style={{ background: totalDue > 0 ? (darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed") : "var(--brand-light)" }}
           >
             <span style={{ color: darkMode ? "#fdba74" : "#c2410c" }}>{graded}/{totalDue}</span>
-            <span style={{ color: "var(--muted-foreground)", marginLeft: 4 }}>reviewed</span>
+            <span style={{ color: "var(--muted-foreground)", marginLeft: 4 }}>{t("reviewedLabelHeader")}</span>
           </div>
         </div>
         {/* Progress bar */}
@@ -176,8 +178,8 @@ export default function FlashcardDeck() {
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{graded} graded</span>
-          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{totalDue - graded} remaining</span>
+          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{graded} {t("gradedLabelHeader")}</span>
+          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{totalDue - graded} {t("remainingLabelHeader")}</span>
         </div>
       </div>
 
@@ -246,7 +248,7 @@ export default function FlashcardDeck() {
                   className="px-3 py-1 rounded-full mb-4"
                   style={{ background: darkMode ? "#0f2d4a" : "#e0f2fe", color: darkMode ? "#38bdf8" : "#0369a1", fontSize: 12, fontWeight: 700 }}
                 >
-                   {current.partOfSpeech || 'Word'}
+                   {current.partOfSpeech || t("wordLabelDefault")}
                 </div>
                 <div style={{ fontSize: 36, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>
                   {current.word}
@@ -260,10 +262,10 @@ export default function FlashcardDeck() {
                   onClick={e => handleSpeak(e, current.word)}
                 >
                   <Volume2 size={14} />
-                  Listen
+                  {t("listenBtnLabel")}
                 </button>
                 <div style={{ fontSize: 12.5, color: "var(--muted-foreground)", marginTop: 24, fontWeight: 500 }}>
-                  Tap to reveal ↓
+                  {t("tapToReveal")}
                 </div>
               </div>
 
@@ -310,7 +312,7 @@ export default function FlashcardDeck() {
           {isFlipped && (
             <div className="w-full max-w-[440px]">
               <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 600, textAlign: "center", marginBottom: 16 }}>
-                How well did you remember this word?
+                {t("recallConfidencePrompt")}
               </p>
               <div className="flex gap-4 w-full">
                 {GRADE_OPTIONS.map(g => (
@@ -330,7 +332,7 @@ export default function FlashcardDeck() {
                       <Loader2 size={24} className="animate-spin mb-1" style={{ color: g.color }} />
                     ) : null}
                     <span style={{ fontWeight: 800, fontSize: 16, color: g.color, letterSpacing: "-0.01em" }}>
-                      {g.label}
+                      {g.score === 0 ? t("forgotLabel") : t("rememberedLabel")}
                     </span>
                   </button>
                 ))}
@@ -340,7 +342,7 @@ export default function FlashcardDeck() {
 
           {!isFlipped && (
             <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 500, textAlign: "center" }}>
-              Tap the card to see the answer
+              {t("tapCardHint")}
             </p>
           )}
         </div>

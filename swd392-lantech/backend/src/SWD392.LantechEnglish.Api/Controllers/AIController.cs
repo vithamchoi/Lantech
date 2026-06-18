@@ -258,4 +258,28 @@ public class AIController : ControllerBase
         }
     }
 
+    public class GeneratePhoneticsRequest
+    {
+        [Required]
+        public string Text { get; set; } = null!;
+    }
+
+    /// <summary>
+    /// Generate IPA phonetics for a word or sentence using AI
+    /// </summary>
+    [HttpPost("generate-phonetics")]
+    [ProducesResponseType(typeof(ApiResponse<string>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GeneratePhonetics([FromBody] GeneratePhoneticsRequest request, CancellationToken cancellationToken)
+    {
+        try
+        {
+            var result = await _aiService.GeneratePhoneticIpaAsync(request.Text, cancellationToken);
+            return Ok(ApiResponse<string>.SuccessResponse(result, "Phonetics generated successfully"));
+        }
+        catch (Exception ex)
+        {
+            return BadRequest(ApiResponse.ErrorResponse(ex.Message));
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
 import { useAppStore } from "../store/appStore";
+import { useTranslation } from "../hooks/useTranslation";
 
 const SLIDES = [
   {
@@ -49,6 +50,7 @@ const SLIDES = [
 export default function LessonRoom() {
   const navigate = useNavigate();
   const { user, setUser } = useAppStore();
+  const { t } = useTranslation();
   const [slideIndex, setSlideIndex] = useState(0);
   const [answer, setAnswer] = useState("");
   const [submitted, setSubmitted] = useState(false);
@@ -93,13 +95,13 @@ export default function LessonRoom() {
             className="inline-block px-6 py-2 rounded-full mb-4"
             style={{ background: "var(--brand-gold-light)", color: "#92400e", fontWeight: 800, fontSize: 16 }}
           >
-            +80 XP Earned!
+            {t("xpEarned", { xp: "80" })}
           </div>
           <h2 style={{ fontSize: 28, fontWeight: 900, color: "#3c3c3c", marginBottom: 10 }}>
-            Lesson Complete! 🌱
+            {t("lessonCompleteTitle")}
           </h2>
           <p style={{ fontSize: 15, color: "#888", lineHeight: 1.7, marginBottom: 32 }}>
-            You've finished "Daily Routines — Present Continuous". Your orchard is growing!
+            {t("lessonCompleteDesc")}
           </p>
           <div className="flex gap-3 justify-center">
             <button
@@ -108,7 +110,7 @@ export default function LessonRoom() {
               className="px-8 py-3.5 rounded-2xl cursor-pointer border-none outline-none font-bold text-white shadow-md transition-all"
               style={{ background: "var(--brand)", boxShadow: "0 4px 0 var(--brand-dark)" }}
             >
-              Back to Trail →
+              {t("backToTrail")}
             </button>
             <button
               onClick={() => { setSlideIndex(0); setCompleted(false); setAnswer(""); setSubmitted(false); }}
@@ -116,7 +118,7 @@ export default function LessonRoom() {
               className="px-6 py-3.5 rounded-2xl cursor-pointer transition-all border"
               style={{ background: "#fff", borderColor: "rgba(0,0,0,0.1)", color: "#3c3c3c", fontWeight: 700 }}
             >
-              Review Again
+              {t("reviewAgain")}
             </button>
           </div>
         </div>
@@ -137,7 +139,7 @@ export default function LessonRoom() {
           className="flex items-center gap-1 cursor-pointer border-none outline-none bg-transparent"
           style={{ color: "#888", fontWeight: 700, fontSize: 13.5 }}
         >
-          <ChevronLeft size={16} /> Exit Lesson
+          <ChevronLeft size={16} /> {t("exitLesson")}
         </button>
         <div
           className="px-3 py-1.5 rounded-full"
@@ -182,14 +184,14 @@ export default function LessonRoom() {
                   style={{ background: "var(--brand-light)", border: "2px solid var(--brand)" }}
                 >
                   <div style={{ fontSize: 11, fontWeight: 700, color: "var(--brand-dark)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 4 }}>
-                    Structure
+                    {t("structureLabel")}
                   </div>
                   <div style={{ fontSize: 16, fontWeight: 800, color: "var(--brand-dark)" }}>{slide.structure}</div>
                 </div>
               )}
 
               <div>
-                <div style={{ fontSize: 12, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>Examples</div>
+                <div style={{ fontSize: 12, fontWeight: 700, color: "#aaa", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>{t("examplesLabel")}</div>
                 <div className="flex flex-col gap-2">
                   {slide.examples?.map((ex, i) => (
                     <div
@@ -215,7 +217,7 @@ export default function LessonRoom() {
               <div className="text-center mb-6">
                 <div style={{ fontSize: 52, marginBottom: 10 }}>{slide.emoji}</div>
                 <h2 style={{ fontSize: 20, fontWeight: 900, color: "#3c3c3c", marginBottom: 6 }}>{slide.title}</h2>
-                <p style={{ fontSize: 13.5, color: "#888" }}>Type your answer in the box below</p>
+                <p style={{ fontSize: 13.5, color: "#888" }}>{t("typeAnswerDesc")}</p>
               </div>
               <div
                 className="rounded-2xl px-5 py-4 mb-6"
@@ -228,7 +230,7 @@ export default function LessonRoom() {
                 value={answer}
                 onChange={e => setAnswer(e.target.value)}
                 disabled={submitted}
-                placeholder="Type your answer here..."
+                placeholder={t("typeAnswerPlaceholder")}
                 className="w-full px-5 py-3.5 rounded-2xl outline-none mb-4"
                 style={{
                   border: submitted
@@ -255,11 +257,11 @@ export default function LessonRoom() {
                   )}
                   <div>
                     <div style={{ fontWeight: 800, fontSize: 14.5, color: isCorrect ? "var(--brand-dark)" : "#dc2626" }}>
-                      {isCorrect ? "Excellent! 🎉" : "Not quite — keep trying!"}
+                      {isCorrect ? t("excellentLabel") : t("notQuiteLabel")}
                     </div>
                     {!isCorrect && (
                       <div style={{ fontSize: 13.5, color: "#991b1b", marginTop: 4 }}>
-                        Correct answer: <strong>{slide.answer}</strong>
+                        {t("correctAnswerWas")} <strong>{slide.answer}</strong>
                       </div>
                     )}
                   </div>
@@ -276,11 +278,11 @@ export default function LessonRoom() {
                     background: answer.trim() ? "var(--brand)" : "#e5e7eb",
                   }}
                 >
-                  Check Answer
+                  {t("checkAnswer")}
                 </button>
               ) : (
                 <button onClick={handleNext} type="button" className="w-full py-3.5 rounded-2xl cursor-pointer border-none outline-none text-white font-bold" style={{ background: "var(--brand)" }}>
-                  Continue →
+                  {t("continueLabel")}
                 </button>
               )}
             </div>
@@ -325,7 +327,7 @@ export default function LessonRoom() {
                 ))}
               </div>
               <button onClick={handleNext} type="button" className="w-full py-3.5 rounded-2xl cursor-pointer border-none outline-none text-white font-bold" style={{ background: "var(--brand)" }}>
-                Continue →
+                {t("continueLabel")}
               </button>
             </div>
           )}
@@ -344,7 +346,7 @@ export default function LessonRoom() {
                 fontSize: 13,
               }}
             >
-              <ChevronLeft size={15} /> Previous
+              <ChevronLeft size={15} /> {t("previousLabel")}
             </button>
 
             <div className="flex gap-1.5">
@@ -368,7 +370,7 @@ export default function LessonRoom() {
                 className="flex items-center gap-1 px-4 py-2 rounded-xl cursor-pointer border-none outline-none text-white font-bold"
                 style={{ background: "var(--brand)" }}
               >
-                Next <ChevronRight size={15} />
+                {t("nextLabel")} <ChevronRight size={15} />
               </button>
             ) : (
               <div style={{ width: 90 }} />

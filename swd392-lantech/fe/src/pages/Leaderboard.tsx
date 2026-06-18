@@ -3,6 +3,7 @@ import { useAppStore } from "../store/appStore";
 import { gamificationService, LeaderboardEntryDto } from "../services/gamificationService";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 type Period = "weekly" | "monthly" | "all-time";
 
@@ -12,6 +13,7 @@ const PODIUM_HEIGHTS = [120, 90, 70];
 
 export default function Leaderboard() {
   const { user } = useAppStore();
+  const { t } = useTranslation();
   const [period, setPeriod] = useState<Period>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntryDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -21,15 +23,20 @@ export default function Leaderboard() {
       setIsLoading(true);
       try {
         const data = await gamificationService.getLeaderboard(period);
-        setEntries(data.entries);
+        const mappedEntries = (data.entries || []).map((entry: any) => ({
+          ...entry,
+          totalXp: entry.xp ?? entry.totalXp ?? 0,
+          isCurrentUser: user ? entry.userId === user.id : false
+        }));
+        setEntries(mappedEntries);
       } catch (error) {
-        toast.error("Failed to load leaderboard");
+        toast.error(t("failedToLoadLeaderboard"));
       } finally {
         setIsLoading(false);
       }
     };
     fetchLeaderboard();
-  }, [period]);
+  }, [period, user?.id]);
 
   if (!user) return null;
 
@@ -45,31 +52,28 @@ export default function Leaderboard() {
   }
 
   return (
-    <div className="overflow-y-auto h-full px-8 py-7 text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
+    <div className="overflow-y-auto h-full px-8 py-7 text-left bg-background text-foreground" style={{ fontFamily: "var(--font-family)" }}>
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 style={{ fontSize: 26, fontWeight: 900, color: "#3c3c3c", marginBottom: 4 }}>🏆 Leaderboard</h1>
-          <p style={{ fontSize: 14, color: "#888" }}>See how you stack up against other learners worldwide</p>
+          <h1 className="text-[26px] font-black text-foreground mb-1">🏆 {t("leaderboardTitle")}</h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400">{t("leaderboardSubtitle")}</p>
         </div>
 
         {/* Period tabs */}
         <div
-          className="flex rounded-2xl p-1 mb-8"
-          style={{ background: "#f3f4f6" }}
+          className="flex rounded-2xl p-1 mb-8 bg-cream-200 dark:bg-slate-900/50 border border-sage/50 dark:border-[#2C3531]/50"
         >
-          {([["weekly", "Weekly"], ["monthly", "Monthly"], ["all-time", "All Time"]] as [Period, string][]).map(([p, label]) => (
+          {([["weekly", t("periodWeekly")], ["monthly", t("periodMonthly")], ["all-time", t("periodAllTime")]] as [Period, string][]).map(([p, label]) => (
             <button
               key={p}
               onClick={() => setPeriod(p)}
               type="button"
-              className="flex-1 py-2 rounded-xl cursor-pointer transition-all border-none outline-none"
+              className="flex-1 py-2 rounded-xl cursor-pointer transition-all border-none outline-none font-bold text-[13.5px]"
               style={{
-                background: period === p ? "#fff" : "transparent",
-                color: period === p ? "#3c3c3c" : "#888",
-                fontWeight: 700,
-                fontSize: 13.5,
-                boxShadow: period === p ? "0 1px 8px rgba(0,0,0,0.08)" : "none",
+                background: period === p ? "var(--brand)" : "transparent",
+                color: period === p ? "#fff" : "var(--muted-foreground)",
+                boxShadow: period === p ? "0 4px 12px rgba(88, 204, 2, 0.25)" : "none",
               }}
             >
               {label}
@@ -96,23 +100,23 @@ export default function Leaderboard() {
                         border: `3px solid ${PODIUM_COLORS[podiumIndex]}`,
                         fontWeight: 800,
                         fontSize: 16,
-                        color: podiumIndex === 0 ? "#fff" : "#3c3c3c",
+                        color: podiumIndex === 0 ? "#fff" : "var(--foreground)",
                       }}
                     >
                       {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="w-full h-full rounded-full" /> : (player.fullName || "Un").substring(0, 2).toUpperCase()}
                     </div>
                     <div
-                      className="absolute -top-2 -right-1 w-5 h-5 rounded-full flex items-center justify-center"
-                      style={{ fontSize: 12, background: "#fff", border: "1.5px solid #e5e7eb" }}
+                      className="absolute -top-2 -right-1 w-5 h-5 rounded-full flex items-center justify-center bg-white dark:bg-[#1E2522] border border-sage dark:border-[#2C3531]"
+                      style={{ fontSize: 12 }}
                     >
                       {PODIUM_EMOJIS[podiumIndex]}
                     </div>
                   </div>
 
-                  <div style={{ fontWeight: 800, fontSize: 13, color: "#3c3c3c", marginBottom: 4, textAlign: "center" }}>
+                  <div className="font-extrabold text-[13px] text-foreground mb-1 text-center">
                     {player.fullName?.split(" ")[0] || "Unknown"}
                   </div>
-                  <div style={{ fontSize: 12, color: "#888", fontWeight: 600, marginBottom: 6 }}>
+                  <div className="text-[12px] text-slate-500 dark:text-slate-400 font-semibold mb-1.5">
                     {(player.totalXp || 0).toLocaleString()} XP
                   </div>
 
@@ -121,7 +125,7 @@ export default function Leaderboard() {
                     className="w-24 rounded-t-2xl flex items-center justify-center"
                     style={{
                       height: PODIUM_HEIGHTS[podiumIndex],
-                      background: `linear-gradient(180deg, ${PODIUM_COLORS[podiumIndex]}44 0%, ${PODIUM_COLORS[podiumIndex]}22 100%)`,
+                      background: `linear-gradient(180deg, ${PODIUM_COLORS[podiumIndex]}44 0%, ${PODIUM_COLORS[podiumIndex]}11 100%)`,
                       border: `2px solid ${PODIUM_COLORS[podiumIndex]}66`,
                       fontWeight: 900,
                       fontSize: 24,
@@ -135,41 +139,40 @@ export default function Leaderboard() {
             })}
           </div>
         ) : (
-          <div className="text-center p-10 text-slate-400 font-bold">Not enough entries for podium yet.</div>
+          <div className="text-center p-10 text-slate-400 font-bold">{t("notEnoughEntries")}</div>
         )}
 
         {/* Detailed ranking table */}
         <div
-          className="rounded-3xl overflow-hidden"
-          style={{ border: "2px solid rgba(0,0,0,0.06)", boxShadow: "0 4px 20px rgba(0,0,0,0.05)" }}
+          className="rounded-3xl overflow-hidden border border-sage dark:border-[#2C3531] shadow-diffuse"
         >
           {/* Table header */}
           <div
-            className="grid px-5 py-3"
+            className="grid px-5 py-3 bg-cream-200 dark:bg-slate-900/80 border-b border-sage dark:border-[#2C3531]"
             style={{
-              background: "#f7f7f7",
               gridTemplateColumns: "40px 1fr 100px",
               fontSize: 11.5,
               fontWeight: 700,
-              color: "#aaa",
+              color: "var(--muted-foreground)",
               textTransform: "uppercase",
               letterSpacing: 0.8,
             }}
           >
-            <div>Rank</div>
-            <div>Player</div>
-            <div className="text-right">XP Points</div>
+            <div>{t("rankLabel")}</div>
+            <div>{t("userLabel")}</div>
+            <div className="text-right">{t("xpLabel")}</div>
           </div>
 
           {/* Rows */}
           {entries.map((player, i) => (
             <div
               key={player.userId}
-              className="grid items-center px-5 py-3.5 border-t transition-all"
+              className="grid items-center px-5 py-3.5 border-t border-sage dark:border-[#2C3531] transition-all"
               style={{
                 gridTemplateColumns: "40px 1fr 100px",
-                background: player.isCurrentUser ? "linear-gradient(90deg, var(--brand-light), #f0fdf4)" : i % 2 === 0 ? "#fff" : "#fafafa",
-                borderColor: "rgba(0,0,0,0.06)",
+                background: player.isCurrentUser 
+                  ? "var(--accent)" 
+                  : i % 2 === 0 ? "var(--card)" : "var(--background)",
                 borderLeft: player.isCurrentUser ? "4px solid var(--brand)" : "4px solid transparent",
               }}
             >
@@ -178,7 +181,7 @@ export default function Leaderboard() {
                 {player.rank <= 3 ? (
                   <span style={{ fontSize: 18 }}>{PODIUM_EMOJIS[player.rank - 1]}</span>
                 ) : (
-                  <span style={{ fontWeight: 800, fontSize: 14, color: "#aaa" }}>#{player.rank}</span>
+                  <span className="font-extrabold text-[14px] text-slate-400 dark:text-slate-500">#{player.rank}</span>
                 )}
               </div>
 
@@ -187,41 +190,40 @@ export default function Leaderboard() {
                 <div
                   className="w-9 h-9 rounded-full flex items-center justify-center shrink-0"
                   style={{
-                    background: player.isCurrentUser ? "var(--brand)" : "#e5e7eb",
+                    background: player.isCurrentUser ? "var(--brand)" : "var(--input-background)",
                     fontWeight: 800,
                     fontSize: 12,
-                    color: player.isCurrentUser ? "#fff" : "#888",
+                    color: player.isCurrentUser ? "#fff" : "var(--foreground)",
                   }}
                 >
                   {player.avatarUrl ? <img src={player.avatarUrl} alt="" className="w-full h-full rounded-full" /> : (player.fullName || "Un").substring(0, 2).toUpperCase()}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
-                    <span style={{ fontWeight: 700, fontSize: 14, color: "#3c3c3c" }}>{player.fullName || "Unknown"}</span>
+                    <span className="font-bold text-[14px] text-foreground">{player.fullName || "Unknown"}</span>
                     {player.isCurrentUser && (
                       <span
-                        className="px-2 py-0.5 rounded-full"
-                        style={{ background: "var(--brand)", color: "#fff", fontSize: 10, fontWeight: 700 }}
+                        className="px-2 py-0.5 rounded-full text-[10px] font-bold text-white bg-brand"
                       >
-                        You
+                        {t("youLabel")}
                       </span>
                     )}
                   </div>
                   <span
-                    className="px-2 py-0.5 rounded-full"
-                    style={{ background: "#e0f2fe", color: "#0369a1", fontSize: 10.5, fontWeight: 700 }}
+                    className="px-2 py-0.5 rounded-full text-[10.5px] font-bold"
+                    style={{ background: "var(--input-background)", color: "var(--muted-foreground)" }}
                   >
-                    {player.level || "Beginner"}
+                    {player.level || t("levelBeginner")}
                   </span>
                 </div>
               </div>
 
               {/* XP */}
               <div className="text-right">
-                <span style={{ fontWeight: 800, fontSize: 14, color: player.isCurrentUser ? "var(--brand-dark)" : "#3c3c3c" }}>
+                <span className="font-extrabold text-[14px] text-foreground">
                   {(player.totalXp || 0).toLocaleString()}
                 </span>
-                <span style={{ fontSize: 11.5, color: "#aaa", marginLeft: 2 }}>XP</span>
+                <span className="text-[11.5px] text-slate-400 dark:text-slate-500 ml-1">XP</span>
               </div>
             </div>
           ))}

@@ -69,4 +69,9 @@ public class AIService : IAIService
         }
         return await _aiProvider.GenerateLearningPathAsync(level, sourceLanguageCode, weakSkills, cancellationToken);
     }
+
+    public async Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default)
+    {
+        return await _aiProvider.GeneratePhoneticIpaAsync(text, cancellationToken);
+    }
 }

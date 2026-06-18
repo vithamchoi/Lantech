@@ -19,4 +19,6 @@ public interface IAIService
     Task<string> AnalyzeWeaknessesAsync(string historySummaryJson, string sourceLanguageCode, CancellationToken cancellationToken = default);
 
     Task<string> GenerateLearningPathAsync(string cefrLevel, string sourceLanguageCode, List<string> weakSkills, CancellationToken cancellationToken = default);
+
+    Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default);
 }

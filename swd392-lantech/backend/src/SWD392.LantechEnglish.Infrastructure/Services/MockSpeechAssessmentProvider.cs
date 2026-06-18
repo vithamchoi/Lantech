@@ -6,9 +6,9 @@ namespace SWD392.LantechEnglish.Infrastructure.Services;
 
 public class MockSpeechAssessmentProvider : ISpeechAssessmentProvider
 {
-    public Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
+    public Task<PronunciationResult> AssessPronunciationAsync(string targetText, byte[] audioData, CancellationToken cancellationToken = default)
     {
-        if (string.IsNullOrWhiteSpace(targetText) || string.IsNullOrWhiteSpace(transcriptText))
+        if (string.IsNullOrWhiteSpace(targetText) || audioData == null || audioData.Length == 0)
         {
             return Task.FromResult(new PronunciationResult
             {
@@ -16,10 +16,13 @@ public class MockSpeechAssessmentProvider : ISpeechAssessmentProvider
                 Accuracy = 0,
                 Fluency = 0,
                 Completeness = 0,
-                Feedback = "Please provide both target text and speech transcript.",
-                WordLevelFeedbackJson = "[]"
+                Feedback = "Please provide both target text and speech audio.",
+                WordLevelFeedbackJson = "[]",
+                TranscriptText = string.Empty
             });
         }
+
+        string transcriptText = targetText;
 
         // Clean text helper (removes punctuation, converts to lower case)
         string Clean(string text) => Regex.Replace(text.ToLower(), @"[^\w\s]", "").Trim();
@@ -64,7 +67,8 @@ public class MockSpeechAssessmentProvider : ISpeechAssessmentProvider
             Feedback = overallScore >= 80 
                 ? "Excellent pronunciation! Your pacing and accuracy are very natural." 
                 : "Good attempt. Practice repeating the sentence slowly to improve accuracy.",
-            WordLevelFeedbackJson = JsonSerializer.Serialize(wordFeedbacks)
+            WordLevelFeedbackJson = JsonSerializer.Serialize(wordFeedbacks),
+            TranscriptText = transcriptText
         };
 
         return Task.FromResult(result);

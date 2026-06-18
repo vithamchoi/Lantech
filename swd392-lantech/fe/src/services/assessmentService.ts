@@ -40,8 +40,8 @@ export const assessmentService = {
     return response.data.data;
   },
 
-  startAssessment: async (): Promise<AssessmentDetailDto> => {
-    const response = await apiClient.post<any>('/assessments/start');
+  startAssessment: async (sourceLanguageCode: string = 'vi'): Promise<AssessmentDetailDto> => {
+    const response = await apiClient.post<any>('/assessments/start', { sourceLanguageCode });
     return response.data.data;
   },
 

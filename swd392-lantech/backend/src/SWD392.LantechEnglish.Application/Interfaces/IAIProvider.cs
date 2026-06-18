@@ -25,4 +25,6 @@ public interface IAIProvider
     Task<(double Score, string Feedback)> GradeSpeakingAsync(string prompt, string transcriptText, string targetText, string sourceLanguageCode, CancellationToken cancellationToken = default);
     
     Task<byte[]> GenerateAudioAsync(string text, string voice = "alloy", CancellationToken cancellationToken = default);
+
+    Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default);
 }

@@ -48,8 +48,8 @@ export default function AdminCurriculum() {
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Curriculum CMS</span>
-            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Chapters & Unit Structure</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Quản Lý Giáo Trình</span>
+            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Cấu trúc Chương & Bài học</h1>
           </div>
         </div>
 
@@ -58,7 +58,7 @@ export default function AdminCurriculum() {
             const newUnit: CurriculumUnit = {
               id: Date.now().toString(),
               unitNum: units.length + 1,
-              title: 'New Forest Chapter',
+              title: 'Chương Lâm Nghiệp Mới',
               level: 'B1',
               lessonsCount: 2,
               quizzesCount: 1
@@ -68,7 +68,7 @@ export default function AdminCurriculum() {
           }}
           className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all"
         >
-          <Plus className="w-4 h-4" /> Create Chapter
+          <Plus className="w-4 h-4" /> Tạo Chương Mới
         </button>
       </div>
 
@@ -83,16 +83,16 @@ export default function AdminCurriculum() {
                 </div>
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="text-xs font-bold text-slate-400">Unit {unit.unitNum}</span>
+                    <span className="text-xs font-bold text-slate-400">Bài {unit.unitNum}</span>
                     <span className="px-2 py-0.5 bg-slate-900 text-white text-[9px] font-bold rounded">
                       {unit.level}
                     </span>
                   </div>
                   <h4 className="font-bold text-base text-slate">{unit.title}</h4>
                   <div className="flex items-center gap-4 text-xs text-slate-400 font-semibold pt-1">
-                    <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {unit.lessonsCount} lessons</span>
+                    <span className="flex items-center gap-1"><BookOpen className="w-3.5 h-3.5" /> {unit.lessonsCount} bài học</span>
                     <span>•</span>
-                    <span>{unit.quizzesCount} quizzes</span>
+                    <span>{unit.quizzesCount} bài kiểm tra</span>
                   </div>
                 </div>
               </div>
@@ -103,7 +103,7 @@ export default function AdminCurriculum() {
                   onClick={() => handleEdit(unit)}
                   className="flex items-center gap-1.5 px-3 py-1.5 bg-cream-200 hover:bg-cream-300 text-slate text-xs font-bold rounded-control transition-all"
                 >
-                  <Edit2 className="w-3.5 h-3.5" /> Edit Unit
+                  <Edit2 className="w-3.5 h-3.5" /> Sửa Bài học
                 </button>
                 <button
                   onClick={() => handleDelete(unit.id)}
@@ -122,7 +122,7 @@ export default function AdminCurriculum() {
         <div className="fixed inset-0 bg-slate/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
-              <h3 className="font-outfit font-bold text-lg text-slate">Edit Unit Details</h3>
+              <h3 className="font-outfit font-bold text-lg text-slate">Chỉnh Sửa Chi Tiết Bài học</h3>
               <button 
                 onClick={() => setEditingUnit(null)}
                 className="p-1 hover:bg-cream-200 rounded"
@@ -133,7 +133,7 @@ export default function AdminCurriculum() {
 
             <div className="space-y-4 text-left">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Chapter Title</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tiêu đề Chương</label>
                 <input
                   type="text"
                   value={editingUnit.title}
@@ -144,7 +144,7 @@ export default function AdminCurriculum() {
 
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Unit Number</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Số Thứ Tự Bài</label>
                   <input
                     type="number"
                     value={editingUnit.unitNum}
@@ -154,7 +154,7 @@ export default function AdminCurriculum() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Target level</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cấp độ Mục tiêu</label>
                   <select
                     value={editingUnit.level}
                     onChange={(e) => setEditingUnit({ ...editingUnit, level: e.target.value })}
@@ -168,7 +168,7 @@ export default function AdminCurriculum() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Lessons</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Số Bài học</label>
                   <input
                     type="number"
                     value={editingUnit.lessonsCount}
@@ -184,13 +184,13 @@ export default function AdminCurriculum() {
                 onClick={() => setEditingUnit(null)}
                 className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={handleSave}
                 className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Save Curriculum
+                <Check className="w-4 h-4" /> Lưu Giáo trình
               </button>
             </div>
           </div>

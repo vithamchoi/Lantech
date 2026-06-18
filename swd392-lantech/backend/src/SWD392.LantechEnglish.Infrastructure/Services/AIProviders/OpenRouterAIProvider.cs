@@ -233,7 +233,7 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
     }
 
-    public Task<PronunciationResult> AssessPronunciationAsync(string targetText, string transcriptText, CancellationToken cancellationToken = default)
+    public Task<PronunciationResult> AssessPronunciationAsync(string targetText, byte[] audioData, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException("OpenRouter does not support native speech assessment in this environment.");
     }

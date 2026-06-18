@@ -173,4 +173,9 @@ public class MockAIProvider : IAIProvider
         catch { }
         return Array.Empty<byte>();
     }
+
+    public Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default)
+    {
+        return Task.FromResult($"/{text.ToLower()}/");
+    }
 }

@@ -4,10 +4,12 @@ import { useAppStore } from "../store/appStore";
 import { Lock, CheckCircle, Play, ChevronRight, Zap, TrendingUp, AlertCircle, Loader2 } from "lucide-react";
 import { learningService, LessonDto } from "../services/learningService";
 import { toast } from "sonner";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, darkMode } = useAppStore();
+  const { t } = useTranslation();
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [lessons, setLessons] = useState<LessonDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -19,7 +21,7 @@ export default function Dashboard() {
         setLessons(recommendedLessons);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
-        toast.error("Could not load your learning trail");
+        toast.error(t("noPathFound"));
       } finally {
         setIsLoading(false);
       }
@@ -67,7 +69,7 @@ export default function Dashboard() {
               >
                 <TrendingUp size={16} style={{ color: "var(--brand)" }} />
               </div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)" }}>Trail Progress</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)" }}>{t("trailProgress")}</span>
             </div>
             <div style={{ fontSize: 26, fontWeight: 900, color: "var(--foreground)" }}>{progressPercent}%</div>
             <div
@@ -90,10 +92,10 @@ export default function Dashboard() {
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ fontSize: 22 }}>⚡</div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>Weekly XP</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>{t("weeklyXp")}</span>
             </div>
             <div style={{ fontSize: 26, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp} XP</div>
-            <div style={{ fontSize: 12, color: darkMode ? "#fdba74" : "#b45309", fontWeight: 600, marginTop: 6 }}>Keep it up!</div>
+            <div style={{ fontSize: 12, color: darkMode ? "#fdba74" : "#b45309", fontWeight: 600, marginTop: 6 }}>{t("keepItUp")}</div>
           </div>
 
           <div
@@ -110,16 +112,16 @@ export default function Dashboard() {
               >
                 <Zap size={16} style={{ color: "var(--brand-sky)" }} />
               </div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--brand-sky)" }}>Next Lesson</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--brand-sky)" }}>{t("nextLesson")}</span>
             </div>
-            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-sky)" }}>{activeLesson?.title || "All done!"}</div>
+            <div style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-sky)" }}>{activeLesson?.title || t("allDone")}</div>
             {activeLesson && (
               <button
                 onClick={() => handleNodeAction(activeLesson.id)}
                 className="mt-2 flex items-center gap-1 cursor-pointer border-none outline-none bg-transparent"
                 style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-sky)", padding: 0 }}
               >
-                Continue <ChevronRight size={13} />
+                {t("continue")} <ChevronRight size={13} />
               </button>
             )}
           </div>
@@ -128,10 +130,10 @@ export default function Dashboard() {
         {/* Trail heading */}
         <div className="text-left">
           <h2 style={{ fontSize: 19, fontWeight: 900, color: "var(--foreground)", marginBottom: 6 }}>
-            Your Learning Trail
+            {t("yourLearningTrail")}
           </h2>
           <p style={{ fontSize: 13.5, color: "var(--muted-foreground)", marginBottom: 28 }}>
-            Complete each quest node to unlock the next adventure!
+            {t("learningTrailSubtitle")}
           </p>
         </div>
 
@@ -139,7 +141,7 @@ export default function Dashboard() {
         <div className="flex flex-col items-center gap-0">
           {lessons.length === 0 && (
             <div className="p-10 text-center text-slate-500">
-              No lessons available. Complete an assessment first!
+              {t("noLessonsAvailable")}
             </div>
           )}
           {lessons.map((node, index) => {
@@ -220,7 +222,13 @@ export default function Dashboard() {
                           {node.title}
                         </div>
                         <div style={{ fontSize: 11, fontWeight: 600, color: "var(--muted-foreground)" }}>
-                          {node.topic || node.skill} • {node.xpReward} XP
+                          {node.topic || (
+                            node.skill === 'Listening' ? t('listeningSection') :
+                            node.skill === 'Speaking' ? t('speakingSection') :
+                            node.skill === 'Reading' ? t('readingSection') :
+                            node.skill === 'Writing' ? t('writingSection') :
+                            node.skill
+                          )} • {node.xpReward} XP
                         </div>
                       </div>
                     </button>

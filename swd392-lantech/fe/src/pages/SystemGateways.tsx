@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore, UserRole } from '../store/appStore';
-import { ShieldAlert, Server, Activity, ArrowLeft, RefreshCw, Key } from 'lucide-react';
+import { ShieldAlert, Server, Activity, ArrowLeft, Key } from 'lucide-react';
 
 export default function SystemGateways() {
   const navigate = useNavigate();
@@ -16,10 +16,10 @@ export default function SystemGateways() {
   };
 
   const healthServices = [
-    { name: "Core API Host", status: "Healthy", latency: "14ms", details: "SWD392.LantechEnglish.Api running" },
-    { name: "Database Store", status: "Healthy", latency: "2ms", details: "PostgreSQL active connection" },
-    { name: "Speech AI Engine", status: "Healthy", latency: "142ms", details: "Azure Cognitive services online" },
-    { name: "Cache Storage", status: "Healthy", latency: "1ms", details: "Redis cache memory layer active" }
+    { name: "Core API Host", status: "Hoạt động tốt", latency: "14ms", details: "SWD392.LantechEnglish.Api đang chạy" },
+    { name: "Database Store", status: "Hoạt động tốt", latency: "2ms", details: "Kết nối PostgreSQL đang mở" },
+    { name: "Speech AI Engine", status: "Hoạt động tốt", latency: "142ms", details: "Dịch vụ Azure Cognitive trực tuyến" },
+    { name: "Cache Storage", status: "Hoạt động tốt", latency: "1ms", details: "Lớp bộ đệm Redis đang hoạt động" }
   ];
 
   return (
@@ -34,8 +34,8 @@ export default function SystemGateways() {
             <ArrowLeft className="w-5 h-5 text-slate-500 dark:text-slate-400" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Diagnostics Desk</span>
-            <h1 className="text-2xl font-bold text-slate dark:text-cream-50 font-outfit mt-0.5">System Gateways</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400 dark:text-slate-500">Bàn Chẩn Đoán Hệ Thống</span>
+            <h1 className="text-2xl font-bold text-slate dark:text-cream-50 font-outfit mt-0.5">Cổng Kết Nối Hệ Thống</h1>
           </div>
         </div>
       </div>
@@ -46,7 +46,7 @@ export default function SystemGateways() {
         <div className="md:col-span-2 space-y-6">
           <div className="bg-white dark:bg-[#1E2522] p-6 rounded-card border border-sage dark:border-[#2C3531] shadow-diffuse space-y-4 transition-colors duration-300">
             <h3 className="font-outfit font-bold text-lg text-slate dark:text-cream-50 border-b border-sage dark:border-[#2C3531] pb-2 flex items-center gap-2">
-              <Server className="w-5 h-5 text-meadow dark:text-meadow-400" /> Health Services
+              <Server className="w-5 h-5 text-meadow dark:text-meadow-400" /> Trạng thái Dịch vụ
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -59,7 +59,7 @@ export default function SystemGateways() {
                     </span>
                   </div>
                   <p className="text-[10px] text-slate-500 dark:text-cream-300/50 leading-snug">{srv.details}</p>
-                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold pt-1">Response Latency: {srv.latency}</div>
+                  <div className="text-[9px] text-slate-400 dark:text-slate-500 font-bold pt-1">Độ trễ Phản hồi: {srv.latency}</div>
                 </div>
               ))}
             </div>
@@ -68,21 +68,21 @@ export default function SystemGateways() {
           {/* Core System stats */}
           <div className="bg-white dark:bg-[#1E2522] p-6 rounded-card border border-sage dark:border-[#2C3531] shadow-diffuse space-y-4 transition-colors duration-300">
             <h3 className="font-outfit font-bold text-sm text-slate dark:text-cream-50 border-b border-sage dark:border-[#2C3531] pb-2 flex items-center gap-2">
-              <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Endpoint Indicators
+              <Activity className="w-4 h-4 text-slate-500 dark:text-slate-400" /> Chỉ số API Endpoint
             </h3>
             
             <div className="space-y-2 text-xs">
               <div className="flex justify-between p-2 bg-cream-50/50 dark:bg-slate-900/30 rounded border border-sage/50 dark:border-[#2C3531]/50">
-                <span className="font-semibold text-slate-500 dark:text-slate-400">Total API Endpoints Audited</span>
-                <span className="font-mono font-bold text-slate dark:text-cream-50">119 Active Routes</span>
+                <span className="font-semibold text-slate-500 dark:text-slate-400">Tổng số Endpoint được kiểm soát</span>
+                <span className="font-mono font-bold text-slate dark:text-cream-50">119 tuyến đường đang chạy</span>
               </div>
               <div className="flex justify-between p-2 bg-cream-50/50 dark:bg-slate-900/30 rounded border border-sage/50 dark:border-[#2C3531]/50">
-                <span className="font-semibold text-slate-500 dark:text-slate-400">Security Access Filters</span>
-                <span className="font-mono font-bold text-slate dark:text-cream-50">JWT Auth Class Gating</span>
+                <span className="font-semibold text-slate-500 dark:text-slate-400">Bộ lọc quyền bảo mật</span>
+                <span className="font-mono font-bold text-slate dark:text-cream-50">Xác thực Token JWT Gating</span>
               </div>
               <div className="flex justify-between p-2 bg-cream-50/50 dark:bg-slate-900/30 rounded border border-sage/50 dark:border-[#2C3531]/50">
-                <span className="font-semibold text-slate-500 dark:text-slate-400">Mock Mode Active</span>
-                <span className="font-mono font-bold text-meadow dark:text-meadow-400">Yes (Local Development)</span>
+                <span className="font-semibold text-slate-500 dark:text-slate-400">Trạng thái dữ liệu giả (Mock Mode)</span>
+                <span className="font-mono font-bold text-meadow dark:text-meadow-400">Có (Môi trường phát triển cục bộ)</span>
               </div>
             </div>
           </div>
@@ -92,18 +92,18 @@ export default function SystemGateways() {
         <div className="bg-white dark:bg-[#1E2522] p-6 rounded-card border border-sage dark:border-[#2C3531] shadow-diffuse space-y-6 transition-colors duration-300">
           <div>
             <h3 className="font-outfit font-bold text-sm text-slate dark:text-cream-50 border-b border-sage dark:border-[#2C3531] pb-2 flex items-center gap-2">
-              <Key className="w-4 h-4 text-ochre dark:text-ochre-400" /> Role Impersonation
+              <Key className="w-4 h-4 text-ochre dark:text-ochre-400" /> Giả lập Vai trò (Role)
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mt-2">
-              Instantly toggle the user's active session role to verify routing permissions and protected UI pages.
+              Thay đổi nhanh vai trò phiên làm việc của người dùng để xác minh các quyền truy cập trang và phân hệ giao diện.
             </p>
           </div>
 
           <div className="space-y-3">
             {[
-              { roleName: 'Visitor' as UserRole, desc: 'Public landing & Credentials' },
-              { roleName: 'Student' as UserRole, desc: 'Learning dashboard & Study decks' },
-              { roleName: 'Admin' as UserRole, desc: 'Ranger Console & CMS desks' }
+              { roleName: 'Visitor' as UserRole, desc: 'Khách vãng lai & Đăng nhập' },
+              { roleName: 'Student' as UserRole, desc: 'Bảng học tập & Bộ thẻ từ vựng' },
+              { roleName: 'Admin' as UserRole, desc: 'Trang Quản trị Ranger & Hệ thống Quản lý' }
             ].map((sim) => (
               <button
                 key={sim.roleName}
@@ -115,7 +115,7 @@ export default function SystemGateways() {
                 }`}
               >
                 <div>
-                  <span className="text-xs block capitalize text-slate dark:text-cream-100 font-bold">{sim.roleName} Role</span>
+                  <span className="text-xs block capitalize text-slate dark:text-cream-100 font-bold">Vai trò: {sim.roleName}</span>
                   <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal">{sim.desc}</span>
                 </div>
                 {role === sim.roleName && (
@@ -128,9 +128,9 @@ export default function SystemGateways() {
           <div className="bg-ochre-50 dark:bg-ochre-950/10 p-4 rounded-control border border-ochre-100 dark:border-ochre-900/30 flex items-start gap-2.5 transition-colors duration-300">
             <ShieldAlert className="w-5 h-5 text-ochre shrink-0 mt-0.5" />
             <div className="text-left">
-              <h4 className="font-bold text-xs text-ochre-600 dark:text-ochre-400">Sim Safety</h4>
+              <h4 className="font-bold text-xs text-ochre-600 dark:text-ochre-400">An toàn giả lập</h4>
               <p className="text-[10px] text-slate-500 dark:text-cream-200/80 leading-relaxed mt-0.5">
-                These toggles bypass backend checks and modify local Zustand state directly for E2E testing convenience.
+                Các nút này sẽ trực tiếp thay đổi trạng thái trong Zustand cục bộ để thuận tiện cho việc kiểm thử luồng hoạt động (E2E).
               </p>
             </div>
           </div>

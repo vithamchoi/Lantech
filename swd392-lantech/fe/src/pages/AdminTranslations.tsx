@@ -8,16 +8,16 @@ interface TranslationItem {
   english: string;
   translation: string;
   lang: string;
-  status: 'Approved' | 'Draft';
+  status: 'Đã Duyệt' | 'Bản Nháp';
 }
 
 export default function AdminTranslations() {
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState<TranslationItem[]>([
-    { id: '1', key: 'lesson.sapling.title', english: 'Oak Sapling', translation: 'Cây Sồi Con', lang: 'Vietnamese', status: 'Approved' },
-    { id: '2', key: 'lesson.sapling.desc', english: 'A young tree, especially one with a slender trunk.', translation: 'Một cây non, đặc biệt là cây có thân thanh mảnh.', lang: 'Vietnamese', status: 'Approved' },
-    { id: '3', key: 'word.canopy', english: 'Canopy', translation: 'Copete de árboles', lang: 'Spanish', status: 'Draft' },
+    { id: '1', key: 'lesson.sapling.title', english: 'Oak Sapling', translation: 'Cây Sồi Con', lang: 'Vietnamese', status: 'Đã Duyệt' },
+    { id: '2', key: 'lesson.sapling.desc', english: 'A young tree, especially one with a slender trunk.', translation: 'Một cây non, đặc biệt là cây có thân thanh mảnh.', lang: 'Vietnamese', status: 'Đã Duyệt' },
+    { id: '3', key: 'word.canopy', english: 'Canopy', translation: 'Copete de árboles', lang: 'Spanish', status: 'Bản Nháp' },
   ]);
   const [editingItem, setEditingItem] = useState<TranslationItem | null>(null);
 
@@ -54,8 +54,8 @@ export default function AdminTranslations() {
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Database Editor</span>
-            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Translations Database</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Trình Biên Tập Cơ Sở Dữ Liệu</span>
+            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Cơ Sở Dữ Liệu Dịch Thuật</h1>
           </div>
         </div>
 
@@ -67,14 +67,14 @@ export default function AdminTranslations() {
               english: 'New Term',
               translation: 'Bản dịch mới',
               lang: 'Vietnamese',
-              status: 'Draft'
+              status: 'Bản Nháp'
             };
             setItems([newItem, ...items]);
             setEditingItem(newItem);
           }}
           className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all"
         >
-          <Plus className="w-4 h-4" /> Add Key
+          <Plus className="w-4 h-4" /> Thêm Từ Khóa
         </button>
       </div>
 
@@ -84,7 +84,7 @@ export default function AdminTranslations() {
           <Search className="absolute left-3 top-3 w-4.5 h-4.5 text-slate-400" />
           <input
             type="text"
-            placeholder="Search translation key..."
+            placeholder="Tìm kiếm từ khóa bản dịch..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-cream-50 border border-sage rounded-control text-xs focus:outline-none focus:border-meadow transition-all"
@@ -98,12 +98,12 @@ export default function AdminTranslations() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream-200 border-b border-sage text-xs font-bold text-slate-500 uppercase tracking-wider">
-                <th className="px-6 py-4">Key</th>
-                <th className="px-6 py-4">English</th>
-                <th className="px-6 py-4">Translation</th>
-                <th className="px-6 py-4">Language</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">Từ khóa (Key)</th>
+                <th className="px-6 py-4">Tiếng Anh</th>
+                <th className="px-6 py-4">Bản dịch</th>
+                <th className="px-6 py-4">Ngôn ngữ</th>
+                <th className="px-6 py-4">Trạng thái</th>
+                <th className="px-6 py-4 text-right">Thao tác</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sage text-sm font-semibold">
@@ -119,7 +119,7 @@ export default function AdminTranslations() {
                   </td>
                   <td className="px-6 py-4">
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                      item.status === 'Approved' ? 'bg-meadow-50 text-meadow' : 'bg-ochre-50 text-ochre'
+                      item.status === 'Đã Duyệt' ? 'bg-meadow-50 text-meadow' : 'bg-ochre-50 text-ochre'
                     }`}>
                       {item.status}
                     </span>
@@ -150,7 +150,7 @@ export default function AdminTranslations() {
         <div className="fixed inset-0 bg-slate/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
-              <h3 className="font-outfit font-bold text-lg text-slate">Edit Translation Key</h3>
+              <h3 className="font-outfit font-bold text-lg text-slate">Chỉnh Sửa Từ Khóa Bản Dịch</h3>
               <button 
                 onClick={() => setEditingItem(null)}
                 className="p-1 hover:bg-cream-200 rounded"
@@ -161,7 +161,7 @@ export default function AdminTranslations() {
 
             <div className="space-y-4 text-left">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Key Identifier</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mã Định Danh Từ Khóa</label>
                 <input
                   type="text"
                   value={editingItem.key}
@@ -171,7 +171,7 @@ export default function AdminTranslations() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">English Term</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thuật Ngữ Tiếng Anh</label>
                 <input
                   type="text"
                   value={editingItem.english}
@@ -181,7 +181,7 @@ export default function AdminTranslations() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Translation Value</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giá Trị Bản Dịch</label>
                 <textarea
                   rows={3}
                   value={editingItem.translation}
@@ -192,7 +192,7 @@ export default function AdminTranslations() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Language</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ngôn ngữ</label>
                   <select
                     value={editingItem.lang}
                     onChange={(e) => setEditingItem({ ...editingItem, lang: e.target.value })}
@@ -205,14 +205,14 @@ export default function AdminTranslations() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Status</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</label>
                   <select
                     value={editingItem.status}
-                    onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value as 'Approved' | 'Draft' })}
+                    onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value as 'Đã Duyệt' | 'Bản Nháp' })}
                     className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs"
                   >
-                    <option value="Approved">Approved</option>
-                    <option value="Draft">Draft</option>
+                    <option value="Đã Duyệt">Đã Duyệt</option>
+                    <option value="Bản Nháp">Bản Nháp</option>
                   </select>
                 </div>
               </div>
@@ -223,13 +223,13 @@ export default function AdminTranslations() {
                 onClick={() => setEditingItem(null)}
                 className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200"
               >
-                Cancel
+                Hủy
               </button>
               <button
                 onClick={handleSave}
                 className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Save Record
+                <Check className="w-4 h-4" /> Lưu Bản Ghi
               </button>
             </div>
           </div>

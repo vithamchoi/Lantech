@@ -127,6 +127,13 @@ public abstract class BaseAIProvider : IAIProvider
         throw new NotImplementedException("Provider does not support TTS");
     }
 
+    public async Task<string> GeneratePhoneticIpaAsync(string text, CancellationToken cancellationToken = default)
+    {
+        var sys = "You are a linguistic expert. Given an English word or sentence, output ONLY its IPA (International Phonetic Alphabet) transcription. Do not include any other text, notes, or markdown. Output just the plain IPA symbols enclosed in slashes, e.g., /ɪnˈvaɪrənmənt/ or /heˈləʊ ˈwɜːld/.";
+        var usr = $"Provide the IPA phonetic transcription for: '{text}'";
+        return (await CallChatCompletionsAsync(sys, usr, cancellationToken)).Trim().Trim('`').Trim();
+    }
+
     protected string CleanJson(string content)
     {
         if (content.StartsWith("```json")) content = content.Substring(7);
