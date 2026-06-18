@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using SWD392.LantechEnglish.Application.Common.Models;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Application.DTOs.Admin;
+using SWD392.LantechEnglish.Application.DTOs.Vocabulary;
 using System;
 using System.Threading.Tasks;
 
@@ -100,10 +101,30 @@ namespace SWD392.LantechEnglish.Api.Controllers
             var vocabularies = await _adminService.GetVocabulariesAsync();
             return Ok(ApiResponse<object>.SuccessResponse(vocabularies));
         }
-        [HttpGet("vocabulary/{id}")] public IActionResult GetVocabulary(Guid id) => Ok();
-        [HttpPost("vocabulary")] public IActionResult CreateVocabulary() => Ok();
-        [HttpPut("vocabulary/{id}")] public IActionResult UpdateVocabulary(Guid id) => Ok();
-        [HttpDelete("vocabulary/{id}")] public IActionResult DeleteVocabulary(Guid id) => Ok();
+        [HttpGet("vocabulary/{id}")]
+        public IActionResult GetVocabulary(Guid id) => Ok();
+
+        [HttpPost("vocabulary")]
+        public async Task<IActionResult> CreateVocabulary([FromBody] CreateVocabularyRequest request)
+        {
+            var result = await _adminService.CreateVocabularyAsync(request);
+            return Ok(ApiResponse<VocabularyDto>.SuccessResponse(result, "Vocabulary created successfully"));
+        }
+
+        [HttpPut("vocabulary/{id}")]
+        public async Task<IActionResult> UpdateVocabulary(Guid id, [FromBody] CreateVocabularyRequest request)
+        {
+            var result = await _adminService.UpdateVocabularyAsync(id, request);
+            return Ok(ApiResponse<VocabularyDto>.SuccessResponse(result, "Vocabulary updated successfully"));
+        }
+
+        [HttpDelete("vocabulary/{id}")]
+        public async Task<IActionResult> DeleteVocabulary(Guid id)
+        {
+            var result = await _adminService.DeleteVocabularyAsync(id);
+            if (!result) return NotFound(ApiResponse.ErrorResponse("Vocabulary not found"));
+            return Ok(ApiResponse<bool>.SuccessResponse(true, "Vocabulary deleted successfully"));
+        }
 
         // 6. Translations (4)
         [HttpGet("translations")] public IActionResult GetTranslations() => Ok();

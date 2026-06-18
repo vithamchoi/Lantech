@@ -1,5 +1,45 @@
 import apiClient from '../api/apiClient';
 
+export interface AdminVocabularyTranslationRequest {
+  languageCode: string;
+  meaning: string;
+  explanation?: string;
+  exampleTranslation?: string;
+}
+
+export interface CreateVocabularyRequest {
+  word: string;
+  ipa?: string;
+  audioUrl?: string;
+  cefrLevel: string;
+  partOfSpeech?: string;
+  exampleSentence?: string;
+  contentSource?: string;
+  translations: AdminVocabularyTranslationRequest[];
+}
+
+export interface VocabularyTranslationDto {
+  id: string;
+  vocabularyId: string;
+  languageCode: string;
+  meaning: string;
+  explanation?: string;
+  exampleTranslation?: string;
+}
+
+export interface VocabularyDto {
+  id: string;
+  word: string;
+  ipa?: string;
+  audioUrl?: string;
+  cefrLevel: string;
+  partOfSpeech?: string;
+  exampleSentence?: string;
+  contentSource: string;
+  createdAt: string;
+  translations: VocabularyTranslationDto[];
+}
+
 export interface AdminStatsDto {
   totalUsers: number;
   activeUsers: number;
@@ -81,6 +121,15 @@ export const adminService = {
   // Vocabulary
   getVocabularies: async (): Promise<AdminVocabularyDto[]> => {
     return await apiClient.get('/admin/vocabulary');
+  },
+  createVocabulary: async (data: CreateVocabularyRequest): Promise<VocabularyDto> => {
+    return await apiClient.post('/admin/vocabulary', data);
+  },
+  updateVocabulary: async (id: string, data: CreateVocabularyRequest): Promise<VocabularyDto> => {
+    return await apiClient.put(`/admin/vocabulary/${id}`, data);
+  },
+  deleteVocabulary: async (id: string): Promise<void> => {
+    return await apiClient.delete(`/admin/vocabulary/${id}`);
   },
 
   // Badges
