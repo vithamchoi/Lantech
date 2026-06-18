@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { Search, Plus, Volume2, X, Loader2 } from "lucide-react";
 import { vocabularyService, VocabularyDto } from "../services/vocabularyService";
-import { flashcardService } from "../services/flashcardService";
+import { flashcardService, FlashcardDto } from "../services/flashcardService";
 import { toast } from "sonner";
 
 const CEFR_TABS = ["All", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
@@ -225,7 +225,7 @@ export default function VocabularyList() {
           <div className="flex items-start justify-between">
             <div>
               <div style={{ fontWeight: 900, fontSize: 24, color: "var(--foreground)" }}>{selectedWord.word}</div>
-              <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.phoneme}</div>
+              <div style={{ fontSize: 13, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{selectedWord.ipa}</div>
             </div>
             <button onClick={() => setSelectedWord(null)} className="cursor-pointer border-none bg-transparent outline-none" style={{ color: "var(--muted-foreground)" }}>
               <X size={18} />
@@ -252,20 +252,20 @@ export default function VocabularyList() {
               className="px-4 py-3 rounded-xl"
               style={{ fontSize: 13.5, color: "var(--foreground)", lineHeight: 1.7, background: "var(--muted)", fontStyle: "italic" }}
             >
-              "{selectedWord.example}"
+              "{selectedWord.exampleSentence}"
             </p>
           </div>
 
           <div>
             <div style={{ fontSize: 11.5, fontWeight: 700, color: "var(--muted-foreground)", opacity: 0.7, textTransform: "uppercase", letterSpacing: 1, marginBottom: 6 }}>Vietnamese</div>
-            <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{selectedWord.translation}</p>
+            <p style={{ fontSize: 14, color: "var(--muted-foreground)" }}>{selectedWord.meaning}</p>
           </div>
 
           <div
             className="px-3 py-1.5 rounded-full"
             style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 700, fontSize: 12, width: "fit-content" }}
           >
-            {selectedWord.level} Level
+            {selectedWord.cefrLevel} Level
           </div>
 
           <button

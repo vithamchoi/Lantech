@@ -32,6 +32,11 @@ public class AIService : IAIService
         return await _aiProvider.ChatTutorAsync(message, sourceLanguageCode, cancellationToken);
     }
 
+    public IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    {
+        return _aiProvider.ChatTutorStreamAsync(message, sourceLanguageCode, cancellationToken);
+    }
+
     public async Task<string> GenerateAssessmentQuestionsAsync(string skill, string cefrLevel, int count, string sourceLanguageCode, CancellationToken cancellationToken = default)
     {
         if (!Enum.TryParse<CefrLevel>(cefrLevel, true, out var level) ||

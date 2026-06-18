@@ -6,16 +6,23 @@ export interface PronunciationAttemptRequest {
   audioUrl?: string;
 }
 
+export interface WordFeedbackDto {
+  word: string;
+  accuracyScore: number;
+  errorType: string;
+}
+
 export interface PronunciationAttemptDto {
   id: string;
   userId: string;
   targetText: string;
   transcriptText: string;
-  accuracyScore: number;
-  fluencyScore: number;
-  completenessScore: number;
-  overallScore: number;
+  score: number;
+  accuracy: number;
+  fluency?: number;
+  completeness?: number;
   feedback?: string;
+  wordLevelFeedback?: WordFeedbackDto[];
   createdAt: string;
 }
 

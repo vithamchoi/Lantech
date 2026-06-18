@@ -29,7 +29,6 @@ export const learningService = {
   },
 
   getRecommendedLessons: async (): Promise<LessonDto[]> => {
-    const data = await apiClient.get('/learningpaths/recommended');
-    return data || [];
+    return (await apiClient.get('/learningpaths/recommended-lessons')) as LessonDto[];
   }
 };

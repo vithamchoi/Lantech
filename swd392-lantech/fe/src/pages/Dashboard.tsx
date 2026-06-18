@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const { user } = useAppStore();
+  const { user, darkMode } = useAppStore();
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [lessons, setLessons] = useState<LessonDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -83,24 +83,30 @@ export default function Dashboard() {
 
           <div
             className="rounded-2xl p-5"
-            style={{ background: "#fff8cc", border: "2px solid #fde68a" }}
+            style={{
+              background: darkMode ? "rgba(253,230,138,0.15)" : "#fff8cc",
+              border: `2px solid ${darkMode ? "#f59e0b" : "#fde68a"}`,
+            }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div style={{ fontSize: 22 }}>⚡</div>
-              <span style={{ fontSize: 12.5, fontWeight: 700, color: "#b45309" }}>Weekly XP</span>
+              <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>Weekly XP</span>
             </div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: "#92400e" }}>{user.xp} XP</div>
-            <div style={{ fontSize: 12, color: "#b45309", fontWeight: 600, marginTop: 6 }}>Keep it up!</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp} XP</div>
+            <div style={{ fontSize: 12, color: darkMode ? "#fdba74" : "#b45309", fontWeight: 600, marginTop: 6 }}>Keep it up!</div>
           </div>
 
           <div
             className="rounded-2xl p-5 transition-colors duration-300"
-            style={{ background: "var(--brand-sky-light)", border: "2px solid var(--brand-sky)" }}
+            style={{
+              background: darkMode ? "rgba(28,176,246,0.15)" : "var(--brand-sky-light)",
+              border: "2px solid var(--brand-sky)",
+            }}
           >
             <div className="flex items-center gap-3 mb-3">
               <div
                 className="w-9 h-9 rounded-xl flex items-center justify-center"
-                style={{ background: "var(--brand-sky-light)", opacity: 0.8 }}
+                style={{ background: darkMode ? "rgba(28,176,246,0.2)" : "var(--brand-sky-light)", opacity: 0.8 }}
               >
                 <Zap size={16} style={{ color: "var(--brand-sky)" }} />
               </div>

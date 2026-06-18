@@ -63,21 +63,27 @@ export default function AppHeader() {
         {/* Streak */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{ background: "#fff7ed", border: "2px solid #fed7aa" }}
+          style={{
+            background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
+            border: `2px solid ${darkMode ? "rgba(249,115,22,0.4)" : "#fed7aa"}`,
+          }}
           title="Day Streak"
         >
           <Flame size={15} style={{ color: "#f97316" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: "#c2410c" }}>{user.streak}</span>
+          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
         </div>
 
         {/* XP */}
         <div
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{ background: "#f0fdf4", border: "2px solid var(--brand-light)" }}
+          style={{
+            background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
+            border: `2px solid ${darkMode ? "rgba(88,204,2,0.4)" : "var(--brand-light)"}`,
+          }}
           title="Total XP"
         >
           <Sprout size={15} style={{ color: "var(--brand)" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: "var(--brand-dark)" }}>
+          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
             {user.xp.toLocaleString()} XP
           </span>
         </div>
@@ -141,7 +147,7 @@ export default function AppHeader() {
                   <button
                     onClick={markAllRead}
                     className="flex items-center gap-1.5 cursor-pointer border-none outline-none bg-transparent"
-                    style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-dark)", padding: 0 }}
+                    style={{ fontSize: 12, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)", padding: 0 }}
                   >
                     <CheckCheck size={13} />
                     Mark all read
@@ -160,7 +166,7 @@ export default function AppHeader() {
                       onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
                       className="flex gap-3 px-5 py-4 cursor-pointer transition-colors"
                       style={{
-                        background: isUnread ? "rgba(88, 204, 2, 0.08)" : "transparent",
+                        background: isUnread ? (darkMode ? "rgba(88, 204, 2, 0.15)" : "rgba(88, 204, 2, 0.08)") : "transparent",
                         borderBottom: "1px solid var(--border)",
                       }}
                     >
@@ -194,7 +200,7 @@ export default function AppHeader() {
                 style={{ borderColor: "var(--border)" }}
                 onClick={() => setNotifOpen(false)}
               >
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--brand-dark)" }}>See all notifications</span>
+                <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>See all notifications</span>
               </div>
             </div>
           )}

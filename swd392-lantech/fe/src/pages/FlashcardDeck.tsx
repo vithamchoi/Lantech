@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { RotateCcw, ChevronLeft, ChevronRight, Volume2, Loader2 } from "lucide-react";
 import { flashcardService, FlashcardDto } from "../services/flashcardService";
+import { useAppStore } from "../store/appStore";
 import { toast } from "sonner";
 
 const GRADE_OPTIONS = [
@@ -9,6 +10,7 @@ const GRADE_OPTIONS = [
 ];
 
 export default function FlashcardDeck() {
+  const { darkMode } = useAppStore();
   const [dueCards, setDueCards] = useState<FlashcardDto[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
@@ -75,8 +77,8 @@ export default function FlashcardDeck() {
       <div className="h-full min-h-screen flex items-center justify-center text-center p-4" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
         <div className="max-w-md">
           <div style={{ fontSize: 80, marginBottom: 16 }}>✨</div>
-          <h2 style={{ fontSize: 24, fontWeight: 900, color: "#3c3c3c", marginBottom: 8 }}>All Caught Up!</h2>
-          <p style={{ fontSize: 15, color: "#888", marginBottom: 32 }}>
+          <h2 style={{ fontSize: 24, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>All Caught Up!</h2>
+          <p style={{ fontSize: 15, color: "var(--muted-foreground)", marginBottom: 32 }}>
             You have no cards due for review today. Great job staying consistent!
           </p>
         </div>
@@ -152,30 +154,30 @@ export default function FlashcardDeck() {
   return (
     <div className="h-full flex flex-col min-h-screen text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
       {/* Header */}
-      <div className="px-8 py-6 border-b" style={{ borderColor: "rgba(0,0,0,0.06)", background: "#fff" }}>
+      <div className="px-8 py-6 border-b" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h1 style={{ fontSize: 22, fontWeight: 900, color: "#3c3c3c" }}>Flashcard Box</h1>
-            <p style={{ fontSize: 13.5, color: "#888" }}>Spaced Repetition Review Session</p>
+            <h1 style={{ fontSize: 22, fontWeight: 900, color: "var(--foreground)" }}>Flashcard Box</h1>
+            <p style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>Spaced Repetition Review Session</p>
           </div>
           <div
             className="px-4 py-2 rounded-full font-bold text-xs"
-            style={{ background: totalDue > 0 ? "#fff7ed" : "var(--brand-light)" }}
+            style={{ background: totalDue > 0 ? (darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed") : "var(--brand-light)" }}
           >
-            <span style={{ color: "#c2410c" }}>{graded}/{totalDue}</span>
-            <span style={{ color: "#888", marginLeft: 4 }}>reviewed</span>
+            <span style={{ color: darkMode ? "#fdba74" : "#c2410c" }}>{graded}/{totalDue}</span>
+            <span style={{ color: "var(--muted-foreground)", marginLeft: 4 }}>reviewed</span>
           </div>
         </div>
         {/* Progress bar */}
-        <div className="rounded-full overflow-hidden" style={{ height: 8, background: "#e5e7eb" }}>
+        <div className="rounded-full overflow-hidden" style={{ height: 8, background: "var(--muted)" }}>
           <div
             className="h-full rounded-full transition-all"
             style={{ width: `${(graded / totalDue) * 100}%`, background: "var(--brand)" }}
           />
         </div>
         <div className="flex justify-between mt-1">
-          <span style={{ fontSize: 11.5, color: "#aaa" }}>{graded} graded</span>
-          <span style={{ fontSize: 11.5, color: "#aaa" }}>{totalDue - graded} remaining</span>
+          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{graded} graded</span>
+          <span style={{ fontSize: 11.5, color: "var(--muted-foreground)" }}>{totalDue - graded} remaining</span>
         </div>
       </div>
 
@@ -189,18 +191,18 @@ export default function FlashcardDeck() {
               onClick={() => { setCurrentIndex(Math.max(0, currentIndex - 1)); setIsFlipped(false); }}
               disabled={currentIndex === 0}
               className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer border-none outline-none"
-              style={{ background: currentIndex === 0 ? "#f3f4f6" : "#fff", border: "2px solid #e5e7eb", color: "#888" }}
+              style={{ background: currentIndex === 0 ? "var(--muted)" : "var(--card)", border: "2px solid var(--border)", color: "var(--muted-foreground)" }}
             >
               <ChevronLeft size={16} />
             </button>
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#888" }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)" }}>
               {currentIndex + 1} / {totalDue}
             </span>
             <button
               onClick={() => { setCurrentIndex(Math.min(totalDue - 1, currentIndex + 1)); setIsFlipped(false); }}
               disabled={currentIndex === totalDue - 1}
               className="w-9 h-9 rounded-full flex items-center justify-center cursor-pointer border-none outline-none"
-              style={{ background: currentIndex === totalDue - 1 ? "#f3f4f6" : "#fff", border: "2px solid #e5e7eb", color: "#888" }}
+              style={{ background: currentIndex === totalDue - 1 ? "var(--muted)" : "var(--card)", border: "2px solid var(--border)", color: "var(--muted-foreground)" }}
             >
               <ChevronRight size={16} />
             </button>
@@ -234,19 +236,19 @@ export default function FlashcardDeck() {
                   position: "absolute",
                   inset: 0,
                   backfaceVisibility: "hidden",
-                  background: "linear-gradient(135deg, #fff 0%, #f0fdf4 100%)",
-                  border: "3px solid var(--brand-light)",
-                  boxShadow: "0 8px 32px rgba(88,204,2,0.15)",
+                  background: "var(--card)",
+                  border: `3px solid ${darkMode ? "var(--brand-dark)" : "var(--brand-light)"}`,
+                  boxShadow: darkMode ? "none" : "0 8px 32px rgba(88,204,2,0.15)",
                   minHeight: 260,
                 }}
               >
                 <div
                   className="px-3 py-1 rounded-full mb-4"
-                  style={{ background: "#e0f2fe", color: "#0369a1", fontSize: 12, fontWeight: 700 }}
+                  style={{ background: darkMode ? "#0f2d4a" : "#e0f2fe", color: darkMode ? "#38bdf8" : "#0369a1", fontSize: 12, fontWeight: 700 }}
                 >
                    {current.partOfSpeech || 'Word'}
                 </div>
-                <div style={{ fontSize: 36, fontWeight: 900, color: "#3c3c3c", marginBottom: 8 }}>
+                <div style={{ fontSize: 36, fontWeight: 900, color: "var(--foreground)", marginBottom: 8 }}>
                   {current.word}
                 </div>
                 <div style={{ fontSize: 14, color: "#1CB0F6", fontWeight: 600, marginBottom: 20 }}>
@@ -254,13 +256,13 @@ export default function FlashcardDeck() {
                 </div>
                 <button
                   className="flex items-center gap-2 px-4 py-2 rounded-full cursor-pointer hover:bg-sky-100 transition-colors border-none outline-none"
-                  style={{ background: "#e0f2fe", color: "#0369a1", fontWeight: 600, fontSize: 13 }}
+                  style={{ background: darkMode ? "#0f2d4a" : "#e0f2fe", color: darkMode ? "#38bdf8" : "#0369a1", fontWeight: 600, fontSize: 13 }}
                   onClick={e => handleSpeak(e, current.word)}
                 >
                   <Volume2 size={14} />
                   Listen
                 </button>
-                <div style={{ fontSize: 12.5, color: "#aaa", marginTop: 24, fontWeight: 500 }}>
+                <div style={{ fontSize: 12.5, color: "var(--muted-foreground)", marginTop: 24, fontWeight: 500 }}>
                   Tap to reveal ↓
                 </div>
               </div>
@@ -273,28 +275,28 @@ export default function FlashcardDeck() {
                   inset: 0,
                   backfaceVisibility: "hidden",
                   transform: "rotateY(180deg)",
-                  background: "linear-gradient(135deg, #fff 0%, #eff6ff 100%)",
-                  border: "3px solid #bfdbfe",
-                  boxShadow: "0 8px 32px rgba(59,130,246,0.15)",
+                  background: "var(--card)",
+                  border: `3px solid ${darkMode ? "#1e40af" : "#bfdbfe"}`,
+                  boxShadow: darkMode ? "none" : "0 8px 32px rgba(59,130,246,0.15)",
                   minHeight: 260,
                 }}
               >
-                <div style={{ fontSize: 18, color: "#888", marginBottom: 8, fontStyle: "italic" }}>
+                <div style={{ fontSize: 18, color: "var(--muted-foreground)", marginBottom: 8, fontStyle: "italic" }}>
                   {current.meaning}
                 </div>
-                <div style={{ fontSize: 15, fontWeight: 700, color: "#3c3c3c", marginBottom: 12, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 15, fontWeight: 700, color: "var(--foreground)", marginBottom: 12, lineHeight: 1.6 }}>
                   {current.explanation}
                 </div>
                 {current.exampleSentence && (
                   <div
                     className="px-4 py-3 rounded-xl"
-                    style={{ background: "#f0f9ff", border: "1px solid #bae6fd" }}
+                    style={{ background: darkMode ? "rgba(12,74,110,0.2)" : "#f0f9ff", border: `1px solid ${darkMode ? "#0284c7" : "#bae6fd"}` }}
                   >
-                    <p style={{ fontSize: 13.5, color: "#0c4a6e", fontStyle: "italic", lineHeight: 1.6 }}>
+                    <p style={{ fontSize: 13.5, color: darkMode ? "#bae6fd" : "#0c4a6e", fontStyle: "italic", lineHeight: 1.6 }}>
                       "{current.exampleSentence}"
                     </p>
                     {current.exampleTranslation && (
-                       <p style={{ fontSize: 11, color: "#64748b", marginTop: 4 }}>
+                       <p style={{ fontSize: 11, color: "var(--muted-foreground)", marginTop: 4 }}>
                          {current.exampleTranslation}
                        </p>
                     )}
@@ -307,7 +309,7 @@ export default function FlashcardDeck() {
           {/* Grade buttons (shown only when flipped) */}
           {isFlipped && (
             <div className="w-full max-w-[440px]">
-              <p style={{ fontSize: 13, color: "#888", fontWeight: 600, textAlign: "center", marginBottom: 16 }}>
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 600, textAlign: "center", marginBottom: 16 }}>
                 How well did you remember this word?
               </p>
               <div className="flex gap-4 w-full">
@@ -318,7 +320,7 @@ export default function FlashcardDeck() {
                     onClick={() => handleGrade(g.score)}
                     className="flex-1 flex flex-col items-center justify-center py-4 rounded-2xl cursor-pointer transition-all border-none outline-none shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 active:shadow-none"
                     style={{
-                      background: g.bg,
+                      background: darkMode ? (g.score === 0 ? "rgba(255,75,75,0.15)" : "rgba(34,197,94,0.15)") : g.bg,
                       border: `2px solid ${g.color}40`,
                       boxShadow: `0 4px 0 ${g.color}30`,
                       opacity: isSubmitting ? 0.6 : 1
@@ -337,7 +339,7 @@ export default function FlashcardDeck() {
           )}
 
           {!isFlipped && (
-            <p style={{ fontSize: 13, color: "#aaa", fontWeight: 500, textAlign: "center" }}>
+            <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 500, textAlign: "center" }}>
               Tap the card to see the answer
             </p>
           )}

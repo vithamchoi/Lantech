@@ -1,6 +1,8 @@
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Enums;
 using System.Text.Json;
+using System.Collections.Generic;
+using System.Runtime.CompilerServices;
 
 namespace SWD392.LantechEnglish.Infrastructure.Services;
 
@@ -84,6 +86,26 @@ public class MockAIProvider : IAIProvider
             _ => $"[Mock AI Tutor] Hello! Thank you for your question: '{message}'. In English, 'Do' is generally used for activities or tasks, whereas 'Make' is used for creating or producing something physical."
         };
         return Task.FromResult(reply);
+    }
+
+    public async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        var reply = sourceLanguageCode.ToLower() switch
+        {
+            "vi" => $"[Mock AI Tutor] Chào bạn! Cảm ơn câu hỏi của bạn: '{message}'. Trong tiếng Anh, sự khác biệt nằm ở chỗ: 'Do' thường dùng cho các hoạt động hoặc công việc, trong khi 'Make' dùng cho việc chế tạo, tạo ra một sản phẩm mới.",
+            "ja" => $"[Mock AI Tutor] こんにちは！ご質問ありがとうございます: '{message}'。英語では、'Do'は一般的に行動や仕事を指し、'Make'は新しいものを創造または製造することを指します。",
+            "ko" => $"[Mock AI Tutor] 안녕하세요! 질문해 주셔서 감사합니다: '{message}'. 영어에서 'Do'는 일반적으로 활동이나 일을 나타내고, 'Make'는 새로운 것을 만들거나 제작할 때 사용합니다.",
+            "zh" => $"[Mock AI Tutor] 你好！感谢你的提问: '{message}'。在英语中，'Do'通常用于表示活动或工作，而'Make'则用于表示制造、创造出新的物品。",
+            _ => $"[Mock AI Tutor] Hello! Thank you for your question: '{message}'. In English, 'Do' is generally used for activities or tasks, whereas 'Make' is used for creating or producing something physical."
+        };
+
+        var words = reply.Split(' ');
+        foreach (var word in words)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return word + " ";
+            await Task.Delay(50, cancellationToken);
+        }
     }
 
     public Task<string> GenerateLearningPathAsync(CefrLevel cefrLevel, string sourceLanguageCode, List<string> weakSkills, CancellationToken cancellationToken = default)

@@ -19,7 +19,7 @@ interface AppState {
   user: UserProfile | null;
   setRole: (role: UserRole) => void;
   setUser: (user: UserProfile | null) => void;
-  login: (role: UserRole, user: any, accessToken: string, refreshToken: string) => void;
+  login: (role: UserRole, user: any, accessToken?: string, refreshToken?: string) => void;
   logout: () => void;
   darkMode: boolean;
   toggleDarkMode: () => void;
@@ -35,17 +35,21 @@ export const useAppStore = create<AppState>()(
       setRole: (role) => set({ role }),
       setUser: (user) => set({ user }),
       login: (role, user, accessToken, refreshToken) => {
-        localStorage.setItem('access_token', accessToken);
-        localStorage.setItem('refresh_token', refreshToken);
+        if (accessToken) localStorage.setItem('access_token', accessToken);
+        if (refreshToken) localStorage.setItem('refresh_token', refreshToken);
+        
+        const email = typeof user === 'string' ? user : (user?.email || '');
+        const name = typeof user === 'string' ? user.split('@')[0] : (user?.fullName || user?.name || email || 'User');
+        
         const profile: UserProfile = {
-          id: user.id,
-          name: user.fullName,
-          email: user.email,
-          avatar: user.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${user.fullName}`,
-          xp: user.xp,
-          streak: user.streakCount,
-          cefr: user.currentCefrLevel || 'N/A',
-          nativeLang: user.sourceLanguageCode,
+          id: user?.id || '',
+          name: name,
+          email: email,
+          avatar: user?.avatarUrl || `https://api.dicebear.com/7.x/adventurer/svg?seed=${name}`,
+          xp: user?.xp || 0,
+          streak: user?.streakCount || user?.streak || 0,
+          cefr: user?.currentCefrLevel || user?.cefr || 'N/A',
+          nativeLang: user?.sourceLanguageCode || user?.nativeLang || 'vi',
         };
         set({ role, user: profile });
       },

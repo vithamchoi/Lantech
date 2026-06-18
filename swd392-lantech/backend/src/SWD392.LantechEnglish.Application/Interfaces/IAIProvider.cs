@@ -14,6 +14,8 @@ public interface IAIProvider
     
     Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default);
     
+    IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default);
+    
     Task<string> GenerateLearningPathAsync(CefrLevel cefrLevel, string sourceLanguageCode, List<string> weakSkills, CancellationToken cancellationToken = default);
     
     Task<string> GenerateVocabularyExamplesAsync(string word, string sourceLanguageCode, CefrLevel cefrLevel, CancellationToken cancellationToken = default);

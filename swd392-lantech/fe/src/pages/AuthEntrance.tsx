@@ -9,7 +9,7 @@ import { toast } from "sonner";
 export default function AuthEntrance() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login } = useAppStore();
+  const { login, darkMode } = useAppStore();
 
   const initialMode = (location.state as any)?.mode || "login";
   const [activeTab, setActiveTab] = useState<"login" | "register">(initialMode);
@@ -112,7 +112,7 @@ export default function AuthEntrance() {
     <div
       className="min-h-screen w-full flex flex-col justify-between py-8 px-4 transition-colors duration-300"
       style={{
-        background: "linear-gradient(135deg, #f0fdf4 0%, #e0f2fe 100%)",
+        background: "var(--background)",
         fontFamily: "var(--font-family)",
       }}
     >
@@ -130,14 +130,14 @@ export default function AuthEntrance() {
       <div className="max-w-md w-full mx-auto my-auto">
         <div
           className="rounded-3xl shadow-2xl overflow-hidden transition-all duration-300"
-          style={{ background: "#ffffff", border: "2px solid rgba(0,0,0,0.06)" }}
+          style={{ background: "var(--card)", border: "2px solid var(--border)" }}
         >
           {/* Tab Headers */}
           <div
             className="flex border-b"
             style={{
-              borderColor: "rgba(0,0,0,0.06)",
-              background: "#fafafa",
+              borderColor: "var(--border)",
+              background: darkMode ? "rgba(255,255,255,0.03)" : "#fafafa",
             }}
           >
             <button
@@ -145,8 +145,8 @@ export default function AuthEntrance() {
               onClick={() => setActiveTab("login")}
               className="flex-1 py-4 text-sm font-bold tracking-wide transition-all border-none outline-none cursor-pointer"
               style={{
-                background: activeTab === "login" ? "#ffffff" : "transparent",
-                color: activeTab === "login" ? "var(--brand-dark)" : "#888",
+                background: activeTab === "login" ? "var(--card)" : "transparent",
+                color: activeTab === "login" ? (darkMode ? "var(--brand)" : "var(--brand-dark)") : "var(--muted-foreground)",
                 borderBottom: activeTab === "login" ? "3px solid var(--brand)" : "3px solid transparent",
               }}
             >
@@ -157,8 +157,8 @@ export default function AuthEntrance() {
               onClick={() => setActiveTab("register")}
               className="flex-1 py-4 text-sm font-bold tracking-wide transition-all border-none outline-none cursor-pointer"
               style={{
-                background: activeTab === "register" ? "#ffffff" : "transparent",
-                color: activeTab === "register" ? "var(--brand-dark)" : "#888",
+                background: activeTab === "register" ? "var(--card)" : "transparent",
+                color: activeTab === "register" ? (darkMode ? "var(--brand)" : "var(--brand-dark)") : "var(--muted-foreground)",
                 borderBottom: activeTab === "register" ? "3px solid var(--brand)" : "3px solid transparent",
               }}
             >
@@ -177,11 +177,11 @@ export default function AuthEntrance() {
               </div>
               <h2
                 className="text-2xl font-bold text-slate dark:text-cream-50"
-                style={{ color: "#3c3c3c", fontWeight: 900 }}
+                style={{ color: "var(--foreground)", fontWeight: 900 }}
               >
                 Welcome to Lantech
               </h2>
-              <p style={{ fontSize: 13, color: "#888", fontWeight: 500 }}>
+              <p style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 500 }}>
                 {activeTab === "login"
                   ? "Sign in to pick up where you left off"
                   : "Begin your nature-paced learning path"}
@@ -191,7 +191,7 @@ export default function AuthEntrance() {
             <div className="space-y-4 text-left">
               {activeTab === "register" && (
                 <div className="space-y-1.5">
-                  <label style={{ fontSize: 11.5, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                  <label style={{ fontSize: 11.5, fontWeight: 800, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                     Full Name
                   </label>
                   <div className="relative">
@@ -208,11 +208,11 @@ export default function AuthEntrance() {
                       onChange={e => setName(e.target.value)}
                       className="w-full pl-11 pr-4 py-3 outline-none transition-all rounded-xl"
                       style={{
-                        border: "2px solid rgba(0,0,0,0.06)",
+                        border: "2px solid var(--border)",
                         background: "var(--input-background)",
                         fontSize: 14,
                         fontWeight: 600,
-                        color: "#3c3c3c",
+                        color: "var(--foreground)",
                       }}
                     />
                   </div>
@@ -220,7 +220,7 @@ export default function AuthEntrance() {
               )}
 
               <div className="space-y-1.5">
-                <label style={{ fontSize: 11.5, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <label style={{ fontSize: 11.5, fontWeight: 800, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Email Address
                 </label>
                 <div className="relative">
@@ -237,18 +237,18 @@ export default function AuthEntrance() {
                     onChange={e => setEmail(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 outline-none transition-all rounded-xl"
                     style={{
-                      border: "2px solid rgba(0,0,0,0.06)",
+                      border: "2px solid var(--border)",
                       background: "var(--input-background)",
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "#3c3c3c",
+                      color: "var(--foreground)",
                     }}
                   />
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <label style={{ fontSize: 11.5, fontWeight: 800, color: "#888", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                <label style={{ fontSize: 11.5, fontWeight: 800, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: "0.5px" }}>
                   Password
                 </label>
                 <div className="relative">
@@ -265,11 +265,11 @@ export default function AuthEntrance() {
                     onChange={e => setPassword(e.target.value)}
                     className="w-full pl-11 pr-4 py-3 outline-none transition-all rounded-xl"
                     style={{
-                      border: "2px solid rgba(0,0,0,0.06)",
+                      border: "2px solid var(--border)",
                       background: "var(--input-background)",
                       fontSize: 14,
                       fontWeight: 600,
-                      color: "#3c3c3c",
+                      color: "var(--foreground)",
                     }}
                   />
                 </div>
@@ -336,7 +336,7 @@ export default function AuthEntrance() {
       </div>
 
       {/* Footer copyright space */}
-      <div style={{ fontSize: 12, color: "#888", textAlign: "center", fontWeight: 600 }}>
+      <div style={{ fontSize: 12, color: "var(--muted-foreground)", textAlign: "center", fontWeight: 600 }}>
         © 2026 Lantech English. All rights reserved.
       </div>
     </div>

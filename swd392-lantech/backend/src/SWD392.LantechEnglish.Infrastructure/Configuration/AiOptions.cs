@@ -15,4 +15,7 @@ public class AiOptions
     public string GeminiApiKey { get; set; } = string.Empty;
     public string ClaudeApiKey { get; set; } = string.Empty;
     public string OpenAIApiKey { get; set; } = string.Empty;
+    public string ZenMuxApiKey { get; set; } = string.Empty;
+    public string ZenMuxBaseUrl { get; set; } = "https://zenmux.ai/api/v1";
+    public string ZenMuxDefaultModel { get; set; } = "z-ai/glm-5.2-free";
 }

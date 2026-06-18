@@ -41,7 +41,7 @@ export default function AICabin() {
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [analyzerSentence, setAnalyzerSentence] = useState("");
-  const [analyzerLang, setAnalyzerLang] = useState(user?.sourceLanguageCode || "vi");
+  const [analyzerLang, setAnalyzerLang] = useState(user?.nativeLang || "vi");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const endRef = useRef<HTMLDivElement>(null);
@@ -56,19 +56,47 @@ export default function AICabin() {
     const userMsg: Message = { id: Date.now().toString(), role: "user", text, time: "now" };
     setMessages(prev => [...prev, userMsg]);
     setInput("");
+
+    const tutorMsgId = Date.now().toString() + "r";
+    const tutorPlaceholder: Message = { id: tutorMsgId, role: "tutor", text: "", time: "now" };
+    setMessages(prev => [...prev, tutorPlaceholder]);
     setIsTyping(true);
 
+    let accumulatedText = "";
     try {
-      const reply = await aiService.chatTutor(text, analyzerLang);
-      setMessages(prev => [...prev, { id: Date.now().toString() + "r", role: "tutor", text: reply, time: "now" }]);
+      await aiService.chatTutorStream(
+        text,
+        analyzerLang,
+        (chunk) => {
+          setIsTyping(false);
+          accumulatedText += chunk;
+          setMessages(prev =>
+            prev.map(m => m.id === tutorMsgId ? { ...m, text: accumulatedText } : m)
+          );
+        },
+        (error) => {
+          console.error("Streaming error:", error);
+          toast.error("Hệ thống AI đang gặp sự cố. Vui lòng thử lại!");
+          setMessages(prev =>
+            prev.map(m =>
+              m.id === tutorMsgId
+                ? { ...m, text: accumulatedText ? accumulatedText + "\n\n⚠️ *[Lỗi kết nối giữa chừng]*" : "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!" }
+                : m
+            )
+          );
+          setIsTyping(false);
+        }
+      );
     } catch (error: any) {
       toast.error("Failed to get response from AI Tutor");
-      setMessages(prev => [...prev, { 
-        id: Date.now().toString() + "e", 
-        role: "tutor", 
-        text: "I'm sorry, I'm having trouble connecting right now. Please try again later. 🦉", 
-        time: "now" 
-      }]);
+      setMessages(prev =>
+        prev.map(m =>
+          m.id === tutorMsgId
+            ? { ...m, text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!" }
+            : m
+        )
+      );
+      setIsTyping(false);
     } finally {
       setIsTyping(false);
     }
@@ -94,18 +122,18 @@ export default function AICabin() {
       {/* Chat panel */}
       <div className="flex flex-col flex-1 min-w-0 border-r" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
         {/* Chat header */}
-        <div className="px-6 py-4 border-b flex items-center gap-3" style={{ background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}>
+        <div className="px-6 py-4 border-b flex items-center gap-3" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
           <div
             className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)" }}
+            style={{ background: "var(--brand-purple)" }}
           >
             <span style={{ fontSize: 20 }}>🦉</span>
           </div>
           <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: "#3c3c3c" }}>AI Tutor Hoot</div>
+            <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>AI Tutor Hoot</div>
             <div className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--brand)" }} />
-              <span style={{ fontSize: 12, color: "#888", fontWeight: 600 }}>Online — always ready to help</span>
+              <span style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>Online — always ready to help</span>
             </div>
           </div>
           <button
@@ -130,7 +158,7 @@ export default function AICabin() {
                 className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
                 style={{
                   background: msg.role === "tutor"
-                    ? "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)"
+                    ? "var(--brand-purple)"
                     : "var(--brand)",
                   fontSize: msg.role === "tutor" ? 16 : 13,
                   color: "#fff",
@@ -143,9 +171,9 @@ export default function AICabin() {
               <div
                 className="px-4 py-3 rounded-2xl max-w-sm text-left"
                 style={{
-                  background: msg.role === "tutor" ? "#fff" : "var(--brand)",
-                  border: msg.role === "tutor" ? "1.5px solid rgba(0,0,0,0.08)" : "none",
-                  color: msg.role === "tutor" ? "#3c3c3c" : "#fff",
+                  background: msg.role === "tutor" ? "var(--card)" : "var(--brand)",
+                  border: msg.role === "tutor" ? "1.5px solid var(--border)" : "none",
+                  color: msg.role === "tutor" ? "var(--foreground)" : "#fff",
                   fontSize: 13.5,
                   lineHeight: 1.7,
                   borderRadius: msg.role === "tutor" ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
@@ -161,19 +189,19 @@ export default function AICabin() {
             <div className="flex gap-3">
               <div
                 className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: "linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%)", fontSize: 16, marginTop: 4 }}
+                style={{ background: "var(--brand-purple)", fontSize: 16, marginTop: 4 }}
               >
                 🦉
               </div>
               <div
                 className="px-4 py-3 rounded-2xl flex items-center gap-1"
-                style={{ background: "#fff", border: "1.5px solid rgba(0,0,0,0.08)", borderRadius: "4px 18px 18px 18px" }}
+                style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: "4px 18px 18px 18px" }}
               >
                 {[0, 1, 2].map(i => (
                   <div
                     key={i}
-                    className="w-2 h-2 rounded-full animate-bounce"
-                    style={{ background: "#a78bfa", animationDelay: `${i * 0.15}s` }}
+                    className="w-2.5 h-2.5 rounded-full animate-bounce"
+                    style={{ background: "var(--brand-purple)", animationDelay: `${i * 0.15}s` }}
                   />
                 ))}
               </div>
@@ -200,7 +228,7 @@ export default function AICabin() {
         {/* Input */}
         <div
           className="px-5 py-4 border-t flex gap-3"
-          style={{ background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}
+          style={{ background: "var(--card)", borderColor: "var(--border)" }}
         >
           <input
             value={input}
@@ -209,11 +237,11 @@ export default function AICabin() {
             placeholder="Ask Hoot anything about English..."
             className="flex-1 px-4 py-2.5 rounded-2xl outline-none"
             style={{
-              border: "2px solid #e5e7eb",
+              border: "2px solid var(--border)",
               fontSize: 14,
               fontFamily: "var(--font-family)",
-              background: "#fafafa",
-              color: "#3c3c3c",
+              background: "var(--input-background)",
+              color: "var(--foreground)",
             }}
           />
           <button
@@ -222,7 +250,7 @@ export default function AICabin() {
             type="button"
             className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer border-none outline-none shrink-0"
             style={{
-              background: input.trim() ? "#8b5cf6" : "#e5e7eb",
+              background: input.trim() ? "var(--brand-purple)" : "var(--muted)",
             }}
           >
             <Send size={15} color="#fff" />
@@ -233,15 +261,15 @@ export default function AICabin() {
       {/* Sentence Analyzer panel */}
       <div
         className="shrink-0 flex flex-col overflow-hidden hidden lg:flex border-l"
-        style={{ width: 340, background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}
+        style={{ width: 340, background: "var(--card)", borderColor: "var(--border)" }}
       >
-        <div className="px-6 py-4 border-b flex items-center gap-2 text-left" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
-          <Sparkles size={16} style={{ color: "#f59e0b" }} />
-          <span style={{ fontWeight: 800, fontSize: 15, color: "#3c3c3c" }}>Sentence Analyzer</span>
+        <div className="px-6 py-4 border-b flex items-center gap-2 text-left" style={{ borderColor: "var(--border)" }}>
+          <Sparkles size={16} style={{ color: "var(--brand-orange)" }} />
+          <span style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>Sentence Analyzer</span>
         </div>
         <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 text-left">
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: "#888", display: "block", marginBottom: 8 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 8 }}>
               Enter a sentence to analyze
             </label>
             <textarea
@@ -251,18 +279,18 @@ export default function AICabin() {
               rows={4}
               className="w-full px-4 py-3 rounded-xl outline-none resize-none"
               style={{
-                border: "2px solid #e5e7eb",
+                border: "2px solid var(--border)",
                 fontSize: 13.5,
                 fontFamily: "var(--font-family)",
-                background: "#fafafa",
-                color: "#3c3c3c",
+                background: "var(--input-background)",
+                color: "var(--foreground)",
                 lineHeight: 1.7,
               }}
             />
           </div>
 
           <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: "#888", display: "block", marginBottom: 8 }}>
+            <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 8 }}>
               Explanation language
             </label>
             <select
@@ -270,14 +298,14 @@ export default function AICabin() {
               onChange={e => setAnalyzerLang(e.target.value)}
               className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
               style={{
-                border: "2px solid #e5e7eb",
+                border: "2px solid var(--border)",
                 fontSize: 13.5,
                 fontFamily: "var(--font-family)",
-                background: "#fafafa",
-                color: "#3c3c3c",
+                background: "var(--input-background)",
+                color: "var(--foreground)",
               }}
             >
-              {ANALYZER_LANGUAGE_OPTIONS.map(l => <option key={l} value={l}>{l}</option>)}
+              {ANALYZER_LANGUAGE_OPTIONS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
             </select>
           </div>
 
@@ -287,7 +315,7 @@ export default function AICabin() {
             type="button"
             className="py-3 rounded-xl cursor-pointer border-none outline-none text-white transition-all shadow-md"
             style={{
-              background: analyzerSentence.trim() ? "#f59e0b" : "#e5e7eb",
+              background: analyzerSentence.trim() ? "var(--brand-orange)" : "var(--muted)",
               fontWeight: 800,
               fontSize: 14,
             }}
@@ -299,23 +327,23 @@ export default function AICabin() {
             <div className="text-center py-4">
               <div className="flex gap-1.5 justify-center mb-2">
                 {[0, 1, 2].map(i => (
-                  <div key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: "#f59e0b", animationDelay: `${i * 0.15}s` }} />
+                  <div key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: "var(--brand-orange)", animationDelay: `${i * 0.15}s` }} />
                 ))}
               </div>
-              <div style={{ fontSize: 12.5, color: "#888" }}>Analyzing your sentence...</div>
+              <div style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>Analyzing your sentence...</div>
             </div>
           )}
 
           {analysis && !analyzing && (
             <div
               className="rounded-2xl p-5 animate-fade-in"
-              style={{ background: "#fffbeb", border: "2px solid #fde68a" }}
+              style={{ background: "var(--brand-gold-light)", border: "2px solid var(--brand-gold)" }}
             >
-              <div style={{ fontSize: 12, fontWeight: 700, color: "#b45309", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-orange)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
                 Analysis Result
               </div>
               <div
-                style={{ fontSize: 13, color: "#3c3c3c", lineHeight: 1.8 }}
+                style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.8 }}
                 dangerouslySetInnerHTML={{
                   __html: analysis.replace(/\n/g, "<br/>").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
                 }}
