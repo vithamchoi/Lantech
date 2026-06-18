@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SWD392.LantechEnglish.Api/SWD392.LantechEnglish.Api.csproj" />
+    <Project Path="src/SWD392.LantechEnglish.Application/SWD392.LantechEnglish.Application.csproj" />
+    <Project Path="src/SWD392.LantechEnglish.Domain/SWD392.LantechEnglish.Domain.csproj" />
+    <Project Path="src/SWD392.LantechEnglish.Infrastructure/SWD392.LantechEnglish.Infrastructure.csproj" />
+  </Folder>
+</Solution>

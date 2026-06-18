@@ -1,0 +1,6 @@
+@SWD392.LantechEnglish.Api_HostAddress = http://localhost:5131
+
+GET {{SWD392.LantechEnglish.Api_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
