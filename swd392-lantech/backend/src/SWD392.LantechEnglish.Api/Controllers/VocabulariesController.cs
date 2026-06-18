@@ -65,6 +65,21 @@ public class VocabulariesController : ControllerBase
         return Ok(ApiResponse<VocabularyDto>.SuccessResponse(vocab));
     }
 
+    /// <summary>
+    /// Get related vocabularies sharing the same tags
+    /// </summary>
+    [HttpGet("{id:guid}/related")]
+    [ProducesResponseType(typeof(ApiResponse<IEnumerable<VocabularyDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetRelatedVocabularies([FromRoute] Guid id, CancellationToken cancellationToken)
+    {
+        var uid = UserId;
+        if (uid == Guid.Empty) return Unauthorized(ApiResponse.ErrorResponse("Invalid token"));
+
+        var list = await _vocabService.GetRelatedVocabulariesAsync(id, cancellationToken);
+        return Ok(ApiResponse<IEnumerable<VocabularyDto>>.SuccessResponse(list, "Related vocabularies fetched successfully"));
+    }
+
 
     /// <summary>Get vocabulary translations</summary>
     [HttpGet("{id:guid}/translations")]

@@ -31,6 +31,7 @@ public class AppDbContext : DbContext
     public DbSet<XpTransaction> XpTransactions => Set<XpTransaction>();
     public DbSet<StudySession> StudySessions => Set<StudySession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<Tag> Tags => Set<Tag>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
