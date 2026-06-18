@@ -39,8 +39,20 @@ const ANALYZER_LANGUAGE_OPTIONS = [
 
 export default function AICabin() {
   const { user } = useAppStore();
-  const { t } = useTranslation();
-  const [messages, setMessages] = useState<Message[]>([]);
+  const { t, language } = useTranslation();
+  const [messages, setMessages] = useState<Message[]>(() => {
+    const currentUser = useAppStore.getState().user;
+    const key = `lantech_chat_messages_${currentUser?.id || "guest"}`;
+    const saved = localStorage.getItem(key);
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse saved chat messages", e);
+      }
+    }
+    return [];
+  });
   const [input, setInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [analyzerSentence, setAnalyzerSentence] = useState("");
@@ -51,15 +63,27 @@ export default function AICabin() {
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    setMessages([
-      {
-        id: "0",
-        role: "tutor",
-        text: t("aiCabinWelcome"),
-        time: "now",
+    setMessages(prev => {
+      if (prev.length === 0) {
+        return [
+          {
+            id: "0",
+            role: "tutor",
+            text: t("aiCabinWelcome"),
+            time: "now",
+          }
+        ];
       }
-    ]);
-  }, [t]);
+      return prev.map(m => m.id === "0" ? { ...m, text: t("aiCabinWelcome") } : m);
+    });
+  }, [language]);
+
+  useEffect(() => {
+    const key = `lantech_chat_messages_${user?.id || "guest"}`;
+    if (messages.length > 0) {
+      localStorage.setItem(key, JSON.stringify(messages));
+    }
+  }, [messages, user?.id]);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -79,9 +103,17 @@ export default function AICabin() {
     let addedPlaceholder = false;
 
     try {
+      const history = messages
+        .filter(m => m.id !== "0")
+        .map(m => ({
+          role: (m.role === "tutor" ? "assistant" : "user") as "assistant" | "user",
+          content: m.text
+        }));
+
       await aiService.chatTutorStream(
         text,
         analyzerLang,
+        history,
         (chunk) => {
           setIsTyping(false);
           accumulatedText += chunk;

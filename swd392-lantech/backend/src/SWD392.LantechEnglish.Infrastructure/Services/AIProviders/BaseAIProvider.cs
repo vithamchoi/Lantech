@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using System.Text.Json;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Enums;
@@ -65,13 +66,13 @@ public abstract class BaseAIProvider : IAIProvider
         return prompt;
     }
 
-    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
         var sys = GetChatTutorSystemPrompt(sourceLanguageCode);
         return await CallChatCompletionsAsync(sys, message, cancellationToken);
     }
 
-    public virtual IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public virtual IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
         throw new NotImplementedException("Streaming is not supported by this provider.");
     }

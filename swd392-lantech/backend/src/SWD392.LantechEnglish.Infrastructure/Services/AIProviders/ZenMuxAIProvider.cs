@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -81,7 +82,7 @@ public class ZenMuxAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         return result;
     }
 
-    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrEmpty(_options.ZenMuxApiKey))
         {
@@ -93,14 +94,22 @@ public class ZenMuxAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 
         _logger.LogInformation("Attempting ZenMux stream call using model: {Model}", model);
 
+        var messagesList = new List<object>();
+        messagesList.Add(new { role = "system", content = systemPrompt });
+        if (history != null)
+        {
+            foreach (var h in history)
+            {
+                var role = h.Role == "tutor" || h.Role == "assistant" ? "assistant" : "user";
+                messagesList.Add(new { role = role, content = h.Content });
+            }
+        }
+        messagesList.Add(new { role = "user", content = message });
+
         var payload = new
         {
             model = model,
-            messages = new[]
-            {
-                new { role = "system", content = systemPrompt },
-                new { role = "user", content = message }
-            },
+            messages = messagesList,
             temperature = 0.7,
             stream = true
         };

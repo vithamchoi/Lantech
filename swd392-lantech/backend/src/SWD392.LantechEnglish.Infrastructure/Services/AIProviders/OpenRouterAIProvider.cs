@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -121,7 +122,7 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         throw new AggregateException("All configured OpenRouter models failed to return a valid response.", errors);
     }
 
-    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    public override async IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, [EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         var modelsToTry = new List<string>();
         if (!string.IsNullOrEmpty(_options.OpenRouterDefaultModel))
@@ -154,6 +155,18 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         List<Exception> errors = new();
         HttpResponseMessage? response = null;
 
+        var messagesList = new List<object>();
+        messagesList.Add(new { role = "system", content = systemPrompt });
+        if (history != null)
+        {
+            foreach (var h in history)
+            {
+                var role = h.Role == "tutor" || h.Role == "assistant" ? "assistant" : "user";
+                messagesList.Add(new { role = role, content = h.Content });
+            }
+        }
+        messagesList.Add(new { role = "user", content = message });
+
         foreach (var model in modelsToTry)
         {
             try
@@ -163,11 +176,7 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
                 var payload = new
                 {
                     model = model,
-                    messages = new[]
-                    {
-                        new { role = "system", content = systemPrompt },
-                        new { role = "user", content = message }
-                    },
+                    messages = messagesList,
                     temperature = 0.7,
                     stream = true
                 };

@@ -1,8 +1,14 @@
 import apiClient from '../api/apiClient';
 
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
 export interface ChatTutorRequest {
   message: string;
   sourceLanguageCode?: string;
+  history?: ChatMessage[];
 }
 
 export interface ExplainSentenceRequest {
@@ -12,14 +18,15 @@ export interface ExplainSentenceRequest {
 }
 
 export const aiService = {
-  chatTutor: async (message: string, sourceLanguageCode: string = 'vi'): Promise<string> => {
+  chatTutor: async (message: string, sourceLanguageCode: string = 'vi', history?: ChatMessage[]): Promise<string> => {
     // Expected response wrapper from apiClient
-    return await apiClient.post('/ai/chat-tutor', { message, sourceLanguageCode });
+    return await apiClient.post('/ai/chat-tutor', { message, sourceLanguageCode, history });
   },
 
   chatTutorStream: async (
     message: string,
     sourceLanguageCode: string = 'vi',
+    history: ChatMessage[] = [],
     onChunk: (text: string) => void,
     onError: (err: any) => void
   ): Promise<void> => {
@@ -31,7 +38,7 @@ export const aiService = {
           'Content-Type': 'application/json',
           'Authorization': token ? `Bearer ${token}` : '',
         },
-        body: JSON.stringify({ message, sourceLanguageCode })
+        body: JSON.stringify({ message, sourceLanguageCode, history })
       });
 
       if (!response.ok) {

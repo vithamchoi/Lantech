@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using SWD392.LantechEnglish.Application.Interfaces;
@@ -196,11 +197,11 @@ public class FallbackAIProvider : IAIProvider, ISpeechAssessmentProvider
     public Task<string> AnalyzeWeaknessesAsync(string historySummaryJson, string sourceLanguageCode, CancellationToken cancellationToken = default)
         => ExecuteWithFallbackAsync(p => p.AnalyzeWeaknessesAsync(historySummaryJson, sourceLanguageCode, cancellationToken), nameof(AnalyzeWeaknessesAsync));
 
-    public Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
-        => ExecuteWithFallbackAsync(p => p.ChatTutorAsync(message, sourceLanguageCode, cancellationToken), nameof(ChatTutorAsync));
+    public Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
+        => ExecuteWithFallbackAsync(p => p.ChatTutorAsync(message, sourceLanguageCode, history, cancellationToken), nameof(ChatTutorAsync));
 
-    public IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
-        => ExecuteWithFallbackStreamAsync(p => p.ChatTutorStreamAsync(message, sourceLanguageCode, cancellationToken), nameof(ChatTutorStreamAsync));
+    public IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
+        => ExecuteWithFallbackStreamAsync(p => p.ChatTutorStreamAsync(message, sourceLanguageCode, history, cancellationToken), nameof(ChatTutorStreamAsync));
 
     public Task<string> GenerateLearningPathAsync(CefrLevel cefrLevel, string sourceLanguageCode, List<string> weakSkills, CancellationToken cancellationToken = default)
         => ExecuteWithFallbackAsync(p => p.GenerateLearningPathAsync(cefrLevel, sourceLanguageCode, weakSkills, cancellationToken), nameof(GenerateLearningPathAsync));

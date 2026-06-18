@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -91,6 +92,7 @@ public class AIController : ControllerBase
         [Required]
         public string Message { get; set; } = null!;
         public string SourceLanguageCode { get; set; } = "vi";
+        public List<ChatMessageDto>? History { get; set; }
     }
 
     /// <summary>
@@ -105,7 +107,7 @@ public class AIController : ControllerBase
     {
         try
         {
-            var result = await _aiService.ChatTutorAsync(request.Message, request.SourceLanguageCode, cancellationToken);
+            var result = await _aiService.ChatTutorAsync(request.Message, request.SourceLanguageCode, request.History, cancellationToken);
             return Ok(ApiResponse<string>.SuccessResponse(result, "Tutor response generated"));
         }
         catch (Exception ex)
@@ -126,7 +128,7 @@ public class AIController : ControllerBase
 
         try
         {
-            await foreach (var chunk in _aiService.ChatTutorStreamAsync(request.Message, request.SourceLanguageCode, cancellationToken))
+            await foreach (var chunk in _aiService.ChatTutorStreamAsync(request.Message, request.SourceLanguageCode, request.History, cancellationToken))
             {
                 await Response.WriteAsync($"data: {System.Text.Json.JsonSerializer.Serialize(new { content = chunk })}\n\n", cancellationToken);
                 await Response.Body.FlushAsync(cancellationToken);

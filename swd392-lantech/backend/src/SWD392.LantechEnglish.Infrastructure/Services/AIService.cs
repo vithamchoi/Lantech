@@ -1,3 +1,4 @@
+using SWD392.LantechEnglish.Application.DTOs.AI;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Enums;
 
@@ -27,14 +28,14 @@ public class AIService : IAIService
         return await _aiProvider.GenerateExercisesAsync(level, sk, sourceLanguageCode, topic, count, cancellationToken);
     }
 
-    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
-        return await _aiProvider.ChatTutorAsync(message, sourceLanguageCode, cancellationToken);
+        return await _aiProvider.ChatTutorAsync(message, sourceLanguageCode, history, cancellationToken);
     }
 
-    public IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<string> ChatTutorStreamAsync(string message, string sourceLanguageCode, List<ChatMessageDto>? history = null, CancellationToken cancellationToken = default)
     {
-        return _aiProvider.ChatTutorStreamAsync(message, sourceLanguageCode, cancellationToken);
+        return _aiProvider.ChatTutorStreamAsync(message, sourceLanguageCode, history, cancellationToken);
     }
 
     public async Task<string> GenerateAssessmentQuestionsAsync(string skill, string cefrLevel, int count, string sourceLanguageCode, CancellationToken cancellationToken = default)

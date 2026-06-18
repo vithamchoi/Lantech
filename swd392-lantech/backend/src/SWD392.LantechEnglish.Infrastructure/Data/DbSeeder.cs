@@ -60,47 +60,7 @@ public static class DbSeeder
         await context.SaveChangesAsync();
 
         // Seed Tags and link to Vocabulary (independent of Users seeded check)
-        if (!await context.Tags.AnyAsync())
-        {
-            var tagNature = new Tag { Id = Guid.NewGuid(), Name = "Nature & Environment" };
-            var tagFamily = new Tag { Id = Guid.NewGuid(), Name = "Family & Relationships" };
-            var tagAnimals = new Tag { Id = Guid.NewGuid(), Name = "Animals & Wildlife" };
-            var tagFood = new Tag { Id = Guid.NewGuid(), Name = "Food & Dining" };
-            var tagCognition = new Tag { Id = Guid.NewGuid(), Name = "Cognition & Mind" };
-            var tagActions = new Tag { Id = Guid.NewGuid(), Name = "Actions & Movement" };
-            var tagSociety = new Tag { Id = Guid.NewGuid(), Name = "Society & Business" };
-
-            context.Tags.AddRange(tagNature, tagFamily, tagAnimals, tagFood, tagCognition, tagActions, tagSociety);
-            await context.SaveChangesAsync();
-
-            var allVocabs = await context.Vocabularies.Include(v => v.Tags).ToListAsync();
-            var natureWords = new HashSet<string> { "tree", "sun", "ice", "landscape", "rapid", "variable", "hazard", "climate" };
-            var familyWords = new HashSet<string> { "hello", "goodbye", "thank you", "family", "mother", "love", "kinship", "invite", "join", "familiar", "jealous" };
-            var animalWords = new HashSet<string> { "cat", "dog", "fish", "bird", "wild" };
-            var foodWords = new HashSet<string> { "apple", "egg", "breakfast", "dinner", "eat", "satisfy" };
-            var cognitionWords = new HashSet<string> { "believe", "decide", "forget", "guess", "notice", "remember", "suggest", "debate", "negotiate", "deduce", "empirical", "imply", "notion", "qualitative", "abstract", "obscure", "cohere", "elaborate" };
-            var actionWords = new HashSet<string> { "jump", "play", "travel", "gather", "tackle", "participate", "simulate", "utilize", "abandon", "calculate", "damage", "educate" };
-            var societyWords = new HashSet<string> { "campaign", "facility", "maintain", "objective", "radical", "bureaucracy", "legislate", "jurisdiction", "revenue", "margin", "qualify", "abolish", "barrier" };
-
-            foreach (var vocab in allVocabs)
-            {
-                var w = vocab.Word.ToLower();
-                if (natureWords.Contains(w)) vocab.Tags.Add(tagNature);
-                else if (familyWords.Contains(w)) vocab.Tags.Add(tagFamily);
-                else if (animalWords.Contains(w)) vocab.Tags.Add(tagAnimals);
-                else if (foodWords.Contains(w)) vocab.Tags.Add(tagFood);
-                else if (cognitionWords.Contains(w)) vocab.Tags.Add(tagCognition);
-                else if (actionWords.Contains(w)) vocab.Tags.Add(tagActions);
-                else if (societyWords.Contains(w)) vocab.Tags.Add(tagSociety);
-                else
-                {
-                    if (vocab.PartOfSpeech == "noun") vocab.Tags.Add(tagSociety);
-                    else if (vocab.PartOfSpeech == "verb") vocab.Tags.Add(tagActions);
-                    else vocab.Tags.Add(tagCognition);
-                }
-            }
-            await context.SaveChangesAsync();
-        }
+        await EnsureVocabularyTagsLinkedAsync(context);
 
         // Check if already seeded (for other entities)
         if (await context.Users.AnyAsync())
@@ -610,5 +570,68 @@ public static class DbSeeder
         };
         context.Exercises.AddRange(exercises);
         await context.SaveChangesAsync();
+    }
+
+    private static async Task EnsureVocabularyTagsLinkedAsync(AppDbContext context)
+    {
+        // Seed tags if they don't exist
+        var tagNature = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Nature & Environment");
+        var tagFamily = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Family & Relationships");
+        var tagAnimals = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Animals & Wildlife");
+        var tagFood = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Food & Dining");
+        var tagCognition = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Cognition & Mind");
+        var tagActions = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Actions & Movement");
+        var tagSociety = await context.Tags.FirstOrDefaultAsync(t => t.Name == "Society & Business");
+
+        bool tagsChanged = false;
+        if (tagNature == null) { tagNature = new Tag { Id = Guid.NewGuid(), Name = "Nature & Environment" }; context.Tags.Add(tagNature); tagsChanged = true; }
+        if (tagFamily == null) { tagFamily = new Tag { Id = Guid.NewGuid(), Name = "Family & Relationships" }; context.Tags.Add(tagFamily); tagsChanged = true; }
+        if (tagAnimals == null) { tagAnimals = new Tag { Id = Guid.NewGuid(), Name = "Animals & Wildlife" }; context.Tags.Add(tagAnimals); tagsChanged = true; }
+        if (tagFood == null) { tagFood = new Tag { Id = Guid.NewGuid(), Name = "Food & Dining" }; context.Tags.Add(tagFood); tagsChanged = true; }
+        if (tagCognition == null) { tagCognition = new Tag { Id = Guid.NewGuid(), Name = "Cognition & Mind" }; context.Tags.Add(tagCognition); tagsChanged = true; }
+        if (tagActions == null) { tagActions = new Tag { Id = Guid.NewGuid(), Name = "Actions & Movement" }; context.Tags.Add(tagActions); tagsChanged = true; }
+        if (tagSociety == null) { tagSociety = new Tag { Id = Guid.NewGuid(), Name = "Society & Business" }; context.Tags.Add(tagSociety); tagsChanged = true; }
+
+        if (tagsChanged)
+        {
+            await context.SaveChangesAsync();
+        }
+
+        var allVocabs = await context.Vocabularies.Include(v => v.Tags).ToListAsync();
+        bool vocabsChanged = false;
+
+        var natureWords = new HashSet<string> { "tree", "sun", "ice", "landscape", "rapid", "variable", "hazard", "climate" };
+        var familyWords = new HashSet<string> { "hello", "goodbye", "thank you", "family", "mother", "love", "kinship", "invite", "join", "familiar", "jealous" };
+        var animalWords = new HashSet<string> { "cat", "dog", "fish", "bird", "wild" };
+        var foodWords = new HashSet<string> { "apple", "egg", "breakfast", "dinner", "eat", "satisfy" };
+        var cognitionWords = new HashSet<string> { "believe", "decide", "forget", "guess", "notice", "remember", "suggest", "debate", "negotiate", "deduce", "empirical", "imply", "notion", "qualitative", "abstract", "obscure", "cohere", "elaborate" };
+        var actionWords = new HashSet<string> { "jump", "play", "travel", "gather", "tackle", "participate", "simulate", "utilize", "abandon", "calculate", "damage", "educate" };
+        var societyWords = new HashSet<string> { "campaign", "facility", "maintain", "objective", "radical", "bureaucracy", "legislate", "jurisdiction", "revenue", "margin", "qualify", "abolish", "barrier" };
+
+        foreach (var vocab in allVocabs)
+        {
+            if (vocab.Tags.Any()) continue;
+
+            var w = vocab.Word.ToLower();
+            if (natureWords.Contains(w)) vocab.Tags.Add(tagNature);
+            else if (familyWords.Contains(w)) vocab.Tags.Add(tagFamily);
+            else if (animalWords.Contains(w)) vocab.Tags.Add(tagAnimals);
+            else if (foodWords.Contains(w)) vocab.Tags.Add(tagFood);
+            else if (cognitionWords.Contains(w)) vocab.Tags.Add(tagCognition);
+            else if (actionWords.Contains(w)) vocab.Tags.Add(tagActions);
+            else if (societyWords.Contains(w)) vocab.Tags.Add(tagSociety);
+            else
+            {
+                if (vocab.PartOfSpeech == "noun") vocab.Tags.Add(tagSociety);
+                else if (vocab.PartOfSpeech == "verb") vocab.Tags.Add(tagActions);
+                else vocab.Tags.Add(tagCognition);
+            }
+            vocabsChanged = true;
+        }
+
+        if (vocabsChanged)
+        {
+            await context.SaveChangesAsync();
+        }
     }
 }
