@@ -1,3 +1,0 @@
-﻿<Project>
-  <Import Project="..\buildMultiTargeting\SWD392.LantechEnglish.Api.props" />
-</Project>

@@ -40,7 +40,7 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 
         var payload = new
         {
-            model = "llama3-70b-8192",
+            model = "llama-3.3-70b-versatile",
             messages = new[]
             {
                 new { role = "system", content = systemPrompt },
@@ -79,23 +79,13 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             throw new InvalidOperationException("Groq API key is not configured.");
         }
 
-        var languageName = (sourceLanguageCode?.ToLower() ?? "vi") switch
-        {
-            "vi" => "Vietnamese",
-            "zh" => "Chinese",
-            "ja" => "Japanese",
-            "es" => "Spanish",
-            "fr" => "French",
-            _ => "Vietnamese"
-        };
-        
-        var systemPrompt = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
+        var systemPrompt = GetChatTutorSystemPrompt(sourceLanguageCode);
 
         _logger.LogInformation("Attempting Groq stream call using Llama-3-70b");
 
         var payload = new
         {
-            model = "llama3-70b-8192",
+            model = "llama-3.3-70b-versatile",
             messages = new[]
             {
                 new { role = "system", content = systemPrompt },

@@ -89,17 +89,7 @@ public class ZenMuxAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
 
         var model = string.IsNullOrEmpty(_options.ZenMuxDefaultModel) ? "z-ai/glm-5.2-free" : _options.ZenMuxDefaultModel;
-        var languageName = (sourceLanguageCode?.ToLower() ?? "vi") switch
-        {
-            "vi" => "Vietnamese",
-            "zh" => "Chinese",
-            "ja" => "Japanese",
-            "es" => "Spanish",
-            "fr" => "French",
-            _ => "Vietnamese"
-        };
-        
-        var systemPrompt = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
+        var systemPrompt = GetChatTutorSystemPrompt(sourceLanguageCode);
 
         _logger.LogInformation("Attempting ZenMux stream call using model: {Model}", model);
 

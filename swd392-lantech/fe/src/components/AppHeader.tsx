@@ -44,11 +44,12 @@ export default function AppHeader() {
 
   return (
     <header
-      className="flex items-center justify-between px-6 py-3 border-b shrink-0 transition-colors duration-300"
+      className="flex items-center justify-between px-6 border-b shrink-0 transition-colors duration-300"
       style={{
         background: "var(--card)",
         borderColor: "var(--border)",
-        minHeight: 60,
+        height: 70,
+        boxSizing: "border-box",
       }}
     >
       {/* Left: greeting */}

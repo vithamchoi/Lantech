@@ -8,11 +8,21 @@ using SWD392.LantechEnglish.Api.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Load .env file manually
-var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", ".env");
-if (File.Exists(envPath))
+// Load .env file manually from multiple possible locations
+var paths = new[]
 {
-    DotNetEnv.Env.Load(envPath);
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env")
+};
+foreach (var path in paths)
+{
+    if (File.Exists(path))
+    {
+        DotNetEnv.Env.Load(path);
+        break;
+    }
 }
 // Add Environment Variables to configuration
 builder.Configuration.AddEnvironmentVariables();

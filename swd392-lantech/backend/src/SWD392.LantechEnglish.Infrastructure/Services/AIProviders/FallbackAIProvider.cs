@@ -67,108 +67,79 @@ public class FallbackAIProvider : IAIProvider, ISpeechAssessmentProvider
     private async IAsyncEnumerable<string> ExecuteWithFallbackStreamAsync(Func<IAIProvider, IAsyncEnumerable<string>> action, string methodName)
     {
         var errors = new List<Exception>();
+        var providers = new[] { "ZenMux", "OpenRouter", "Groq" };
 
-        // 1. Try ZenMux
-        IAsyncEnumerator<string>? zenMuxEnumerator = null;
-        try
+        foreach (var providerName in providers)
         {
-            var zenMux = _serviceProvider.GetRequiredKeyedService<IAIProvider>("ZenMux");
-            _logger.LogInformation("Using ZenMux stream for {MethodName}", methodName);
-            zenMuxEnumerator = action(zenMux).GetAsyncEnumerator();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "ZenMux failed to initialize stream for {MethodName}. Falling back to OpenRouter.", methodName);
-            errors.Add(ex);
-        }
-
-        if (zenMuxEnumerator != null)
-        {
-            bool hasMore = true;
-            while (hasMore)
+            IAIProvider provider;
+            try
             {
-                string current = "";
-                try
-                {
-                    hasMore = await zenMuxEnumerator.MoveNextAsync();
-                    if (hasMore) current = zenMuxEnumerator.Current;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "ZenMux stream failed during execution for {MethodName}.", methodName);
-                    throw;
-                }
-                if (hasMore) yield return current;
+                provider = _serviceProvider.GetRequiredKeyedService<IAIProvider>(providerName);
             }
-            yield break;
-        }
-
-        // 2. Try OpenRouter
-        IAsyncEnumerator<string>? openRouterEnumerator = null;
-        try
-        {
-            var openRouter = _serviceProvider.GetRequiredKeyedService<IAIProvider>("OpenRouter");
-            _logger.LogInformation("Using OpenRouter stream for {MethodName}", methodName);
-            openRouterEnumerator = action(openRouter).GetAsyncEnumerator();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "OpenRouter failed to initialize stream for {MethodName}. Falling back to Groq.", methodName);
-            errors.Add(ex);
-        }
-
-        if (openRouterEnumerator != null)
-        {
-            bool hasMore = true;
-            while (hasMore)
+            catch (Exception ex)
             {
-                string current = "";
-                try
-                {
-                    hasMore = await openRouterEnumerator.MoveNextAsync();
-                    if (hasMore) current = openRouterEnumerator.Current;
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "OpenRouter stream failed during execution for {MethodName}.", methodName);
-                    throw;
-                }
-                if (hasMore) yield return current;
+                _logger.LogWarning(ex, "Failed to resolve keyed service for provider {ProviderName}", providerName);
+                errors.Add(ex);
+                continue;
             }
-            yield break;
-        }
 
-        // 3. Try Groq
-        IAsyncEnumerator<string>? groqEnumerator = null;
-        try
-        {
-            var groq = _serviceProvider.GetRequiredKeyedService<IAIProvider>("Groq");
-            _logger.LogInformation("Using Groq stream for {MethodName}", methodName);
-            groqEnumerator = action(groq).GetAsyncEnumerator();
-        }
-        catch (Exception ex)
-        {
-            _logger.LogWarning(ex, "Groq failed to initialize stream for {MethodName}. Throwing error.", methodName);
-            errors.Add(ex);
-        }
+            _logger.LogInformation("Attempting stream for {MethodName} using provider {ProviderName}", methodName, providerName);
 
-        if (groqEnumerator != null)
-        {
-            bool hasMore = true;
-            while (hasMore)
+            IAsyncEnumerator<string> enumerator;
+            try
             {
-                string current = "";
-                try
+                enumerator = action(provider).GetAsyncEnumerator();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to get stream enumerator for provider {ProviderName}", providerName);
+                errors.Add(ex);
+                continue;
+            }
+
+            bool initialized = false;
+            bool failed = false;
+            string firstItem = "";
+
+            try
+            {
+                if (await enumerator.MoveNextAsync())
                 {
-                    hasMore = await groqEnumerator.MoveNextAsync();
-                    if (hasMore) current = groqEnumerator.Current;
+                    firstItem = enumerator.Current;
+                    initialized = true;
                 }
-                catch (Exception ex)
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to initialize stream network connection for provider {ProviderName}", providerName);
+                errors.Add(ex);
+                failed = true;
+            }
+
+            if (failed)
+            {
+                continue;
+            }
+
+            if (initialized)
+            {
+                yield return firstItem;
+                bool hasMore = true;
+                while (hasMore)
                 {
-                    _logger.LogError(ex, "Groq stream failed during execution for {MethodName}.", methodName);
-                    throw;
+                    string current = "";
+                    try
+                    {
+                        hasMore = await enumerator.MoveNextAsync();
+                        if (hasMore) current = enumerator.Current;
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Stream failed mid-execution for provider {ProviderName}", providerName);
+                        throw;
+                    }
+                    if (hasMore) yield return current;
                 }
-                if (hasMore) yield return current;
             }
             yield break;
         }

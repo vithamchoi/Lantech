@@ -44,7 +44,10 @@ export default function Sidebar({ onLogout }: SidebarProps) {
       }}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-5 py-5 border-b" style={{ borderColor: "var(--sidebar-border)" }}>
+      <div
+        className="flex items-center gap-2 px-5 border-b shrink-0"
+        style={{ borderColor: "var(--sidebar-border)", height: 70, boxSizing: "border-box" }}
+      >
         <div
           className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer"
           style={{ background: "var(--brand)" }}

@@ -1,0 +1,59 @@
+# ==========================================
+# Root .gitignore for Lantech English Project
+# ==========================================
+
+# --- OS / System Files ---
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# --- IDEs / Editors ---
+.vs/
+.vscode/
+.idea/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.userprefs
+*.usertasks
+*.suo
+*.ntvs*
+*.njsproj
+*.sln.targets
+
+# --- Node / Frontend (fe) ---
+**/node_modules/
+**/dist/
+**/build/
+**/out/
+.npm
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.vite/
+
+# --- .NET / C# Backend ---
+**/bin/
+**/obj/
+[Dd]ebug/
+[Rr]elease/
+_ReSharper*/
+*.[Rr]eSharper
+
+# --- Environment & Secrets ---
+.env
+.env.local
+.env.*.local
+.env.development.local
+.env.test.local
+.env.production.local
+*.secret
+*.pem
+*.key
