@@ -3,6 +3,7 @@ import { Send, Sparkles, RotateCcw, Loader2 } from "lucide-react";
 import { aiService } from "../services/aiService";
 import { useAppStore } from "../store/appStore";
 import { toast } from "sonner";
+import { parseMarkdownToHtml } from "../utils/markdown";
 
 interface Message {
   id: string;
@@ -21,10 +22,10 @@ const INITIAL_MESSAGES: Message[] = [
 ];
 
 const QUICK_PROMPTS = [
-  "Explain the difference between 'since' and 'for'",
-  "Give me examples of modal verbs",
-  "What's the passive voice?",
-  "Help me with phrasal verbs",
+  "Giải thích sự khác biệt giữa 'since' và 'for'",
+  "Cho tôi ví dụ về động từ khuyết thiếu (modal verbs)",
+  "Thế nào là câu bị động (passive voice)?",
+  "Hướng dẫn tôi cách dùng cụm động từ (phrasal verbs)",
 ];
 
 const ANALYZER_LANGUAGE_OPTIONS = [
@@ -44,6 +45,7 @@ export default function AICabin() {
   const [analyzerLang, setAnalyzerLang] = useState(user?.nativeLang || "vi");
   const [analysis, setAnalysis] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState<"chat" | "analyzer">("chat");
   const endRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -58,11 +60,11 @@ export default function AICabin() {
     setInput("");
 
     const tutorMsgId = Date.now().toString() + "r";
-    const tutorPlaceholder: Message = { id: tutorMsgId, role: "tutor", text: "", time: "now" };
-    setMessages(prev => [...prev, tutorPlaceholder]);
     setIsTyping(true);
 
     let accumulatedText = "";
+    let addedPlaceholder = false;
+
     try {
       await aiService.chatTutorStream(
         text,
@@ -70,33 +72,51 @@ export default function AICabin() {
         (chunk) => {
           setIsTyping(false);
           accumulatedText += chunk;
-          setMessages(prev =>
-            prev.map(m => m.id === tutorMsgId ? { ...m, text: accumulatedText } : m)
-          );
+          if (!addedPlaceholder) {
+            addedPlaceholder = true;
+            const newTutorMsg: Message = { id: tutorMsgId, role: "tutor", text: accumulatedText, time: "now" };
+            setMessages(prev => [...prev, newTutorMsg]);
+          } else {
+            setMessages(prev =>
+              prev.map(m => m.id === tutorMsgId ? { ...m, text: accumulatedText } : m)
+            );
+          }
         },
         (error) => {
           console.error("Streaming error:", error);
           toast.error("Hệ thống AI đang gặp sự cố. Vui lòng thử lại!");
-          setMessages(prev =>
-            prev.map(m =>
-              m.id === tutorMsgId
-                ? { ...m, text: accumulatedText ? accumulatedText + "\n\n⚠️ *[Lỗi kết nối giữa chừng]*" : "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!" }
-                : m
-            )
-          );
           setIsTyping(false);
+          if (!addedPlaceholder) {
+            const errorMsg: Message = { 
+              id: tutorMsgId, 
+              role: "tutor", 
+              text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!", 
+              time: "now" 
+            };
+            setMessages(prev => [...prev, errorMsg]);
+          } else {
+            setMessages(prev =>
+              prev.map(m =>
+                m.id === tutorMsgId
+                  ? { ...m, text: accumulatedText + "\n\n⚠️ *[Lỗi kết nối giữa chừng]*" }
+                  : m
+              )
+            );
+          }
         }
       );
     } catch (error: any) {
       toast.error("Failed to get response from AI Tutor");
-      setMessages(prev =>
-        prev.map(m =>
-          m.id === tutorMsgId
-            ? { ...m, text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!" }
-            : m
-        )
-      );
       setIsTyping(false);
+      if (!addedPlaceholder) {
+        const errorMsg: Message = { 
+          id: tutorMsgId, 
+          role: "tutor", 
+          text: "🦉 Rất tiếc, hệ thống AI Tutor đang gặp sự cố kỹ thuật. Bạn vui lòng thử lại sau nhé!", 
+          time: "now" 
+        };
+        setMessages(prev => [...prev, errorMsg]);
+      }
     } finally {
       setIsTyping(false);
     }
@@ -118,239 +138,310 @@ export default function AICabin() {
   };
 
   return (
-    <div className="flex h-full min-h-screen text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
-      {/* Chat panel */}
-      <div className="flex flex-col flex-1 min-w-0 border-r" style={{ borderColor: "rgba(0,0,0,0.08)" }}>
+    <div className="flex w-full text-left overflow-hidden" style={{ fontFamily: "var(--font-family)", background: "var(--background)", height: "calc(100vh - 70px)" }}>
+      {/* Main panel */}
+      <div className="flex flex-col flex-1 min-w-0 h-full overflow-hidden">
         {/* Chat header */}
-        <div className="px-6 py-4 border-b flex items-center gap-3" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
-          <div
-            className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
-            style={{ background: "var(--brand-purple)" }}
-          >
-            <span style={{ fontSize: 20 }}>🦉</span>
-          </div>
-          <div>
-            <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>AI Tutor Hoot</div>
-            <div className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--brand)" }} />
-              <span style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>Online — always ready to help</span>
-            </div>
-          </div>
-          <button
-            onClick={() => setMessages(INITIAL_MESSAGES)}
-            type="button"
-            className="ml-auto cursor-pointer border-none outline-none bg-transparent"
-            style={{ color: "#aaa" }}
-            title="Clear chat"
-          >
-            <RotateCcw size={15} />
-          </button>
-        </div>
-
-        {/* Messages */}
-        <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4">
-          {messages.map(msg => (
-            <div
-              key={msg.id}
-              className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
-            >
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                style={{
-                  background: msg.role === "tutor"
-                    ? "var(--brand-purple)"
-                    : "var(--brand)",
-                  fontSize: msg.role === "tutor" ? 16 : 13,
-                  color: "#fff",
-                  fontWeight: 800,
-                  marginTop: 4,
-                }}
-              >
-                {msg.role === "tutor" ? "🦉" : "A"}
-              </div>
-              <div
-                className="px-4 py-3 rounded-2xl max-w-sm text-left"
-                style={{
-                  background: msg.role === "tutor" ? "var(--card)" : "var(--brand)",
-                  border: msg.role === "tutor" ? "1.5px solid var(--border)" : "none",
-                  color: msg.role === "tutor" ? "var(--foreground)" : "#fff",
-                  fontSize: 13.5,
-                  lineHeight: 1.7,
-                  borderRadius: msg.role === "tutor" ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
-                }}
-                dangerouslySetInnerHTML={{
-                  __html: msg.text.replace(/\n/g, "<br/>").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
-                }}
-              />
-            </div>
-          ))}
-
-          {isTyping && (
-            <div className="flex gap-3">
-              <div
-                className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
-                style={{ background: "var(--brand-purple)", fontSize: 16, marginTop: 4 }}
-              >
-                🦉
-              </div>
-              <div
-                className="px-4 py-3 rounded-2xl flex items-center gap-1"
-                style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: "4px 18px 18px 18px" }}
-              >
-                {[0, 1, 2].map(i => (
-                  <div
-                    key={i}
-                    className="w-2.5 h-2.5 rounded-full animate-bounce"
-                    style={{ background: "var(--brand-purple)", animationDelay: `${i * 0.15}s` }}
-                  />
-                ))}
-              </div>
-            </div>
-          )}
-          <div ref={endRef} />
-        </div>
-
-        {/* Quick prompts */}
-        <div className="px-5 pb-2 flex gap-2 overflow-x-auto">
-          {QUICK_PROMPTS.map(p => (
-            <button
-              key={p}
-              onClick={() => sendMessage(p)}
-              type="button"
-              className="shrink-0 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
-              style={{ background: "#f5f3ff", border: "1.5px solid #ddd6fe", color: "#7c3aed", fontWeight: 600, fontSize: 12 }}
-            >
-              {p}
-            </button>
-          ))}
-        </div>
-
-        {/* Input */}
         <div
-          className="px-5 py-4 border-t flex gap-3"
-          style={{ background: "var(--card)", borderColor: "var(--border)" }}
+          className="px-6 border-b flex items-center justify-between shrink-0"
+          style={{ background: "var(--card)", borderColor: "var(--border)", height: 70, boxSizing: "border-box" }}
         >
-          <input
-            value={input}
-            onChange={e => setInput(e.target.value)}
-            onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-            placeholder="Ask Hoot anything about English..."
-            className="flex-1 px-4 py-2.5 rounded-2xl outline-none"
-            style={{
-              border: "2px solid var(--border)",
-              fontSize: 14,
-              fontFamily: "var(--font-family)",
-              background: "var(--input-background)",
-              color: "var(--foreground)",
-            }}
-          />
-          <button
-            onClick={() => sendMessage(input)}
-            disabled={!input.trim()}
-            type="button"
-            className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer border-none outline-none shrink-0"
-            style={{
-              background: input.trim() ? "var(--brand-purple)" : "var(--muted)",
-            }}
-          >
-            <Send size={15} color="#fff" />
-          </button>
-        </div>
-      </div>
-
-      {/* Sentence Analyzer panel */}
-      <div
-        className="shrink-0 flex flex-col overflow-hidden hidden lg:flex border-l"
-        style={{ width: 340, background: "var(--card)", borderColor: "var(--border)" }}
-      >
-        <div className="px-6 py-4 border-b flex items-center gap-2 text-left" style={{ borderColor: "var(--border)" }}>
-          <Sparkles size={16} style={{ color: "var(--brand-orange)" }} />
-          <span style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>Sentence Analyzer</span>
-        </div>
-        <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-5 text-left">
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 8 }}>
-              Enter a sentence to analyze
-            </label>
-            <textarea
-              value={analyzerSentence}
-              onChange={e => setAnalyzerSentence(e.target.value)}
-              placeholder="e.g. She have been studying since morning."
-              rows={4}
-              className="w-full px-4 py-3 rounded-xl outline-none resize-none"
-              style={{
-                border: "2px solid var(--border)",
-                fontSize: 13.5,
-                fontFamily: "var(--font-family)",
-                background: "var(--input-background)",
-                color: "var(--foreground)",
-                lineHeight: 1.7,
-              }}
-            />
-          </div>
-
-          <div>
-            <label style={{ fontSize: 12.5, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 8 }}>
-              Explanation language
-            </label>
-            <select
-              value={analyzerLang}
-              onChange={e => setAnalyzerLang(e.target.value)}
-              className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-              style={{
-                border: "2px solid var(--border)",
-                fontSize: 13.5,
-                fontFamily: "var(--font-family)",
-                background: "var(--input-background)",
-                color: "var(--foreground)",
-              }}
-            >
-              {ANALYZER_LANGUAGE_OPTIONS.map(l => <option key={l.code} value={l.code}>{l.label}</option>)}
-            </select>
-          </div>
-
-          <button
-            onClick={handleAnalyze}
-            disabled={!analyzerSentence.trim() || analyzing}
-            type="button"
-            className="py-3 rounded-xl cursor-pointer border-none outline-none text-white transition-all shadow-md"
-            style={{
-              background: analyzerSentence.trim() ? "var(--brand-orange)" : "var(--muted)",
-              fontWeight: 800,
-              fontSize: 14,
-            }}
-          >
-            {analyzing ? "Analyzing..." : "⚡ Analyze Sentence"}
-          </button>
-
-          {analyzing && (
-            <div className="text-center py-4">
-              <div className="flex gap-1.5 justify-center mb-2">
-                {[0, 1, 2].map(i => (
-                  <div key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: "var(--brand-orange)", animationDelay: `${i * 0.15}s` }} />
-                ))}
-              </div>
-              <div style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>Analyzing your sentence...</div>
-            </div>
-          )}
-
-          {analysis && !analyzing && (
+          <div className="flex items-center gap-3 text-left">
             <div
-              className="rounded-2xl p-5 animate-fade-in"
-              style={{ background: "var(--brand-gold-light)", border: "2px solid var(--brand-gold)" }}
+              className="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: "var(--brand-purple)" }}
             >
-              <div style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-orange)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 10 }}>
-                Analysis Result
+              <span style={{ fontSize: 20 }}>🦉</span>
+            </div>
+            <div>
+              <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>AI Tutor Hoot</div>
+              <div className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: "var(--brand)" }} />
+                <span style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>Online — always ready to help</span>
               </div>
-              <div
-                style={{ fontSize: 13, color: "var(--foreground)", lineHeight: 1.8 }}
-                dangerouslySetInnerHTML={{
-                  __html: analysis.replace(/\n/g, "<br/>").replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+            </div>
+          </div>
+
+          {/* Tab buttons */}
+          <div className="flex items-center gap-1 bg-gray-100/80 dark:bg-gray-800/80 p-1 rounded-xl" style={{ border: "1.5px solid var(--border)" }}>
+            <button
+              onClick={() => setActiveTab("chat")}
+              type="button"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg border-none outline-none cursor-pointer transition-all"
+              style={{
+                background: activeTab === "chat" ? "var(--card)" : "transparent",
+                color: activeTab === "chat" ? "var(--foreground)" : "var(--muted-foreground)",
+                fontWeight: 700,
+                fontSize: 13,
+                boxShadow: activeTab === "chat" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+              }}
+              title="Nhấp để trò chuyện học tiếng Anh tự do với AI Tutor"
+            >
+              💬 Trò chuyện
+            </button>
+            <button
+              onClick={() => setActiveTab("analyzer")}
+              type="button"
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg border-none outline-none cursor-pointer transition-all"
+              style={{
+                background: activeTab === "analyzer" ? "var(--card)" : "transparent",
+                color: activeTab === "analyzer" ? "var(--foreground)" : "var(--muted-foreground)",
+                fontWeight: 700,
+                fontSize: 13,
+                boxShadow: activeTab === "analyzer" ? "0 1px 3px rgba(0,0,0,0.1)" : "none"
+              }}
+              title="Nhấp để phân tích lỗi chính tả và ngữ pháp câu tiếng Anh"
+            >
+              ⚡ Phân tích câu
+            </button>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => {
+                if (window.confirm("Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện?")) {
+                  setMessages(INITIAL_MESSAGES);
+                }
+              }}
+              type="button"
+              className="cursor-pointer border-none outline-none bg-transparent hover:opacity-80 transition-opacity p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800"
+              style={{ color: "#aaa" }}
+              title="Làm mới cuộc trò chuyện"
+            >
+              <RotateCcw size={15} />
+            </button>
+          </div>
+        </div>
+
+        {/* Tab body content */}
+        {activeTab === "chat" ? (
+          <>
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto px-5 py-5 flex flex-col gap-4">
+              {messages.map(msg => (
+                <div
+                  key={msg.id}
+                  className={`flex gap-3 ${msg.role === "user" ? "flex-row-reverse" : ""}`}
+                >
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{
+                      background: msg.role === "tutor"
+                        ? "var(--brand-purple)"
+                        : "var(--brand)",
+                      fontSize: msg.role === "tutor" ? 16 : 13,
+                      color: "#fff",
+                      fontWeight: 800,
+                      marginTop: 4,
+                    }}
+                  >
+                    {msg.role === "tutor" ? "🦉" : "A"}
+                  </div>
+                  <div
+                    className="px-4 py-3 rounded-2xl max-w-sm text-left"
+                    style={{
+                      background: msg.role === "tutor" ? "var(--card)" : "var(--brand)",
+                      border: msg.role === "tutor" ? "1.5px solid var(--border)" : "none",
+                      color: msg.role === "tutor" ? "var(--foreground)" : "#fff",
+                      fontSize: 13.5,
+                      lineHeight: 1.7,
+                      borderRadius: msg.role === "tutor" ? "4px 18px 18px 18px" : "18px 4px 18px 18px",
+                    }}
+                    dangerouslySetInnerHTML={{
+                      __html: parseMarkdownToHtml(msg.text),
+                    }}
+                  />
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex gap-3">
+                  <div
+                    className="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                    style={{ background: "var(--brand-purple)", fontSize: 16, marginTop: 4 }}
+                  >
+                    🦉
+                  </div>
+                  <div
+                    className="px-4 py-3 rounded-2xl flex items-center gap-1"
+                    style={{ background: "var(--card)", border: "1.5px solid var(--border)", borderRadius: "4px 18px 18px 18px" }}
+                  >
+                    {[0, 1, 2].map(i => (
+                      <div
+                        key={i}
+                        className="w-2.5 h-2.5 rounded-full animate-bounce"
+                        style={{ background: "var(--brand-purple)", animationDelay: `${i * 0.15}s` }}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              <div ref={endRef} />
+            </div>
+
+            {/* Quick prompts */}
+            <div className="px-5 pb-2 flex gap-2 overflow-x-auto shrink-0">
+              {QUICK_PROMPTS.map(p => (
+                <button
+                  key={p}
+                  onClick={() => sendMessage(p)}
+                  type="button"
+                  className="shrink-0 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
+                  style={{ background: "#f5f3ff", border: "1.5px solid #ddd6fe", color: "#7c3aed", fontWeight: 600, fontSize: 12 }}
+                >
+                  {p}
+                </button>
+              ))}
+            </div>
+
+            {/* Input */}
+            <div
+              className="px-5 py-4 border-t flex gap-3 shrink-0"
+              style={{ background: "var(--card)", borderColor: "var(--border)" }}
+            >
+              <input
+                value={input}
+                onChange={e => setInput(e.target.value)}
+                onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
+                placeholder="Ask Hoot anything about English..."
+                className="flex-1 px-4 py-2.5 rounded-2xl outline-none"
+                style={{
+                  border: "2px solid var(--border)",
+                  fontSize: 14,
+                  fontFamily: "var(--font-family)",
+                  background: "var(--input-background)",
+                  color: "var(--foreground)",
                 }}
               />
+              <button
+                onClick={() => sendMessage(input)}
+                disabled={!input.trim()}
+                type="button"
+                className="w-10 h-10 rounded-full flex items-center justify-center cursor-pointer border-none outline-none shrink-0"
+                style={{
+                  background: input.trim() ? "var(--brand-purple)" : "var(--muted)",
+                }}
+              >
+                <Send size={15} color="#fff" />
+              </button>
             </div>
-          )}
-        </div>
+          </>
+        ) : (
+          <div className="flex-1 overflow-y-auto p-6 md:p-8 flex flex-col lg:flex-row gap-6 text-left" style={{ background: "var(--background)" }}>
+            {/* Left side: Analyzer Input */}
+            <div className="flex-1 flex flex-col gap-5 max-w-xl">
+              <div className="p-6 rounded-2xl border" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+                <h3 className="m-0 mb-4 flex items-center gap-2" style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>
+                  <Sparkles size={18} style={{ color: "var(--brand-orange)" }} />
+                  Phân tích ngữ pháp & chính tả
+                </h3>
+                <p className="m-0 mb-4" style={{ fontSize: 13, color: "var(--muted-foreground)", lineHeight: 1.5 }}>
+                  Nhập một câu tiếng Anh bất kỳ dưới đây. Hoot sẽ tự động kiểm tra xem câu của bạn có đúng ngữ pháp không, giải thích chi tiết các lỗi sai (nếu có) và hướng dẫn cấu trúc câu bằng tiếng Việt.
+                </p>
+                <textarea
+                  value={analyzerSentence}
+                  onChange={e => setAnalyzerSentence(e.target.value)}
+                  placeholder="Ví dụ: She have been studying since morning."
+                  className="w-full px-4 py-3 rounded-xl outline-none"
+                  style={{
+                    border: "2px solid var(--border)",
+                    fontSize: 13.5,
+                    fontFamily: "var(--font-family)",
+                    background: "var(--input-background)",
+                    color: "var(--foreground)",
+                    minHeight: 120,
+                    lineHeight: 1.7,
+                    resize: "vertical",
+                  }}
+                />
+                <button
+                  onClick={handleAnalyze}
+                  disabled={analyzing || !analyzerSentence.trim()}
+                  className="w-full py-3 mt-4 rounded-xl cursor-pointer border-none outline-none flex items-center justify-center gap-2 text-white font-bold"
+                  style={{
+                    background: analyzerSentence.trim() ? "var(--brand-orange)" : "var(--muted)",
+                    fontSize: 13.5,
+                    opacity: analyzing || !analyzerSentence.trim() ? 0.6 : 1,
+                  }}
+                >
+                  <Sparkles size={16} />
+                  {analyzing ? "Đang phân tích..." : "Phân tích câu"}
+                </button>
+              </div>
+            </div>
+
+            {/* Right side: Analyzer Results */}
+            <div className="flex-1 flex flex-col gap-5">
+              <div className="p-6 rounded-2xl border flex-1 flex flex-col justify-between" style={{ background: "var(--card)", borderColor: "var(--border)", minHeight: 300 }}>
+                <div>
+                  <h3 className="m-0 mb-4" style={{ fontSize: 16, fontWeight: 800, color: "var(--foreground)" }}>
+                    Kết quả phân tích từ Hoot 🦉
+                  </h3>
+
+                  {analyzing && (
+                    <div className="text-center py-12">
+                      <div className="flex gap-1.5 justify-center mb-2">
+                        {[0, 1, 2].map(i => (
+                          <div key={i} className="w-2.5 h-2.5 rounded-full animate-bounce" style={{ background: "var(--brand-orange)", animationDelay: `${i * 0.15}s` }} />
+                        ))}
+                      </div>
+                      <div style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>Hoot đang phân tích câu của bạn...</div>
+                    </div>
+                  )}
+
+                  {analysis && !analyzing && (
+                    <div
+                      className="overflow-y-auto pr-2"
+                      style={{ fontSize: 13.5, color: "var(--foreground)", lineHeight: 1.8, maxHeight: 400 }}
+                      dangerouslySetInnerHTML={{
+                        __html: parseMarkdownToHtml(analysis),
+                      }}
+                    />
+                  )}
+
+                  {!analysis && !analyzing && (
+                    <div className="text-center py-12 opacity-60">
+                      <span style={{ fontSize: 40, display: "block", marginBottom: 16 }}>📝</span>
+                      <p className="m-0" style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>
+                        Chưa có dữ liệu. Vui lòng nhập câu tiếng Anh ở bên trái để bắt đầu phân tích.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {analysis && !analyzing && (
+                  <div className="mt-6 pt-4 border-t flex gap-3" style={{ borderColor: "var(--border)" }}>
+                    <button
+                      onClick={() => {
+                        navigator.clipboard.writeText(analysis);
+                        toast.success("Đã sao chép kết quả phân tích!");
+                      }}
+                      type="button"
+                      className="flex-1 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-xs"
+                      style={{ background: "transparent", borderColor: "var(--border)", color: "var(--foreground)" }}
+                    >
+                      📋 Sao chép kết quả
+                    </button>
+                    <button
+                      onClick={() => {
+                        const userMsg: Message = { id: Date.now().toString(), role: "user", text: `Phân tích ngữ pháp cho câu: "${analyzerSentence}"`, time: "now" };
+                        const tutorMsg: Message = { id: (Date.now() + 1).toString(), role: "tutor", text: analysis, time: "now" };
+                        setMessages(prev => [...prev, userMsg, tutorMsg]);
+                        setActiveTab("chat");
+                        toast.success("Đã lưu kết quả vào cuộc trò chuyện!");
+                      }}
+                      type="button"
+                      className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs"
+                      style={{ background: "var(--brand-purple)", color: "#fff" }}
+                    >
+                      💬 Gửi vào Chat
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

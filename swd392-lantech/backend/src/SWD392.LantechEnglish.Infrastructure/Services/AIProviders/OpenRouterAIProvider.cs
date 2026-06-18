@@ -63,9 +63,9 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
         }
 
         // Add standard free model as a last-ditch fallback
-        if (!modelsToTry.Contains("meta-llama/llama-3.1-70b-instruct:free"))
+        if (!modelsToTry.Contains("openrouter/free"))
         {
-            modelsToTry.Add("meta-llama/llama-3.1-70b-instruct:free");
+            modelsToTry.Add("openrouter/free");
         }
 
         List<Exception> errors = new();
@@ -144,22 +144,12 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
             }
         }
 
-        if (!modelsToTry.Contains("meta-llama/llama-3.1-70b-instruct:free"))
+        if (!modelsToTry.Contains("openrouter/free"))
         {
-            modelsToTry.Add("meta-llama/llama-3.1-70b-instruct:free");
+            modelsToTry.Add("openrouter/free");
         }
 
-        var languageName = (sourceLanguageCode?.ToLower() ?? "vi") switch
-        {
-            "vi" => "Vietnamese",
-            "zh" => "Chinese",
-            "ja" => "Japanese",
-            "es" => "Spanish",
-            "fr" => "French",
-            _ => "Vietnamese"
-        };
-        
-        var systemPrompt = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
+        var systemPrompt = GetChatTutorSystemPrompt(sourceLanguageCode);
 
         List<Exception> errors = new();
         HttpResponseMessage? response = null;

@@ -12,7 +12,9 @@ public abstract class BaseAIProvider : IAIProvider
     {
         var languageName = GetLanguageName(sourceLanguageCode);
         var sys = $"You are a helpful English tutor. Reply in {languageName}. Output only the explanation.";
-        var usr = $"Explain this related to '{targetText}': {question}";
+        var usr = string.IsNullOrEmpty(question)
+            ? $"Analyze this English sentence: '{targetText}'. Check if there are any grammatical, spelling, or structural errors. If yes, point out the errors, explain why they are wrong in {languageName}, provide the corrected sentence, and explain the key grammar structures or vocabulary. If the sentence is correct, explain its grammar and usage."
+            : $"Explain this related to '{targetText}': {question}";
         return await CallChatCompletionsAsync(sys, usr, cancellationToken);
     }
 
@@ -47,10 +49,25 @@ public abstract class BaseAIProvider : IAIProvider
         return CleanJson(await CallChatCompletionsAsync(sys, usr, cancellationToken));
     }
 
-    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    protected string GetChatTutorSystemPrompt(string sourceLanguageCode)
     {
         var languageName = GetLanguageName(sourceLanguageCode);
-        var sys = $"You are an AI English Tutor. Converse with the user and guide them. You must explain concepts and chat with them in {languageName} to guide them, while helping them practice their English. Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply purely in {languageName} and English. Keep it concise, natural, and helpful.";
+        var prompt = $"You are an AI English Tutor. You converse with the user to help them learn English. You must strictly adhere to the following rules:\n" +
+                     $"1. LANGUAGE RULE: The user's native language is {languageName}. You MUST communicate, explain concepts, and chat with the user in {languageName}. You are FORBIDDEN from generating explanations or responses in English or any other language except for English practice sentences, exercises, or vocabulary examples. All conversational text, feedback, and tutor instructions must be strictly in {languageName}.\n" +
+                     $"2. TOPIC RESTRICTION: You are only allowed to discuss topics related to learning English (such as grammar, vocabulary, pronunciation, reading, writing, speaking, or English practice). If the user asks about ANY unrelated topic (including but not limited to coding, software development, math, history, general advice, politics, or general chit-chat that does not serve English language acquisition), you must ABSOLUTELY REFUSE to answer the query. Politely state in {languageName} that you can only discuss English learning, and steer the user back to the learning topic. Under no circumstances should you answer unrelated questions.\n" +
+                     $"3. Keep your replies concise, natural, encouraging, and extremely helpful.";
+
+        if (languageName != "Chinese")
+        {
+            prompt += $" Do not use any Chinese characters, particles, or punctuation (such as '呢', '吧', '吗', etc.) under any circumstances. Reply ONLY in {languageName}.";
+        }
+
+        return prompt;
+    }
+
+    public async Task<string> ChatTutorAsync(string message, string sourceLanguageCode, CancellationToken cancellationToken = default)
+    {
+        var sys = GetChatTutorSystemPrompt(sourceLanguageCode);
         return await CallChatCompletionsAsync(sys, message, cancellationToken);
     }
 
