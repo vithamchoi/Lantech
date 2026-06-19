@@ -41,17 +41,15 @@ export default function LandingPage() {
       <div className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full bg-sky-500/10 blur-[120px] pointer-events-none z-0" />
 
       {/* Top Navbar */}
-      <nav className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 py-6 flex items-center justify-between z-40 backdrop-blur-md sticky top-0 border-b border-border bg-background/80">
+      <nav className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 py-6 flex items-center justify-between z-40 bg-white dark:bg-background">
         {/* Logo */}
         <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
           <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-[#58CC02] shadow-sm transition-transform hover:rotate-12 duration-300">
             <span className="text-2xl">🌱</span>
           </div>
-          <div className="flex flex-col text-left">
-            <span className="font-extrabold text-xl tracking-tight leading-none text-foreground">
-              Lantech <span style={{ color: "var(--brand)" }}>English</span>
-            </span>
-            <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase mt-1">Language Orchard</span>
+          <div>
+            <span className="font-extrabold text-2xl text-[#1e293b] dark:text-foreground">Lantech</span>
+            <span className="font-extrabold text-2xl text-[#58CC02]"> English</span>
           </div>
         </div>
 
@@ -66,7 +64,7 @@ export default function LandingPage() {
             <a
               key={link.id}
               href={`#${link.id}`}
-              className="text-muted-foreground hover:text-[#58CC02] font-bold text-base transition-colors"
+              className="text-[#4b5563] dark:text-muted-foreground hover:text-[#58CC02] font-bold text-base transition-colors"
             >
               {link.label}
             </a>
@@ -147,13 +145,13 @@ export default function LandingPage() {
             onClick={() => handleEnterAuth("login")}
             whileHover={{ 
               scale: 1.05, 
-              backgroundColor: "rgba(88, 204, 2, 0.08)"
+              backgroundColor: "rgba(0, 0, 0, 0.02)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-5 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-base transition-colors hidden sm:block"
+            className="px-6 py-2.5 rounded-full cursor-pointer border outline-none font-bold text-base transition-colors hidden sm:block"
             style={{
-              border: "2px solid var(--brand)",
-              color: "var(--brand)",
+              borderColor: "var(--border)",
+              color: "var(--foreground)",
               background: "transparent",
             }}
           >
@@ -166,10 +164,10 @@ export default function LandingPage() {
             whileHover={{ 
               scale: 1.05,
               filter: "brightness(1.05)",
-              boxShadow: "0 4px 15px rgba(88, 204, 2, 0.3)"
+              boxShadow: "0 4px 15px rgba(88, 204, 2, 0.2)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-5 py-2.5 rounded-xl cursor-pointer border-none outline-none text-white font-bold text-base hidden sm:block shadow-sm"
+            className="px-6 py-2.5 rounded-full cursor-pointer border-none outline-none text-white font-bold text-base hidden sm:block shadow-sm"
             style={{
               background: "var(--brand)",
             }}
