@@ -159,7 +159,13 @@ public class AdminService : IAdminService
                 Level = l.CefrLevel.ToString(),
                 Exercises = _context.Exercises.Count(e => e.LessonId == l.Id),
                 Students = 0, // Placeholder
-                Order = l.OrderIndex
+                Order = l.OrderIndex,
+                Description = l.Description,
+                Skill = l.Skill.ToString(),
+                Topic = l.Topic,
+                EstimatedMinutes = l.EstimatedMinutes,
+                XpReward = l.XpReward,
+                IsPublished = l.IsPublished
             })
             .ToListAsync(cancellationToken);
     }

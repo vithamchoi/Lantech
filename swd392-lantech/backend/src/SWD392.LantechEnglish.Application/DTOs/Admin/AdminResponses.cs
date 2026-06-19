@@ -31,6 +31,12 @@ public class AdminLessonDto
     public int Exercises { get; set; }
     public int Students { get; set; }
     public int Order { get; set; }
+    public string Description { get; set; } = null!;
+    public string Skill { get; set; } = null!;
+    public string? Topic { get; set; }
+    public int EstimatedMinutes { get; set; }
+    public int XpReward { get; set; }
+    public bool IsPublished { get; set; }
 }
 
 public class AdminQuestionDto

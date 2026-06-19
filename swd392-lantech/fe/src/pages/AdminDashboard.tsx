@@ -602,13 +602,13 @@ export default function AdminDashboard() {
     setLessonForm({
       title: lesson.title,
       cefrLevel: lesson.level,
-      description: `Description for ${lesson.title}`,
-      skill: "Reading",
-      topic: "",
+      description: lesson.description || "",
+      skill: lesson.skill || "Reading",
+      topic: lesson.topic || "",
       orderIndex: lesson.order,
-      estimatedMinutes: 15,
-      xpReward: 20,
-      isPublished: true
+      estimatedMinutes: lesson.estimatedMinutes || 15,
+      xpReward: lesson.xpReward || 20,
+      isPublished: lesson.isPublished !== undefined ? lesson.isPublished : true
     });
     setShowAddModal(true);
   };

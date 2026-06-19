@@ -93,6 +93,12 @@ export interface AdminLessonDto {
   exercises: number;
   students: number;
   order: number;
+  description: string;
+  skill: string;
+  topic?: string;
+  estimatedMinutes: number;
+  xpReward: number;
+  isPublished: boolean;
 }
 
 export interface AdminQuestionDto {
