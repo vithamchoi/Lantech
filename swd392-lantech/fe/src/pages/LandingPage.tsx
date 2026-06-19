@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
-import { Sun, Moon, Globe, ChevronDown, Check } from "lucide-react";
+import { Sun, Moon, Globe, ChevronDown, Check, Map, Layers, Bot, Mic } from "lucide-react";
+import heroMascot from "../assets/hero-mascot.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -30,9 +31,8 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col transition-colors duration-300 relative overflow-x-hidden"
+      className="min-h-screen w-full flex flex-col bg-white dark:bg-background transition-colors duration-300 relative overflow-x-hidden"
       style={{
-        background: "var(--background)",
         fontFamily: "var(--font-family)",
       }}
     >
@@ -40,14 +40,12 @@ export default function LandingPage() {
       <div className="absolute top-20 left-1/4 w-80 h-80 rounded-full bg-brand/10 blur-[100px] pointer-events-none z-0" />
       <div className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full bg-sky-500/10 blur-[120px] pointer-events-none z-0" />
 
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-12 py-5 backdrop-blur-md sticky top-0 z-40 border-b border-border bg-background/80">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:rotate-12 duration-300"
-            style={{ background: "var(--brand)" }}
-          >
-            <span style={{ fontSize: 22 }}>🌱</span>
+      {/* Top Navbar */}
+      <nav className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 py-6 flex items-center justify-between z-40 backdrop-blur-md sticky top-0 border-b border-border bg-background/80">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5 cursor-pointer" onClick={() => navigate("/")}>
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-[#58CC02] shadow-sm transition-transform hover:rotate-12 duration-300">
+            <span className="text-2xl">🌱</span>
           </div>
           <div className="flex flex-col text-left">
             <span className="font-extrabold text-xl tracking-tight leading-none text-foreground">
@@ -57,6 +55,25 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* Navigation Links */}
+        <div className="hidden lg:flex items-center gap-10">
+          {[
+            { label: t("navDashboard") || "Tính năng", id: "features" },
+            { label: "Cách hoạt động", id: "how-it-works" },
+            { label: "Bảng giá", id: "pricing" },
+            { label: "Về chúng tôi", id: "about-us" }
+          ].map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              className="text-muted-foreground hover:text-[#58CC02] font-bold text-base transition-colors"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Action Buttons, Lang Dropdown & Theme Toggle */}
         <div className="flex items-center gap-3 sm:gap-4">
           {/* Light/Dark Toggle */}
           <motion.button
@@ -125,6 +142,7 @@ export default function LandingPage() {
 
           <div className="h-6 w-px bg-border hidden sm:block" />
 
+          {/* Sign In Button */}
           <motion.button
             onClick={() => handleEnterAuth("login")}
             whileHover={{ 
@@ -132,7 +150,7 @@ export default function LandingPage() {
               backgroundColor: "rgba(88, 204, 2, 0.08)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-xs transition-colors hidden sm:block"
+            className="px-5 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-base transition-colors hidden sm:block"
             style={{
               border: "2px solid var(--brand)",
               color: "var(--brand)",
@@ -142,6 +160,7 @@ export default function LandingPage() {
             {t("landingSignIn")}
           </motion.button>
           
+          {/* Join Trail Button */}
           <motion.button
             onClick={() => handleEnterAuth("register")}
             whileHover={{ 
@@ -150,7 +169,7 @@ export default function LandingPage() {
               boxShadow: "0 4px 15px rgba(88, 204, 2, 0.3)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md transition-all"
+            className="px-5 py-2.5 rounded-xl cursor-pointer border-none outline-none text-white font-bold text-base hidden sm:block shadow-sm"
             style={{
               background: "var(--brand)",
             }}
@@ -160,196 +179,142 @@ export default function LandingPage() {
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 max-w-5xl mx-auto z-10">
-        {/* Mascot illustration */}
-        <div className="relative mb-10">
-          <motion.div
-            className="w-36 h-36 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, var(--brand) 0%, #34d399 100%)" }}
-            animate={{ 
-              y: [0, -8, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            {/* Soft inner glow ring */}
-            <div className="absolute inset-1.5 rounded-full border-2 border-white/20 pointer-events-none" />
-            <span style={{ fontSize: 72 }}>🐣</span>
-          </motion.div>
-          
-          <motion.div
-            className="absolute -top-3 -right-3 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1E2522]"
-            style={{ background: "var(--brand-gold)", fontSize: 22 }}
-            animate={{ 
-              y: [0, 5, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.5
-            }}
-          >
-            ⭐
-          </motion.div>
-          <motion.div
-            className="absolute -bottom-2 -left-3 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1E2522]"
-            style={{ background: darkMode ? "#2C3531" : "#e0f2fe", fontSize: 20 }}
-            animate={{ 
-              x: [0, 4, 0],
-            }}
-            transition={{
-              duration: 3.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.8
-            }}
-          >
-            🌿
-          </motion.div>
+      {/* Hero Section */}
+      <div className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 pt-8 pb-4 grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8 items-center min-h-[640px] z-10">
+        {/* Left Column (Content) */}
+        <div className="lg:col-span-6 flex flex-col items-start text-left">
+          {/* Pill Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E7F9D4] text-[#58CC02] text-sm font-black tracking-wider uppercase mb-6 shadow-sm">
+            <span>🌱</span> Học • Luyện tập • Tiến bộ
+          </div>
+
+          {/* Headline */}
+          <h1 className="text-5xl sm:text-6xl lg:text-[72px] font-black tracking-tight text-foreground leading-[1.05] mb-6">
+            {t("landingHeroHeaderMain") || "Phát triển tiếng Anh"} <br />
+            <span className="text-[#58CC02]">{t("landingHeroHeaderSub") || "Qua từng thử thách"}</span>
+          </h1>
+
+          {/* Subhead */}
+          <p className="text-muted-foreground text-lg lg:text-xl font-bold leading-relaxed mb-10 max-w-xl">
+            {t("landingHeroDesc") || "Nâng tầm kỹ năng tiếng Anh qua các thử thách ngữ pháp, luyện nói và từ vựng — tất cả trong một hành trình học tập đầy thú vị."}
+          </p>
+
+          {/* 3D CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-5 w-full sm:w-auto mb-6">
+            {/* Primary Green 3D Button */}
+            <motion.button
+              onClick={() => handleEnterAuth("register")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative group px-10 py-5 bg-[#58CC02] hover:bg-[#61E202] text-white font-extrabold text-lg rounded-2xl cursor-pointer border-b-[6px] border-[#3D8F00] active:border-b-0 active:translate-y-[6px] transition-all duration-100 flex items-center justify-center gap-2"
+            >
+              <span>🌱</span> {t("landingCtaJoin") || "Bắt đầu học — Miễn phí!"}
+              <span className="absolute bottom-0 left-0 w-full h-[6px] bg-[#3D8F00] rounded-b-2xl -z-10 group-active:h-0" />
+            </motion.button>
+
+            {/* Secondary White 3D Button */}
+            <motion.button
+              onClick={() => handleEnterAuth("login")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="relative group px-10 py-5 bg-white dark:bg-card hover:bg-[#FAF8F5] text-gray-700 dark:text-foreground font-extrabold text-lg rounded-2xl cursor-pointer border-2 border-b-[6px] border-[#E5E5E5] dark:border-border active:border-b-2 active:translate-y-[4px] transition-all duration-100 flex items-center justify-center gap-2"
+            >
+              <span className="text-sm">▶</span> {t("landingCtaLogin") || "Vào phòng học"}
+              <span className="absolute bottom-0 left-0 w-full h-[6px] bg-[#E5E5E5] dark:bg-border rounded-b-2xl -z-10 group-active:h-0" />
+            </motion.button>
+          </div>
+
+          {/* Guarantee Text */}
+          <div className="flex items-center gap-2 text-sm font-bold text-green-600/95">
+            <span>✓</span> 100% Miễn phí bắt đầu
+            <span className="text-gray-300 font-normal">•</span> Không cần thẻ tín dụng
+          </div>
         </div>
 
-        <h1
-          className="mb-6 font-outfit text-foreground tracking-tight text-left sm:text-center"
-          style={{
-            fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
-            fontWeight: 900,
-            lineHeight: 1.15,
-            maxWidth: 800,
-          }}
-        >
-          {t("landingHeroHeaderMain")}<br />
-          <span style={{ color: "var(--brand)" }}>{t("landingHeroHeaderSub")}</span>
-        </h1>
-        
-        <p
-          className="mb-12 text-muted-foreground font-medium max-w-2xl text-left sm:text-center"
-          style={{ fontSize: "clamp(1rem, 2vw, 1.125rem)", lineHeight: 1.8 }}
-        >
-          {t("landingHeroDesc")}
-        </p>
-
-        {/* CTA buttons */}
-        <div className="flex items-center gap-5 flex-wrap justify-center mb-20">
-          <motion.button
-            onClick={() => handleEnterAuth("register")}
-            whileHover={{ 
-              y: -3,
-              boxShadow: "0 8px 0 var(--brand-dark), 0 12px 28px rgba(88,204,2,0.35)",
-              scale: 1.02
-            }}
-            whileTap={{ 
-              y: 3,
-              boxShadow: "0 2px 0 var(--brand-dark), 0 4px 10px rgba(88,204,2,0.15)",
-              scale: 0.98
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="px-10 py-4 rounded-2xl cursor-pointer border-none outline-none text-white font-black text-lg shadow-lg flex items-center gap-2"
-            style={{
-              background: "var(--brand)",
-              boxShadow: "0 6px 0 var(--brand-dark), 0 8px 20px rgba(88,204,2,0.25)",
-            }}
-          >
-            {t("landingCtaJoin")}
-          </motion.button>
-          
-          <motion.button
-            onClick={() => handleEnterAuth("login")}
-            whileHover={{ 
-              y: -3,
-              boxShadow: darkMode ? "0 6px 0 rgba(255,255,255,0.08), 0 10px 24px rgba(0,0,0,0.3)" : "0 6px 0 rgba(0,0,0,0.12), 0 10px 24px rgba(0,0,0,0.08)",
-              scale: 1.02
-            }}
-            whileTap={{ 
-              y: 1,
-              boxShadow: darkMode ? "0 2px 0 rgba(255,255,255,0.04)" : "0 2px 0 rgba(0,0,0,0.05)",
-              scale: 0.98
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="px-10 py-4 rounded-2xl cursor-pointer border outline-none font-bold text-lg"
-            style={{
-              background: "var(--card)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-              boxShadow: darkMode ? "0 4px 0 rgba(255,255,255,0.06)" : "0 4px 0 rgba(0,0,0,0.08)",
-            }}
-          >
-            {t("landingCtaLogin")}
-          </motion.button>
+        {/* Right Column (Hero Visual) */}
+        <div className="lg:col-span-6 flex justify-center items-center w-full relative">
+          <img
+            src={heroMascot}
+            alt="Lantech English Mascot and App Dashboard"
+            className="w-full max-w-[620px] h-auto object-contain select-none pointer-events-none"
+          />
         </div>
+      </div>
 
-        {/* Features grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl w-full text-left">
+      {/* Feature Cards Section */}
+      <div className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 pt-4 pb-16 z-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { icon: "🗺️", titleKey: "landingFeat1Title", descKey: "landingFeat1Desc" },
-            { icon: "🃏", titleKey: "landingFeat2Title", descKey: "landingFeat2Desc" },
-            { icon: "🤖", titleKey: "landingFeat3Title", descKey: "landingFeat3Desc" },
-            { icon: "🎤", titleKey: "landingFeat4Title", descKey: "landingFeat4Desc" },
-            { icon: "🏆", titleKey: "landingFeat5Title", descKey: "landingFeat5Desc" },
-            { icon: "🎖️", titleKey: "landingFeat6Title", descKey: "landingFeat6Desc" },
-          ].map((f, i) => (
+            {
+              icon: <Map className="w-8 h-8 text-[#58CC02]" />,
+              iconBg: "bg-green-50 dark:bg-green-950/20",
+              title: t("landingFeat1Title") || "Lộ trình học tập",
+              desc: t("landingFeat1Desc") || "Đi theo con đường học tập được thiết kế qua các cấp độ ngữ pháp và theo dõi tiến trình của bạn.",
+            },
+            {
+              icon: <Layers className="w-8 h-8 text-[#CE82FF]" />,
+              iconBg: "bg-purple-50 dark:bg-purple-950/20",
+              title: t("landingFeat2Title") || "Bàn học Flashcard",
+              desc: t("landingFeat2Desc") || "Phương pháp lặp lại ngắt quãng giúp ghi nhớ từ vựng mới hiệu quả và lâu dài.",
+            },
+            {
+              icon: <Bot className="w-8 h-8 text-[#1CB0F6]" />,
+              iconBg: "bg-sky-50 dark:bg-sky-950/20",
+              title: t("landingFeat3Title") || "Gia sư AI",
+              desc: t("landingFeat3Desc") || "Nhận giải thích ngữ pháp và phân tích câu chi tiết tức thì bất cứ lúc nào.",
+            },
+            {
+              icon: <Mic className="w-8 h-8 text-indigo-500" />,
+              iconBg: "bg-indigo-50 dark:bg-indigo-950/20",
+              title: t("landingFeat4Title") || "Trung tâm luyện âm",
+              desc: t("landingFeat4Desc") || "Trí tuệ nhân tạo chấm điểm bài nói và giúp bạn phát âm chuẩn như người bản xứ.",
+            },
+          ].map((feature, i) => (
             <motion.div
               key={i}
               whileHover={{ 
                 y: -6, 
-                scale: 1.03, 
+                scale: 1.02, 
                 borderColor: "var(--brand)",
-                boxShadow: darkMode ? "0 12px 30px rgba(0,0,0,0.5)" : "0 12px 28px rgba(0,0,0,0.08)"
+                boxShadow: darkMode ? "0 12px 30px rgba(0,0,0,0.4)" : "0 12px 28px rgba(0,0,0,0.05)"
               }}
               whileTap={{ scale: 0.98 }}
-              className="rounded-3xl p-6 cursor-pointer border border-solid transition-all duration-300 flex flex-col items-start gap-3"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--border)",
-                boxShadow: darkMode ? "none" : "0 4px 20px rgba(0,0,0,0.02)",
-              }}
+              className="flex flex-col items-start p-7 bg-white dark:bg-card border-2 border-gray-100 dark:border-border rounded-[28px] shadow-sm hover:shadow-md transition-all duration-200 cursor-pointer"
             >
-              <div className="w-14 h-14 rounded-2xl bg-brand/5 dark:bg-brand/10 flex items-center justify-center text-3xl shadow-sm mb-1">
-                {f.icon}
+              {/* Styled Icon */}
+              <div className={`p-4 rounded-[20px] ${feature.iconBg} mb-6 flex items-center justify-center`}>
+                {feature.icon}
               </div>
-              <h3 className="font-extrabold text-[15px] text-foreground tracking-tight">
-                {t(f.titleKey)}
-              </h3>
-              <p className="text-[12.5px] text-muted-foreground leading-relaxed">
-                {t(f.descKey)}
-              </p>
+              {/* Title */}
+              <h3 className="text-foreground font-extrabold text-xl mb-3">{feature.title}</h3>
+              {/* Description */}
+              <p className="text-muted-foreground text-base leading-relaxed">{feature.desc}</p>
             </motion.div>
           ))}
         </div>
       </div>
 
       {/* Footer */}
-      <footer
-        className="px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10"
-        style={{ borderTop: "1px solid var(--border)", background: "var(--card)" }}
-      >
-        <div className="text-xs text-muted-foreground font-semibold">
-          {t("rightsReserved")}
-        </div>
-        
-        <div className="flex items-center gap-6 flex-wrap justify-center">
-          <motion.button
-            onClick={() => handleEnterAuth("login", "ranger")}
-            whileHover={{ scale: 1.05, color: "#f472b6" }}
-            whileTap={{ scale: 0.95 }}
-            className="cursor-pointer border-none outline-none bg-transparent"
-            style={{ fontSize: 12, color: "#ec4899", fontWeight: 700, textDecoration: "underline" }}
-          >
-            {t("landingDemoAdmin")}
-          </motion.button>
-          
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full inline-block animate-pulse"
-              style={{ background: "var(--brand)" }}
-            />
-            <span className="text-xs text-muted-foreground font-semibold">
-              {t("landingServerStatus")}
-            </span>
+      <footer className="mt-auto border-t border-border bg-card z-10">
+        <div className="w-full max-w-[1360px] mx-auto px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-muted-foreground font-semibold">
+            {t("rightsReserved")}
+          </div>
+          <div className="flex items-center gap-6">
+            <motion.button
+              onClick={() => handleEnterAuth("login", "ranger")}
+              whileHover={{ scale: 1.05, color: "#f472b6" }}
+              whileTap={{ scale: 0.95 }}
+              className="cursor-pointer text-xs text-pink-500 font-bold hover:underline bg-none border-none"
+            >
+              {t("landingDemoAdmin")}
+            </motion.button>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#58CC02] inline-block animate-pulse" />
+              <span className="text-sm text-muted-foreground font-semibold">
+                {t("landingServerStatus")}
+              </span>
+            </div>
           </div>
         </div>
       </footer>
