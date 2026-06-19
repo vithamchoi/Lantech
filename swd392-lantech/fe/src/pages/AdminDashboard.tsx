@@ -52,8 +52,9 @@ const translateSkill = (skill: string) => {
 };
 
 const translateDifficulty = (difficulty: string | number) => {
-  if (difficulty === "Hard" || difficulty === 3) return "Khó";
-  if (difficulty === "Medium" || difficulty === 2) return "Trung bình";
+  const d = String(difficulty);
+  if (d === "Hard" || d === "3") return "Khó";
+  if (d === "Medium" || d === "2") return "Trung bình";
   return "Dễ";
 };
 
@@ -1037,7 +1038,7 @@ export default function AdminDashboard() {
                       <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[q.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{q.level}</span>
                     </td>
                     <td className="px-5 py-3.5">
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: q.difficulty === "Hard" ? "#dc2626" : q.difficulty === "Medium" ? "#d97706" : "#16a34a" }}>
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: (q.difficulty === "Hard" || q.difficulty === "3") ? "#dc2626" : (q.difficulty === "Medium" || q.difficulty === "2") ? "#d97706" : "#16a34a" }}>
                         {translateDifficulty(q.difficulty)}
                       </span>
                     </td>
