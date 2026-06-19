@@ -6,6 +6,7 @@ import { adminService, AdminStatsDto, AdminUserDto, AdminLessonDto, AdminQuestio
 import { toast } from "sonner";
 import apiClient from "../api/apiClient";
 import { motion, AnimatePresence } from "motion/react";
+import CustomSelect from "../components/CustomSelect";
 
 type AdminSection = "overview" | "questions" | "lessons" | "vocabulary" | "users" | "badges" | "pronunciation";
 
@@ -1521,27 +1522,25 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Trình độ CEFR</label>
-                    <select
+                    <CustomSelect
                       value={lessonForm.cefrLevel}
-                      onChange={e => setLessonForm(prev => ({ ...prev, cefrLevel: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                    </select>
+                      onChange={val => setLessonForm(prev => ({ ...prev, cefrLevel: val }))}
+                      options={["A1", "A2", "B1", "B2", "C1", "C2"]}
+                    />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Kỹ năng</label>
-                    <select
+                    <CustomSelect
                       value={lessonForm.skill}
-                      onChange={e => setLessonForm(prev => ({ ...prev, skill: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {[["Reading", "Đọc"], ["Listening", "Nghe"], ["Speaking", "Nói"], ["Writing", "Viết"], ["Grammar", "Ngữ pháp"]].map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
+                      onChange={val => setLessonForm(prev => ({ ...prev, skill: val }))}
+                      options={[
+                        ["Reading", "Đọc"],
+                        ["Listening", "Nghe"],
+                        ["Speaking", "Nói"],
+                        ["Writing", "Viết"],
+                        ["Grammar", "Ngữ pháp"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
@@ -1645,28 +1644,28 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Từ loại</label>
-                    <select
+                    <CustomSelect
                       value={vocabForm.partOfSpeech}
-                      onChange={e => setVocabForm(prev => ({ ...prev, partOfSpeech: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {[["Noun", "Danh từ"], ["Verb", "Động từ"], ["Adjective", "Tính từ"], ["Adverb", "Trạng từ"], ["Pronoun", "Đại từ"], ["Preposition", "Giới từ"], ["Conjunction", "Liên từ"]].map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
+                      onChange={val => setVocabForm(prev => ({ ...prev, partOfSpeech: val }))}
+                      options={[
+                        ["Noun", "Danh từ"],
+                        ["Verb", "Động từ"],
+                        ["Adjective", "Tính từ"],
+                        ["Adverb", "Trạng từ"],
+                        ["Pronoun", "Đại từ"],
+                        ["Preposition", "Giới từ"],
+                        ["Conjunction", "Liên từ"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Trình độ CEFR</label>
-                  <select
+                  <CustomSelect
                     value={vocabForm.cefrLevel}
-                    onChange={e => setVocabForm(prev => ({ ...prev, cefrLevel: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                  </select>
+                    onChange={val => setVocabForm(prev => ({ ...prev, cefrLevel: val }))}
+                    options={["A1", "A2", "B1", "B2", "C1", "C2"]}
+                  />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Nghĩa (Bản dịch Tiếng Việt)</label>
@@ -1696,43 +1695,40 @@ export default function AdminDashboard() {
               <div className="flex flex-col gap-4">
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Chọn bài học</label>
-                  <select
+                  <CustomSelect
                     value={questionForm.lessonId}
-                    onChange={e => setQuestionForm(prev => ({ ...prev, lessonId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    <option value="">-- Chọn một bài học --</option>
-                    {lessons.map(l => <option key={l.id} value={l.id}>{l.title} ({l.level})</option>)}
-                  </select>
+                    onChange={val => setQuestionForm(prev => ({ ...prev, lessonId: val }))}
+                    options={[
+                      { value: "", label: "-- Chọn một bài học --" },
+                      ...lessons.map(l => ({ value: l.id, label: `${l.title} (${l.level})` }))
+                    ]}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Loại câu hỏi</label>
-                    <select
+                    <CustomSelect
                       value={questionForm.type}
-                      onChange={e => setQuestionForm(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      <option value="MultipleChoice">Trắc nghiệm (MCQ)</option>
-                      <option value="FillInTheBlank">Điền vào chỗ trống</option>
-                      <option value="TrueFalse">Đúng hoặc Sai</option>
-                      <option value="TextResponse">Tự luận ngắn</option>
-                    </select>
+                      onChange={val => setQuestionForm(prev => ({ ...prev, type: val }))}
+                      options={[
+                        ["MultipleChoice", "Trắc nghiệm (MCQ)"],
+                        ["FillInTheBlank", "Điền vào chỗ trống"],
+                        ["TrueFalse", "Đúng hoặc Sai"],
+                        ["TextResponse", "Tự luận ngắn"]
+                      ]}
+                    />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Độ khó</label>
-                    <select
-                      value={questionForm.difficulty}
-                      onChange={e => setQuestionForm(prev => ({ ...prev, difficulty: Number(e.target.value) }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      <option value={1}>Dễ</option>
-                      <option value={2}>Trung bình</option>
-                      <option value={3}>Khó</option>
-                    </select>
+                    <CustomSelect
+                      value={String(questionForm.difficulty)}
+                      onChange={val => setQuestionForm(prev => ({ ...prev, difficulty: Number(val) }))}
+                      options={[
+                        ["1", "Dễ"],
+                        ["2", "Trung bình"],
+                        ["3", "Khó"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
@@ -1817,16 +1813,11 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-3 gap-3 items-end">
                   <div className="col-span-1">
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Biểu tượng</label>
-                    <select
+                    <CustomSelect
                       value={badgeForm.iconUrl}
-                      onChange={e => setBadgeForm(prev => ({ ...prev, iconUrl: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {["🏅", "🔥", "🎓", "⚡", "🏆", "🌟", "📚", "🧠", "👑", "🎯", "🛡️", "⚔️"].map(emoji => (
-                        <option key={emoji} value={emoji}>{emoji}</option>
-                      ))}
-                    </select>
+                      onChange={val => setBadgeForm(prev => ({ ...prev, iconUrl: val }))}
+                      options={["🏅", "🔥", "🎓", "⚡", "🏆", "🌟", "📚", "🧠", "👑", "🎯", "🛡️", "⚔️"]}
+                    />
                   </div>
                   <div className="col-span-2">
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Hoặc tự nhập emoji/URL</label>
@@ -1877,20 +1868,19 @@ export default function AdminDashboard() {
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Loại điều kiện đạt</label>
-                  <select
+                  <CustomSelect
                     value={badgeForm.conditionType}
-                    onChange={e => setBadgeForm(prev => ({ ...prev, conditionType: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    <option value="XP">Tích lũy XP (XP)</option>
-                    <option value="STREAK">Chuỗi ngày liên tục (STREAK)</option>
-                    <option value="LESSONCOMPLETED">Hoàn thành bài học (LESSONCOMPLETED)</option>
-                    <option value="FLASHCARDREVIEWED">Ôn tập Flashcard (FLASHCARDREVIEWED)</option>
-                    <option value="PERFECTLESSON">Đạt 100% điểm bài học (PERFECTLESSON)</option>
-                    <option value="ASSESSMENTCOMPLETED">Làm bài đánh giá (ASSESSMENTCOMPLETED)</option>
-                    <option value="SELFLEVELSELECTED">Tự chọn trình độ đầu vào (SELFLEVELSELECTED)</option>
-                  </select>
+                    onChange={val => setBadgeForm(prev => ({ ...prev, conditionType: val }))}
+                    options={[
+                      ["XP", "Tích lũy XP (XP)"],
+                      ["STREAK", "Chuỗi ngày liên tục (STREAK)"],
+                      ["LESSONCOMPLETED", "Hoàn thành bài học (LESSONCOMPLETED)"],
+                      ["FLASHCARDREVIEWED", "Ôn tập Flashcard (FLASHCARDREVIEWED)"],
+                      ["PERFECTLESSON", "Đạt 100% điểm bài học (PERFECTLESSON)"],
+                      ["ASSESSMENTCOMPLETED", "Làm bài đánh giá (ASSESSMENTCOMPLETED)"],
+                      ["SELFLEVELSELECTED", "Tự chọn trình độ đầu vào (SELFLEVELSELECTED)"]
+                    ]}
+                  />
                 </div>
 
                 {badgeForm.conditionType !== "SELFLEVELSELECTED" && (

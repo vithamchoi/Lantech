@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Compass, BookOpen, Trash2, Edit2, Check } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 interface CurriculumUnit {
   id: string;
@@ -155,16 +156,11 @@ export default function AdminCurriculum() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Cấp độ Mục tiêu</label>
-                  <select
+                  <CustomSelect
                     value={editingUnit.level}
-                    onChange={(e) => setEditingUnit({ ...editingUnit, level: e.target.value })}
-                    className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs"
-                  >
-                    <option value="A1">A1</option>
-                    <option value="A2">A2</option>
-                    <option value="B1">B1</option>
-                    <option value="B2">B2</option>
-                  </select>
+                    onChange={(val) => setEditingUnit({ ...editingUnit, level: val })}
+                    options={["A1", "A2", "B1", "B2"]}
+                  />
                 </div>
 
                 <div className="space-y-1">
