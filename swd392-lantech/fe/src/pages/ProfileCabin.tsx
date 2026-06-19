@@ -6,6 +6,7 @@ import { profileService } from "../services/profileService";
 import { gamificationService, UserBadgeDto, XpTransactionDto } from "../services/gamificationService";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function ProfileCabin() {
   const navigate = useNavigate();
@@ -64,6 +65,21 @@ export default function ProfileCabin() {
     navigate("/");
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.05
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 15 },
+    show: { opacity: 1, y: 0, transition: { type: "spring" as const, stiffness: 350, damping: 25 } }
+  };
+
   return (
     <div className="flex h-full min-h-screen text-left flex-col md:flex-row" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
       {/* Left panel */}
@@ -87,31 +103,55 @@ export default function ProfileCabin() {
             </button>
           </div>
 
-          {editing ? (
-            <div className="w-full flex gap-2">
-              <input
-                value={tempName}
-                onChange={e => setTempName(e.target.value)}
-                className="flex-1 px-3 py-2 rounded-xl outline-none"
-                style={{ border: "2px solid var(--brand)", fontSize: 14, fontFamily: "var(--font-family)" }}
-              />
-              <button
-                onClick={handleSave}
-                type="button"
-                className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none outline-none"
-                style={{ background: "var(--brand)" }}
+          <AnimatePresence mode="wait">
+            {editing ? (
+              <motion.div
+                key="editing"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="w-full flex gap-2"
               >
-                <Save size={14} color="#fff" />
-              </button>
-            </div>
-          ) : (
-            <div className="flex items-center gap-2">
-              <span style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)" }}>{user.name}</span>
-              <button onClick={() => setEditing(true)} className="cursor-pointer border-none bg-transparent outline-none" style={{ color: "#aaa" }}>
-                <Edit2 size={13} />
-              </button>
-            </div>
-          )}
+                <input
+                  value={tempName}
+                  onChange={e => setTempName(e.target.value)}
+                  className="flex-1 px-3 py-2 rounded-xl outline-none"
+                  style={{ border: "2px solid var(--brand)", fontSize: 14, fontFamily: "var(--font-family)" }}
+                />
+                <motion.button
+                  onClick={handleSave}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  type="button"
+                  className="w-9 h-9 rounded-xl flex items-center justify-center cursor-pointer border-none outline-none"
+                  style={{ background: "var(--brand)" }}
+                >
+                  <Save size={14} color="#fff" />
+                </motion.button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="display"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="flex items-center gap-2"
+              >
+                <span style={{ fontSize: 17, fontWeight: 800, color: "var(--foreground)" }}>{user.name}</span>
+                <motion.button
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => setEditing(true)}
+                  className="cursor-pointer border-none bg-transparent outline-none"
+                  style={{ color: "#aaa" }}
+                >
+                  <Edit2 size={13} />
+                </motion.button>
+              </motion.div>
+            )}
+          </AnimatePresence>
 
           <div style={{ fontSize: 13, color: "var(--muted-foreground)", marginTop: 4 }}>{user.email}</div>
 
@@ -130,16 +170,20 @@ export default function ProfileCabin() {
             { label: t("totalXp"), value: user.xp.toLocaleString(), icon: "⭐", color: "#f59e0b" },
             { label: t("levelLabel"), value: user.cefr, icon: "🎓", color: "#8b5cf6" },
             { label: t("badgesLabel"), value: badges.length, icon: "🏅", color: "var(--brand)" },
-          ].map(s => (
-            <div
+          ].map((s, idx) => (
+            <motion.div
               key={s.label}
-              className="rounded-2xl p-4 text-center"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ type: "spring", stiffness: 350, damping: 22, delay: idx * 0.04 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="rounded-2xl p-4 text-center cursor-default transition-all"
               style={{ background: "var(--background)", border: "1.5px solid var(--border)" }}
             >
               <div style={{ fontSize: 20, marginBottom: 4 }}>{s.icon}</div>
               <div style={{ fontWeight: 900, fontSize: 18, color: s.color }}>{s.value}</div>
               <div style={{ fontSize: 11, color: "var(--muted-foreground)", fontWeight: 600, marginTop: 2 }}>{s.label}</div>
-            </div>
+            </motion.div>
           ))}
         </div>
 
@@ -147,18 +191,22 @@ export default function ProfileCabin() {
         <div>
           <div className="flex items-center gap-2 mb-3">
             <Calendar size={14} style={{ color: "var(--brand)" }} />
-            <span style={{ fontSize: 13, fontWeight: 700, color: "#3c3c3c" }}>{t("streakCalendarLabel")}</span>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "var(--foreground)" }}>{t("streakCalendarLabel")}</span>
           </div>
           <div className="grid gap-1" style={{ gridTemplateColumns: "repeat(7, 1fr)" }}>
             {t("weekDays").split(",").map((d, i) => (
               <div key={i} className="text-center" style={{ fontSize: 9, fontWeight: 700, color: "#aaa", paddingBottom: 2 }}>{d}</div>
             ))}
             {streakCalendar.map((day, i) => (
-              <div
+              <motion.div
                 key={i}
-                className="aspect-square rounded-md flex items-center justify-center"
+                initial={{ opacity: 0, scale: 0.5 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: "spring", stiffness: 300, damping: 20, delay: (i % 7) * 0.02 }}
+                whileHover={{ scale: 1.15 }}
+                className="aspect-square rounded-md flex items-center justify-center cursor-pointer"
                 style={{
-                  background: day.studied ? "var(--brand-light)" : "#f3f4f6",
+                  background: day.studied ? "var(--brand-light)" : "var(--muted)",
                 }}
                 title={day.studied ? `${t("studiedLabel")} (${day.date})` : ""}
               />
@@ -167,25 +215,27 @@ export default function ProfileCabin() {
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ background: "var(--brand)" }} />
-              <span style={{ fontSize: 10.5, color: "#888" }}>{t("todayLabel")}</span>
+              <span style={{ fontSize: 10.5, color: "var(--muted-foreground)" }}>{t("todayLabel")}</span>
             </div>
             <div className="flex items-center gap-1">
               <div className="w-3 h-3 rounded-sm" style={{ background: "var(--brand-light)" }} />
-              <span style={{ fontSize: 10.5, color: "#888" }}>{t("studiedLabel")}</span>
+              <span style={{ fontSize: 10.5, color: "var(--muted-foreground)" }}>{t("studiedLabel")}</span>
             </div>
           </div>
         </div>
 
         {/* Logout */}
-        <button
+        <motion.button
           onClick={handleLogout}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
           type="button"
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl cursor-pointer w-full border-none outline-none font-bold text-white transition-all shadow-md"
+          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl cursor-pointer w-full border-none outline-none font-bold text-white transition-all shadow-md active:translate-y-1 active:shadow-none"
           style={{ background: "#dc2626" }}
         >
           <LogOut size={15} />
           {t("signOutLabel")}
-        </button>
+        </motion.button>
       </div>
 
       {/* Right panel */}
@@ -193,11 +243,13 @@ export default function ProfileCabin() {
         {/* Tabs */}
         <div className="flex gap-2 mb-6">
           {([["achievements", t("achievementsTab")], ["xp-log", t("xpHistoryTab")]] as [typeof activeTab, string][]).map(([tab, label]) => (
-            <button
+            <motion.button
               key={tab}
               onClick={() => setActiveTab(tab)}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
               type="button"
-              className="px-5 py-2 rounded-full cursor-pointer transition-all border-none outline-none font-bold text-sm"
+              className="px-5 py-2 rounded-full cursor-pointer transition-all border-none outline-none font-bold text-sm relative"
               style={{
                 background: activeTab === tab ? "var(--brand)" : "var(--card)",
                 color: activeTab === tab ? "#fff" : "var(--muted-foreground)",
@@ -205,94 +257,121 @@ export default function ProfileCabin() {
               }}
             >
               {label}
-            </button>
+            </motion.button>
           ))}
         </div>
 
-        {activeTab === "achievements" && (
-          <>
-            <div className="flex items-center gap-2 mb-5">
-              <Award size={16} style={{ color: "#f59e0b" }} />
-              <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)" }}>{t("achievementsShelf")}</h2>
-              <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--muted-foreground)" }}>
-                {t("unlockedCount", { count: badges.length.toString() })}
-              </span>
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              {isLoadingData ? (
-                 <div className="col-span-4 flex justify-center py-10"><Loader2 className="animate-spin" /></div>
-              ) : badges.map(ub => (
-                <div
-                  key={ub.id}
-                  className="rounded-2xl p-4 text-center flex flex-col items-center gap-2"
-                  style={{
-                    background: "var(--card)",
-                    border: `2px solid ${darkMode ? "var(--brand-dark)" : "var(--brand-light)"}`,
-                    boxShadow: darkMode ? "none" : "0 2px 12px rgba(88,204,2,0.15)",
-                  }}
-                >
-                  <div style={{ fontSize: 32 }}>
-                    {ub.badge.imageUrl || '🏅'}
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", lineHeight: 1.4 }}>
-                    {ub.badge.name}
-                  </div>
-                  <div
-                    className="px-2 py-0.5 rounded-full"
-                    style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontSize: 10, fontWeight: 700 }}
-                  >
-                    {t("unlockedLabel")} ✓
-                  </div>
-                </div>
-              ))}
-              {!isLoadingData && badges.length === 0 && (
-                <div className="col-span-4 text-center py-10 text-slate-400">{t("keepStudying")}</div>
-              )}
-            </div>
-          </>
-        )}
-
-        {activeTab === "xp-log" && (
-          <>
-            <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)", marginBottom: 20 }}>{t("xpHistoryTab")}</h2>
-            <div
-              className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between"
-              style={{
-                background: darkMode ? "rgba(253,230,138,0.15)" : "#fff8cc",
-                border: `2px solid ${darkMode ? "#f59e0b" : "#fde68a"}`,
-              }}
+        <AnimatePresence mode="wait">
+          {activeTab === "achievements" && (
+            <motion.div
+              key="achievements"
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+              variants={containerVariants}
             >
-              <div>
-                <div style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>{t("totalXpEarned")}</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp.toLocaleString()} XP</div>
+              <div className="flex items-center gap-2 mb-5">
+                <Award size={16} style={{ color: "#f59e0b" }} />
+                <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)" }}>{t("achievementsShelf")}</h2>
+                <span style={{ marginLeft: "auto", fontSize: 13, color: "var(--muted-foreground)" }}>
+                  {t("unlockedCount", { count: badges.length.toString() })}
+                </span>
               </div>
-              <div style={{ fontSize: 40 }}>⭐</div>
-            </div>
-            <div className="flex flex-col gap-3">
+              
               {isLoadingData ? (
-                 <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
-              ) : xpHistory.map((entry, i) => (
-                <div
-                  key={i}
-                  className="flex items-center gap-4 px-5 py-4 rounded-2xl"
-                  style={{ background: "var(--card)", border: "1.5px solid var(--border)" }}
-                >
-                  <span style={{ fontSize: 22, flexShrink: 0 }}>✨</span>
-                  <div className="flex-1 min-w-0">
-                    <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--foreground)" }}>{entry.reason}</div>
-                    <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(entry.createdAt).toLocaleDateString()}</div>
-                  </div>
-                  <div
-                    className="px-3 py-1 rounded-full shrink-0"
-                    style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 800, fontSize: 13 }}
-                  >
-                    +{entry.amount} XP
-                  </div>
+                <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
+              ) : (
+                <motion.div variants={containerVariants} className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {badges.map(ub => (
+                    <motion.div
+                      key={ub.id}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.04, y: -2 }}
+                      className="rounded-2xl p-4 text-center flex flex-col items-center gap-2"
+                      style={{
+                        background: "var(--card)",
+                        border: `2px solid ${darkMode ? "var(--brand-dark)" : "var(--brand-light)"}`,
+                        boxShadow: darkMode ? "none" : "0 2px 12px rgba(88,204,2,0.15)",
+                      }}
+                    >
+                      <div style={{ fontSize: 32 }}>
+                        {ub.badge.iconUrl || '🏅'}
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "var(--foreground)", lineHeight: 1.4 }}>
+                        {ub.badge.name}
+                      </div>
+                      <div
+                        className="px-2 py-0.5 rounded-full"
+                        style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontSize: 10, fontWeight: 700 }}
+                      >
+                        {t("unlockedLabel")} ✓
+                      </div>
+                    </motion.div>
+                  ))}
+                  {badges.length === 0 && (
+                    <div className="col-span-4 text-center py-10 text-slate-400">{t("keepStudying")}</div>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+
+          {activeTab === "xp-log" && (
+            <motion.div
+              key="xp-log"
+              initial="hidden"
+              animate="show"
+              exit="hidden"
+              variants={containerVariants}
+            >
+              <h2 style={{ fontSize: 17, fontWeight: 900, color: "var(--foreground)", marginBottom: 20 }}>{t("xpHistoryTab")}</h2>
+              <div
+                className="rounded-2xl px-5 py-4 mb-6 flex items-center justify-between"
+                style={{
+                  background: darkMode ? "rgba(253,230,138,0.15)" : "#fff8cc",
+                  border: `2px solid ${darkMode ? "#f59e0b" : "#fde68a"}`,
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>{t("totalXpEarned")}</div>
+                  <div style={{ fontSize: 28, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp.toLocaleString()} XP</div>
                 </div>
-              ))}
-            </div>
-          </>
-        )}
+                <div style={{ fontSize: 40 }}>⭐</div>
+              </div>
+
+              {isLoadingData ? (
+                <div className="flex justify-center py-10"><Loader2 className="animate-spin" /></div>
+              ) : (
+                <motion.div variants={containerVariants} className="flex flex-col gap-3">
+                  {xpHistory.map((entry, i) => (
+                    <motion.div
+                      key={i}
+                      variants={itemVariants}
+                      whileHover={{ scale: 1.01, x: 2 }}
+                      className="flex items-center gap-4 px-5 py-4 rounded-2xl"
+                      style={{ background: "var(--card)", border: "1.5px solid var(--border)" }}
+                    >
+                      <span style={{ fontSize: 22, flexShrink: 0 }}>✨</span>
+                      <div className="flex-1 min-w-0">
+                        <div style={{ fontSize: 13.5, fontWeight: 600, color: "var(--foreground)" }}>{entry.reason}</div>
+                        <div style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{new Date(entry.createdAt).toLocaleDateString()}</div>
+                      </div>
+                      <div
+                        className="px-3 py-1 rounded-full shrink-0"
+                        style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 800, fontSize: 13 }}
+                      >
+                        +{entry.amount} XP
+                      </div>
+                    </motion.div>
+                  ))}
+                  {xpHistory.length === 0 && (
+                    <div className="text-center py-10 text-slate-400">{t("keepStudying")}</div>
+                  )}
+                </motion.div>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );

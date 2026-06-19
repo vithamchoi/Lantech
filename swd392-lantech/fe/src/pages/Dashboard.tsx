@@ -5,6 +5,7 @@ import { Lock, CheckCircle, Play, ChevronRight, Zap, TrendingUp, AlertCircle, Lo
 import { learningService, LessonDto } from "../services/learningService";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import { motion, AnimatePresence } from "motion/react";
 
 export default function Dashboard() {
   const navigate = useNavigate();
@@ -13,6 +14,7 @@ export default function Dashboard() {
   const [hoveredNode, setHoveredNode] = useState<string | null>(null);
   const [lessons, setLessons] = useState<LessonDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [shakingNodeId, setShakingNodeId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -40,25 +42,69 @@ export default function Dashboard() {
   // Logic tìm bài học active: bài học đầu tiên chưa hoàn thành
   const activeLesson = lessons.find(l => l.progressStatus !== 'Completed');
 
-  const handleNodeAction = (nodeId: string) => {
+  const handleNodeAction = (nodeId: string, isLocked: boolean) => {
+    if (isLocked) {
+      setShakingNodeId(nodeId);
+      setTimeout(() => setShakingNodeId(null), 400);
+      toast.warning(t("completePreviousLesson") || "Hãy hoàn thành bài học trước để mở khóa!");
+      return;
+    }
     navigate(`/lesson/${nodeId}`);
   };
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin" size={48} color="var(--brand)" />
-      </div>
-    );
-  }
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.08
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        type: "spring" as const,
+        stiffness: 260,
+        damping: 20
+      }
+    }
+  };
 
   return (
-    <div className="flex h-full min-h-screen" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
-      {/* Main trail area */}
-      <div className="flex-1 overflow-y-auto px-8 py-7">
+    <div className="flex h-full min-h-screen relative w-full" style={{ fontFamily: "var(--font-family)", background: "var(--background)" }}>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-center absolute inset-0 z-50 bg-background h-full w-full"
+          >
+            <Loader2 className="animate-spin" size={48} color="var(--brand)" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="flex-1 flex flex-col min-w-0"
+          >
+            {/* Main trail area */}
+            <div className="flex-1 overflow-y-auto px-8 py-7">
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.05 }}
             className="rounded-2xl p-5 transition-colors duration-300"
             style={{ background: "var(--card)", border: "2px solid var(--border)" }}
           >
@@ -76,14 +122,20 @@ export default function Dashboard() {
               className="mt-2 rounded-full overflow-hidden"
               style={{ height: 6, background: "var(--muted)" }}
             >
-              <div
+              <motion.div
                 className="h-full rounded-full"
-                style={{ width: `${progressPercent}%`, background: "var(--brand)", transition: "width 0.8s ease" }}
+                initial={{ width: 0 }}
+                animate={{ width: `${progressPercent}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{ background: "var(--brand)" }}
               />
             </div>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.1 }}
             className="rounded-2xl p-5"
             style={{
               background: darkMode ? "rgba(253,230,138,0.15)" : "#fff8cc",
@@ -96,9 +148,12 @@ export default function Dashboard() {
             </div>
             <div style={{ fontSize: 26, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp} XP</div>
             <div style={{ fontSize: 12, color: darkMode ? "#fdba74" : "#b45309", fontWeight: 600, marginTop: 6 }}>{t("keepItUp")}</div>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 22, delay: 0.15 }}
             className="rounded-2xl p-5 transition-colors duration-300"
             style={{
               background: darkMode ? "rgba(28,176,246,0.15)" : "var(--brand-sky-light)",
@@ -117,14 +172,14 @@ export default function Dashboard() {
             <div style={{ fontSize: 15, fontWeight: 800, color: "var(--brand-sky)" }}>{activeLesson?.title || t("allDone")}</div>
             {activeLesson && (
               <button
-                onClick={() => handleNodeAction(activeLesson.id)}
+                onClick={() => handleNodeAction(activeLesson.id, false)}
                 className="mt-2 flex items-center gap-1 cursor-pointer border-none outline-none bg-transparent"
                 style={{ fontSize: 12, fontWeight: 700, color: "var(--brand-sky)", padding: 0 }}
               >
                 {t("continue")} <ChevronRight size={13} />
               </button>
             )}
-          </div>
+          </motion.div>
         </div>
 
         {/* Trail heading */}
@@ -138,7 +193,12 @@ export default function Dashboard() {
         </div>
 
         {/* Trail nodes */}
-        <div className="flex flex-col items-center gap-0">
+        <motion.div
+          variants={containerVariants}
+          initial="hidden"
+          animate="visible"
+          className="flex flex-col items-center gap-0 w-full"
+        >
           {lessons.length === 0 && (
             <div className="p-10 text-center text-slate-500">
               {t("noLessonsAvailable")}
@@ -153,7 +213,11 @@ export default function Dashboard() {
             const isNodeLocked = !isNodeActive && node.progressStatus !== 'Completed' && index > lessons.findIndex(l => l.id === activeLesson?.id);
 
             return (
-              <div key={node.id} className="w-full flex flex-col items-center">
+              <motion.div
+                key={node.id}
+                variants={itemVariants}
+                className="w-full flex flex-col items-center"
+              >
                 {/* Connector line */}
                 {index > 0 && (
                   <div
@@ -174,15 +238,19 @@ export default function Dashboard() {
                 >
                   <div className="relative">
                     {/* Node button */}
-                    <button
-                      onClick={() => !isNodeLocked && handleNodeAction(node.id)}
+                    <motion.button
+                      onClick={() => handleNodeAction(node.id, isNodeLocked)}
                       onMouseEnter={() => setHoveredNode(node.id)}
                       onMouseLeave={() => setHoveredNode(null)}
-                      className="relative flex flex-col items-center transition-all border-none outline-none bg-transparent"
+                      whileHover={!isNodeLocked ? { scale: 1.08 } : {}}
+                      whileTap={!isNodeLocked ? { scale: 0.95 } : {}}
+                      className={`relative flex flex-col items-center transition-all border-none outline-none bg-transparent ${
+                        shakingNodeId === node.id ? "animate-wiggle" : ""
+                      }`}
                       style={{ cursor: isNodeLocked ? "not-allowed" : "pointer" }}
                     >
                       <div
-                        className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all"
+                        className="w-20 h-20 rounded-full flex items-center justify-center shadow-lg transition-all relative"
                         style={{
                           background:
                             node.progressStatus === "Completed"
@@ -196,9 +264,11 @@ export default function Dashboard() {
                               : node.progressStatus === "Completed"
                               ? "0 6px 0 var(--brand-dark)"
                               : "0 4px 0 #d1d5db",
-                          transform: isHovered && !isNodeLocked ? "scale(1.08)" : "scale(1)",
                         }}
                       >
+                        {isNodeActive && (
+                          <div className="absolute inset-0 rounded-full bg-brand-sky opacity-40 animate-ping pointer-events-none" />
+                        )}
                         {node.progressStatus === "Completed" ? (
                           <CheckCircle size={30} color="#fff" />
                         ) : isNodeActive ? (
@@ -209,13 +279,18 @@ export default function Dashboard() {
                       </div>
 
                       {/* Node Tooltip/Label */}
-                      <div
-                        className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg shadow-sm border transition-all"
+                      <motion.div
+                        initial={false}
+                        animate={{
+                          y: isHovered ? -4 : 0,
+                          opacity: isHovered ? 1 : 0.8,
+                          scale: isHovered ? 1.02 : 1
+                        }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="absolute -bottom-12 left-1/2 -translate-x-1/2 whitespace-nowrap px-3 py-1.5 rounded-lg shadow-sm border transition-all z-20"
                         style={{
                           background: "var(--card)",
                           borderColor: isNodeActive ? "var(--brand)" : "var(--border)",
-                          opacity: isHovered ? 1 : 0.8,
-                          transform: isHovered ? "translate(-50%, -4px)" : "translate(-50%, 0)",
                         }}
                       >
                         <div style={{ fontSize: 13, fontWeight: 800, color: "var(--foreground)" }}>
@@ -230,15 +305,19 @@ export default function Dashboard() {
                             node.skill
                           )} • {node.xpReward} XP
                         </div>
-                      </div>
-                    </button>
+                      </motion.div>
+                    </motion.button>
                   </div>
                 </div>
-              </div>
+              </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+

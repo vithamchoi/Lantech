@@ -57,3 +57,6 @@ _ReSharper*/
 *.secret
 *.pem
 *.key
+
+# --- Markdown ---
+*.md

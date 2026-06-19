@@ -83,6 +83,70 @@ public class AdminService : IAdminService
         return false;
     }
 
+    public async Task<bool> UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { id }, cancellationToken);
+        if (user == null) return false;
+
+        user.FullName = request.Username;
+        user.Email = request.Email;
+        user.Xp = request.Xp;
+        user.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
+    public async Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { id }, cancellationToken);
+        if (user == null) return false;
+
+        // Clean up dependent records manually to avoid FK constraint violations
+        var skillProfiles = await _context.UserSkillProfiles.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (skillProfiles.Any()) _context.UserSkillProfiles.RemoveRange(skillProfiles);
+
+        var badges = await _context.UserBadges.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (badges.Any()) _context.UserBadges.RemoveRange(badges);
+
+        var xpTransactions = await _context.XpTransactions.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (xpTransactions.Any()) _context.XpTransactions.RemoveRange(xpTransactions);
+
+        var refreshTokens = await _context.RefreshTokens.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (refreshTokens.Any()) _context.RefreshTokens.RemoveRange(refreshTokens);
+
+        var progress = await _context.LessonProgress.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (progress.Any()) _context.LessonProgress.RemoveRange(progress);
+
+        var attempts = await _context.ExerciseAttempts.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (attempts.Any()) _context.ExerciseAttempts.RemoveRange(attempts);
+
+        var pAttempts = await _context.PronunciationAttempts.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (pAttempts.Any()) _context.PronunciationAttempts.RemoveRange(pAttempts);
+
+        var sessions = await _context.StudySessions.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (sessions.Any()) _context.StudySessions.RemoveRange(sessions);
+
+        var paths = await _context.LearningPaths.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (paths.Any()) _context.LearningPaths.RemoveRange(paths);
+
+        var fReviews = await _context.FlashcardReviews.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (fReviews.Any()) _context.FlashcardReviews.RemoveRange(fReviews);
+
+        var flashcards = await _context.Flashcards.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (flashcards.Any()) _context.Flashcards.RemoveRange(flashcards);
+
+        var aAnswers = await _context.AssessmentAnswers.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (aAnswers.Any()) _context.AssessmentAnswers.RemoveRange(aAnswers);
+
+        var assessments = await _context.Assessments.Where(x => x.UserId == id).ToListAsync(cancellationToken);
+        if (assessments.Any()) _context.Assessments.RemoveRange(assessments);
+
+        _context.Users.Remove(user);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
+    }
+
     // --- LESSONS CRUD ---
 
     public async Task<IEnumerable<AdminLessonDto>> GetLessonsAsync(CancellationToken cancellationToken = default)
@@ -388,12 +452,108 @@ public class AdminService : IAdminService
             .Select(b => new AdminBadgeDto
             {
                 Id = b.Id,
+                Code = b.Code,
                 Title = b.Name,
                 Description = b.Description,
+                IconUrl = b.IconUrl,
+                ConditionType = b.ConditionType,
+                ConditionValue = b.ConditionValue,
                 RequiredXP = b.ConditionType == "XP" ? b.ConditionValue : 0,
                 Holders = _context.UserBadges.Count(ub => ub.BadgeId == b.Id)
             })
             .ToListAsync(cancellationToken);
+    }
+
+    public async Task<AdminBadgeDto?> GetBadgeByIdAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var b = await _context.Badges.FindAsync(new object[] { id }, cancellationToken);
+        if (b == null) return null;
+
+        return new AdminBadgeDto
+        {
+            Id = b.Id,
+            Code = b.Code,
+            Title = b.Name,
+            Description = b.Description,
+            IconUrl = b.IconUrl,
+            ConditionType = b.ConditionType,
+            ConditionValue = b.ConditionValue,
+            RequiredXP = b.ConditionType == "XP" ? b.ConditionValue : 0,
+            Holders = await _context.UserBadges.CountAsync(ub => ub.BadgeId == b.Id, cancellationToken)
+        };
+    }
+
+    public async Task<AdminBadgeDto> CreateBadgeAsync(CreateBadgeRequest request, CancellationToken cancellationToken = default)
+    {
+        var b = new Badge
+        {
+            Id = Guid.NewGuid(),
+            Code = request.Code,
+            Name = request.Name,
+            Description = request.Description,
+            IconUrl = request.IconUrl,
+            ConditionType = request.ConditionType,
+            ConditionValue = request.ConditionValue
+        };
+
+        _context.Badges.Add(b);
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AdminBadgeDto
+        {
+            Id = b.Id,
+            Code = b.Code,
+            Title = b.Name,
+            Description = b.Description,
+            IconUrl = b.IconUrl,
+            ConditionType = b.ConditionType,
+            ConditionValue = b.ConditionValue,
+            RequiredXP = b.ConditionType == "XP" ? b.ConditionValue : 0,
+            Holders = 0
+        };
+    }
+
+    public async Task<AdminBadgeDto> UpdateBadgeAsync(Guid id, CreateBadgeRequest request, CancellationToken cancellationToken = default)
+    {
+        var b = await _context.Badges.FindAsync(new object[] { id }, cancellationToken);
+        if (b == null) throw new KeyNotFoundException("Badge not found");
+
+        b.Code = request.Code;
+        b.Name = request.Name;
+        b.Description = request.Description;
+        b.IconUrl = request.IconUrl;
+        b.ConditionType = request.ConditionType;
+        b.ConditionValue = request.ConditionValue;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return new AdminBadgeDto
+        {
+            Id = b.Id,
+            Code = b.Code,
+            Title = b.Name,
+            Description = b.Description,
+            IconUrl = b.IconUrl,
+            ConditionType = b.ConditionType,
+            ConditionValue = b.ConditionValue,
+            RequiredXP = b.ConditionType == "XP" ? b.ConditionValue : 0,
+            Holders = await _context.UserBadges.CountAsync(ub => ub.BadgeId == b.Id, cancellationToken)
+        };
+    }
+
+    public async Task<bool> DeleteBadgeAsync(Guid id, CancellationToken cancellationToken = default)
+    {
+        var b = await _context.Badges.FindAsync(new object[] { id }, cancellationToken);
+        if (b == null) return false;
+
+        var userBadges = await _context.UserBadges
+            .Where(ub => ub.BadgeId == id)
+            .ToListAsync(cancellationToken);
+        _context.UserBadges.RemoveRange(userBadges);
+
+        _context.Badges.Remove(b);
+        await _context.SaveChangesAsync(cancellationToken);
+        return true;
     }
 
     // --- MAP HELPERS ---

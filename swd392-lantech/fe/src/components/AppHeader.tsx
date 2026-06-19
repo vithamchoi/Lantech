@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useAppStore } from "../store/appStore";
 import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic, Sun, Moon } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
+import { motion, AnimatePresence } from "motion/react";
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: "#60a5fa",
@@ -64,7 +65,10 @@ export default function AppHeader() {
       {/* Right: stats */}
       <div className="flex items-center gap-4">
         {/* Streak */}
-        <div
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
           style={{
             background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
@@ -74,10 +78,13 @@ export default function AppHeader() {
         >
           <Flame size={15} style={{ color: "#f97316" }} />
           <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
-        </div>
+        </motion.div>
 
         {/* XP */}
-        <div
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
           style={{
             background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
@@ -89,11 +96,13 @@ export default function AppHeader() {
           <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
             {user.xp.toLocaleString()} XP
           </span>
-        </div>
+        </motion.div>
 
         {/* CEFR Level */}
-        <div
-          className="px-3 py-1.5 rounded-full"
+        <motion.div
+          whileHover={{ scale: 1.05 }}
+          transition={{ type: "spring", stiffness: 400, damping: 17 }}
+          className="px-3 py-1.5 rounded-full select-none"
           style={{
             background: levelColor + "22",
             border: `2px solid ${levelColor}55`,
@@ -104,25 +113,40 @@ export default function AppHeader() {
           }}
         >
           {user.cefr}
-        </div>
+        </motion.div>
 
         {/* Theme Toggle */}
-        <button
+        <motion.button
+          whileHover={{ scale: 1.15, rotate: 15 }}
+          whileTap={{ scale: 0.85, rotate: -15 }}
           onClick={toggleDarkMode}
-          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer border-none outline-none"
+          className="w-8 h-8 rounded-full flex items-center justify-center transition-colors cursor-pointer border-none outline-none relative overflow-hidden"
           style={{ background: "var(--muted)" }}
           title={darkMode ? t("lightModeTitle") : t("darkModeTitle")}
         >
-          {darkMode ? (
-            <Sun size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
-          ) : (
-            <Moon size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
-          )}
-        </button>
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.div
+              key={darkMode ? "sun" : "moon"}
+              initial={{ y: -20, opacity: 0, rotate: -40 }}
+              animate={{ y: 0, opacity: 1, rotate: 0 }}
+              exit={{ y: 20, opacity: 0, rotate: 40 }}
+              transition={{ duration: 0.2 }}
+              className="absolute inset-0 flex items-center justify-center"
+            >
+              {darkMode ? (
+                <Sun size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
+              ) : (
+                <Moon size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
+              )}
+            </motion.div>
+          </AnimatePresence>
+        </motion.button>
 
         {/* Notification bell */}
         <div className="relative" ref={panelRef}>
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
             onClick={() => setNotifOpen(v => !v)}
             className="w-8 h-8 rounded-full flex items-center justify-center transition-colors relative cursor-pointer border-none outline-none"
             style={{ background: notifOpen ? "var(--secondary)" : "var(--muted)" }}
@@ -130,85 +154,92 @@ export default function AppHeader() {
             <Bell size={15} style={{ color: "var(--foreground)", opacity: 0.8 }} />
             {unreadCount > 0 && (
               <span
-                className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center"
+                className="absolute -top-0.5 -right-0.5 w-4 h-4 rounded-full flex items-center justify-center shadow-sm"
                 style={{ background: "var(--brand-ruby)", fontSize: 9, fontWeight: 800, color: "#fff" }}
               >
                 {unreadCount}
               </span>
             )}
-          </button>
+          </motion.button>
 
-          {notifOpen && (
-            <div
-              className="absolute right-0 top-11 z-50 rounded-2xl shadow-2xl overflow-hidden"
-              style={{ width: 340, background: "var(--card)", border: "1.5px solid var(--border)" }}
-            >
-              {/* Header */}
-              <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
-                <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>{t("notifications")}</div>
-                {unreadCount > 0 && (
-                  <button
-                    onClick={markAllRead}
-                    className="flex items-center gap-1.5 cursor-pointer border-none outline-none bg-transparent"
-                    style={{ fontSize: 12, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)", padding: 0 }}
-                  >
-                    <CheckCheck size={13} />
-                    {t("markAllRead")}
-                  </button>
-                )}
-              </div>
-
-              {/* List */}
-              <div style={{ maxHeight: 380 }} className="overflow-y-auto">
-                {notificationsList.map(n => {
-                  const isUnread = n.unread && !readIds.has(n.id);
-                  const Icon = n.icon;
-                  return (
-                    <div
-                      key={n.id}
-                      onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
-                      className="flex gap-3 px-5 py-4 cursor-pointer transition-colors"
-                      style={{
-                        background: isUnread ? (darkMode ? "rgba(88, 204, 2, 0.15)" : "rgba(88, 204, 2, 0.08)") : "transparent",
-                        borderBottom: "1px solid var(--border)",
-                      }}
-                    >
-                      <div
-                        className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
-                        style={{ background: n.iconBg }}
-                      >
-                        <Icon size={16} style={{ color: n.iconColor }} />
-                      </div>
-                      <div className="flex-1 min-w-0 text-left">
-                        <div className="flex items-start justify-between gap-2">
-                          <div style={{ fontSize: 13, fontWeight: isUnread ? 700 : 600, color: "var(--foreground)", lineHeight: 1.4 }}>{n.title}</div>
-                          {isUnread && (
-                            <span
-                              className="w-2 h-2 rounded-full shrink-0 mt-1"
-                              style={{ background: "var(--brand)" }}
-                            />
-                          )}
-                        </div>
-                        <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5, marginTop: 2 }}>{n.body}</div>
-                        <div style={{ fontSize: 11, color: "var(--muted-foreground)", opacity: 0.6, marginTop: 4, fontWeight: 600 }}>{n.time}</div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Footer */}
-              <div
-                className="px-5 py-3 text-center cursor-pointer border-t"
-                style={{ borderColor: "var(--border)" }}
-                onClick={() => setNotifOpen(false)}
+          <AnimatePresence>
+            {notifOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                transition={{ duration: 0.15 }}
+                className="absolute right-0 top-11 z-50 rounded-2xl shadow-2xl overflow-hidden"
+                style={{ width: 340, background: "var(--card)", border: "1.5px solid var(--border)" }}
               >
-                <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>{t("seeAllNotif")}</span>
-              </div>
-            </div>
-          )}
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b" style={{ borderColor: "var(--border)" }}>
+                  <div style={{ fontWeight: 800, fontSize: 15, color: "var(--foreground)" }}>{t("notifications")}</div>
+                  {unreadCount > 0 && (
+                    <button
+                      onClick={markAllRead}
+                      className="flex items-center gap-1.5 cursor-pointer border-none outline-none bg-transparent"
+                      style={{ fontSize: 12, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)", padding: 0 }}
+                    >
+                      <CheckCheck size={13} />
+                      {t("markAllRead")}
+                    </button>
+                  )}
+                </div>
+
+                {/* List */}
+                <div style={{ maxHeight: 380 }} className="overflow-y-auto">
+                  {notificationsList.map(n => {
+                    const isUnread = n.unread && !readIds.has(n.id);
+                    const Icon = n.icon;
+                    return (
+                      <div
+                        key={n.id}
+                        onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
+                        className="flex gap-3 px-5 py-4 cursor-pointer transition-colors"
+                        style={{
+                          background: isUnread ? (darkMode ? "rgba(88, 204, 2, 0.15)" : "rgba(88, 204, 2, 0.08)") : "transparent",
+                          borderBottom: "1px solid var(--border)",
+                        }}
+                      >
+                        <div
+                          className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
+                          style={{ background: n.iconBg }}
+                        >
+                          <Icon size={16} style={{ color: n.iconColor }} />
+                        </div>
+                        <div className="flex-1 min-w-0 text-left">
+                          <div className="flex items-start justify-between gap-2">
+                            <div style={{ fontSize: 13, fontWeight: isUnread ? 700 : 600, color: "var(--foreground)", lineHeight: 1.4 }}>{n.title}</div>
+                            {isUnread && (
+                              <span
+                                className="w-2 h-2 rounded-full shrink-0 mt-1"
+                                style={{ background: "var(--brand)" }}
+                              />
+                            )}
+                          </div>
+                          <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5, marginTop: 2 }}>{n.body}</div>
+                          <div style={{ fontSize: 11, color: "var(--muted-foreground)", opacity: 0.6, marginTop: 4, fontWeight: 600 }}>{n.time}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Footer */}
+                <div
+                  className="px-5 py-3 text-center cursor-pointer border-t"
+                  style={{ borderColor: "var(--border)" }}
+                  onClick={() => setNotifOpen(false)}
+                >
+                  <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>{t("seeAllNotif")}</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </header>
   );
 }
+

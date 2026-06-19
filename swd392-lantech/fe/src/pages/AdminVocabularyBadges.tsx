@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Award, BookOpen, Plus, Edit2, Trash2, Check, Sparkles, Loader2 } from 'lucide-react';
 import { adminService, AdminVocabularyDto, AdminBadgeDto } from '../services/adminService';
 import { toast } from 'sonner';
+import { motion } from 'motion/react';
 
 export default function AdminVocabularyBadges() {
   const navigate = useNavigate();
@@ -34,6 +35,18 @@ export default function AdminVocabularyBadges() {
   }, [activeTab]);
 
   const [editingVocab, setEditingVocab] = useState<AdminVocabularyDto | null>(null);
+  const [editingBadge, setEditingBadge] = useState<AdminBadgeDto | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: "",
+    message: "",
+    onConfirm: () => {}
+  });
 
   const handleSaveVocab = async () => {
     if (!editingVocab) return;
@@ -100,25 +113,91 @@ export default function AdminVocabularyBadges() {
     }
   };
 
-  const handleDeleteVocab = async (id: string) => {
-    if (!window.confirm("Are you sure you want to delete this word?")) return;
+  const handleDeleteVocab = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Xóa từ vựng",
+      message: "Bạn có chắc chắn muốn xóa từ vựng này?",
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          await adminService.deleteVocabulary(id);
+          setVocab(vocab.filter(v => v.id !== id));
+          toast.success("Vocabulary deleted successfully");
+        } catch (error) {
+          console.error("Failed to delete vocabulary", error);
+          toast.error("Failed to delete vocabulary");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleDeleteBadge = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Xóa huy hiệu",
+      message: "Bạn có chắc chắn muốn xóa huy hiệu này?",
+      onConfirm: async () => {
+        setIsLoading(true);
+        try {
+          await adminService.deleteBadge(id);
+          setBadges(badges.filter(b => b.id !== id));
+          toast.success("Xóa huy hiệu thành công");
+        } catch (error) {
+          console.error("Failed to delete badge", error);
+          toast.error("Không thể xóa huy hiệu");
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    });
+  };
+
+  const handleSaveBadge = async () => {
+    if (!editingBadge) return;
+    if (!editingBadge.code.trim()) {
+      toast.error("Mã Code không được để trống");
+      return;
+    }
+    if (!editingBadge.title.trim()) {
+      toast.error("Tên Huy hiệu không được để trống");
+      return;
+    }
 
     setIsLoading(true);
     try {
-      await adminService.deleteVocabulary(id);
-      setVocab(vocab.filter(v => v.id !== id));
-      toast.success("Vocabulary deleted successfully");
+      const payload = {
+        code: editingBadge.code.trim(),
+        name: editingBadge.title.trim(),
+        description: editingBadge.description.trim(),
+        iconUrl: editingBadge.iconUrl || '🏅',
+        conditionType: editingBadge.conditionType,
+        conditionValue: editingBadge.conditionType === 'SELFLEVELSELECTED' ? 0 : editingBadge.conditionValue
+      };
+
+      if (editingBadge.id && !editingBadge.id.startsWith("new_")) {
+        // Edit mode
+        const updated = await adminService.updateBadge(editingBadge.id, payload);
+        setBadges(badges.map(b => b.id === editingBadge.id ? {
+          ...updated,
+          holders: editingBadge.holders
+        } : b));
+        toast.success("Cập nhật huy hiệu thành công");
+      } else {
+        // Create mode
+        const created = await adminService.createBadge(payload);
+        setBadges([created, ...badges]);
+        toast.success("Thêm mới huy hiệu thành công");
+      }
+      setEditingBadge(null);
     } catch (error) {
-      console.error("Failed to delete vocabulary", error);
-      toast.error("Failed to delete vocabulary");
+      console.error("Failed to save badge", error);
+      toast.error("Không thể lưu huy hiệu");
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleDeleteBadge = async (id: string) => {
-     setBadges(badges.filter(b => b.id !== id));
-     toast.success("Đã xóa huy hiệu cục bộ");
   };
 
   return (
@@ -158,14 +237,17 @@ export default function AdminVocabularyBadges() {
           ) : (
             <button
               onClick={() => {
-                const newBadge: AdminBadgeDto = {
-                  id: Date.now().toString(),
-                  title: 'Huy hiệu Mới',
-                  description: 'Giải thích điều kiện mở khóa',
-                  requiredXP: 100,
+                setEditingBadge({
+                  id: 'new_' + Date.now().toString(),
+                  code: '',
+                  title: '',
+                  description: '',
+                  iconUrl: '🏅',
+                  conditionType: 'XP',
+                  conditionValue: 100,
+                  requiredXP: 0,
                   holders: 0
-                };
-                setBadges([...badges, newBadge]);
+                });
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all cursor-pointer"
             >
@@ -252,23 +334,52 @@ export default function AdminVocabularyBadges() {
               <Loader2 className="w-6 h-6 animate-spin mx-auto text-meadow" />
             </div>
           ) : badges.map((badge) => (
-            <div key={badge.id} className="bg-white p-6 rounded-card border border-sage shadow-diffuse space-y-4 flex flex-col justify-between">
+            <div key={badge.id} className="bg-white p-6 rounded-card border border-sage shadow-diffuse space-y-4 flex flex-col justify-between relative overflow-hidden group">
+              <div className="absolute top-3 right-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button
+                  onClick={() => setEditingBadge(badge)}
+                  className="p-1 hover:bg-cream-200 rounded text-slate-500 hover:text-slate cursor-pointer"
+                >
+                  <Edit2 className="w-3.5 h-3.5" />
+                </button>
+                <button
+                  onClick={() => handleDeleteBadge(badge.id)}
+                  className="p-1 hover:bg-rose-50 rounded text-rose-600 cursor-pointer"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
               <div className="flex gap-4">
-                <div className="text-4xl shrink-0">🏅</div>
-                <div className="space-y-1">
-                  <h4 className="font-bold text-sm text-slate">{badge.title}</h4>
+                <div className="text-4xl shrink-0 select-none">{badge.iconUrl || '🏅'}</div>
+                <div className="space-y-1 text-left">
+                  <h4 className="font-bold text-sm text-slate flex items-center gap-1.5 flex-wrap">
+                    {badge.title}
+                    <span className="text-[10px] px-1.5 py-0.5 bg-cream-300 text-slate-600 rounded font-mono font-bold uppercase">
+                      {badge.code}
+                    </span>
+                  </h4>
                   <p className="text-xs text-slate-500 leading-relaxed">{badge.description}</p>
                 </div>
               </div>
 
-              <div className="flex justify-between items-center pt-4 border-t border-sage text-xs font-bold">
-                <span className="text-meadow">Yêu cầu +{badge.requiredXP} XP</span>
-                <button
-                  onClick={() => handleDeleteBadge(badge.id)}
-                  className="text-rose-600 hover:underline cursor-pointer"
-                >
-                  Xóa
-                </button>
+              <div className="pt-4 border-t border-sage flex flex-col gap-2 text-left">
+                <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-meadow" />
+                  <span>Yêu cầu: </span>
+                  <span className="font-bold text-meadow">
+                    {badge.conditionType?.toUpperCase() === 'XP' && `Tích lũy ${badge.conditionValue} XP`}
+                    {badge.conditionType?.toUpperCase() === 'STREAK' && `Học liên tục ${badge.conditionValue} ngày`}
+                    {badge.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `Hoàn thành ${badge.conditionValue} bài học`}
+                    {badge.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `Ôn tập ${badge.conditionValue} flashcard`}
+                    {badge.conditionType?.toUpperCase() === 'PERFECTLESSON' && `Đạt 100% ${badge.conditionValue} bài học`}
+                    {badge.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `Làm ${badge.conditionValue} bài đánh giá`}
+                    {badge.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `Tự chọn trình độ đầu vào`}
+                    {!['XP', 'STREAK', 'LESSONCOMPLETED', 'FLASHCARDREVIEWED', 'PERFECTLESSON', 'ASSESSMENTCOMPLETED', 'SELFLEVELSELECTED'].includes(badge.conditionType?.toUpperCase() || '') && `${badge.conditionType}: ${badge.conditionValue}`}
+                  </span>
+                </div>
+                <div className="flex justify-between items-center text-[11px] font-bold text-slate-400">
+                  <span>{badge.holders} học viên sở hữu</span>
+                </div>
               </div>
             </div>
           ))}
@@ -281,7 +392,7 @@ export default function AdminVocabularyBadges() {
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
               <h3 className="font-outfit font-bold text-lg text-slate">
-                {editingVocab.id ? "Edit Vocabulary Word" : "Add Vocabulary Word"}
+                {editingVocab.id ? "Chỉnh Sửa Từ Vựng" : "Thêm Từ Vựng Mới"}
               </h3>
               <button 
                 onClick={() => setEditingVocab(null)}
@@ -350,6 +461,152 @@ export default function AdminVocabularyBadges() {
               >
                 <Check className="w-4 h-4" /> Lưu Từ Vựng
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Editing Badge Dialog Portal */}
+      {editingBadge && (
+        <div className="fixed inset-0 bg-slate/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
+            <div className="flex justify-between items-start">
+              <h3 className="font-outfit font-bold text-lg text-slate">
+                {editingBadge.id && !editingBadge.id.startsWith("new_") ? "Chỉnh Sửa Huy Chương" : "Thêm Huy Chương Mới"}
+              </h3>
+              <button 
+                onClick={() => setEditingBadge(null)}
+                className="p-1 hover:bg-cream-200 rounded cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4 text-left">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mã Code (Không dấu, không khoảng trắng)</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: XP_1000"
+                  value={editingBadge.code}
+                  onChange={(e) => setEditingBadge({ ...editingBadge, code: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tên Huy Chương</label>
+                <input
+                  type="text"
+                  placeholder="Ví dụ: Chiến Binh XP"
+                  value={editingBadge.title}
+                  onChange={(e) => setEditingBadge({ ...editingBadge, title: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs font-semibold"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mô Tả Huy Chương</label>
+                <textarea
+                  placeholder="Mô tả cách đạt huy chương..."
+                  value={editingBadge.description}
+                  onChange={(e) => setEditingBadge({ ...editingBadge, description: e.target.value })}
+                  className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs min-h-[60px] font-semibold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Biểu Tượng (Emoji)</label>
+                  <input
+                    type="text"
+                    placeholder="🏅"
+                    value={editingBadge.iconUrl || ''}
+                    onChange={(e) => setEditingBadge({ ...editingBadge, iconUrl: e.target.value })}
+                    className="w-full px-4 py-2 bg-cream-50 border border-sage rounded-control text-center text-lg h-[38px] font-semibold"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loại Điều Kiện</label>
+                  <select
+                    value={editingBadge.conditionType}
+                    onChange={(e) => setEditingBadge({ ...editingBadge, conditionType: e.target.value })}
+                    className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs h-[38px] font-semibold"
+                  >
+                    <option value="XP">Tích Lũy XP</option>
+                    <option value="STREAK">Học Liên Tục (Streak)</option>
+                    <option value="LESSONCOMPLETED">Hoàn Thành Bài Học</option>
+                    <option value="FLASHCARDREVIEWED">Ôn Tập Flashcard</option>
+                    <option value="PERFECTLESSON">Bài Học Đạt 100%</option>
+                    <option value="ASSESSMENTCOMPLETED">Làm Bài Khảo Sát</option>
+                    <option value="SELFLEVELSELECTED">Đã Chọn Trình Độ</option>
+                  </select>
+                </div>
+              </div>
+
+              {editingBadge.conditionType !== 'SELFLEVELSELECTED' && (
+                <div className="space-y-1">
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giá Trị Cần Đạt</label>
+                  <input
+                    type="number"
+                    min={1}
+                    value={editingBadge.conditionValue}
+                    onChange={(e) => setEditingBadge({ ...editingBadge, conditionValue: parseInt(e.target.value) || 0 })}
+                    className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs font-semibold"
+                  />
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-4">
+              <button
+                onClick={() => setEditingBadge(null)}
+                className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200 cursor-pointer"
+              >
+                Hủy
+              </button>
+              <button
+                onClick={handleSaveBadge}
+                className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-4 h-4" /> Lưu Huy Chương
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm.isOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="w-full max-w-md border border-border rounded-xl p-6 shadow-2xl text-left animate-in fade-in zoom-in-95 duration-155" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+            <h3 className="text-lg font-bold mb-2" style={{ color: "var(--foreground)" }}>{deleteConfirm.title}</h3>
+            <p className="text-sm mb-6" style={{ color: "var(--muted-foreground)" }}>{deleteConfirm.message}</p>
+            <div className="flex justify-end gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => setDeleteConfirm(prev => ({ ...prev, isOpen: false }))}
+                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none transition-all hover:bg-neutral-200 dark:hover:bg-neutral-800"
+                style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
+              >
+                Hủy bỏ
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                type="button"
+                onClick={() => {
+                  deleteConfirm.onConfirm();
+                  setDeleteConfirm(prev => ({ ...prev, isOpen: false }));
+                }}
+                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none text-white transition-all hover:brightness-95"
+                style={{ background: "var(--destructive)" }}
+              >
+                Xóa
+              </motion.button>
             </div>
           </div>
         </div>

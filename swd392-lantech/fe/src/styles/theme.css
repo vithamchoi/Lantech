@@ -55,6 +55,8 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+  --sidebar-active-bg: var(--brand-light);
+  --sidebar-active-text: var(--brand-dark);
 }
 
 .dark {
@@ -93,6 +95,8 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(0.269 0 0);
   --sidebar-ring: oklch(0.439 0 0);
+  --sidebar-active-bg: rgba(88, 204, 2, 0.12);
+  --sidebar-active-text: var(--brand);
 }
 
 @theme inline {
@@ -199,3 +203,57 @@
     line-height: 1.5;
   }
 }
+
+/* 3D Button utilities */
+.btn-3d {
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 0 var(--brand-dark);
+}
+.btn-3d:hover {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 var(--brand-dark);
+}
+.btn-3d:active {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 var(--brand-dark);
+}
+
+.btn-3d-sky {
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 0 #1b8ec5;
+}
+.btn-3d-sky:hover {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 #1b8ec5;
+}
+.btn-3d-sky:active {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 #1b8ec5;
+}
+
+.btn-3d-secondary {
+  position: relative;
+  transition: transform 0.1s ease, box-shadow 0.1s ease;
+  box-shadow: 0 4px 0 #cbced4;
+}
+.btn-3d-secondary:hover {
+  transform: translateY(1px);
+  box-shadow: 0 3px 0 #cbced4;
+}
+.btn-3d-secondary:active {
+  transform: translateY(4px);
+  box-shadow: 0 0px 0 #cbced4;
+}
+
+/* Shaking keyframe for locked nodes */
+@keyframes wiggle {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px) rotate(-1deg); }
+  75% { transform: translateX(4px) rotate(1deg); }
+}
+.animate-wiggle {
+  animation: wiggle 0.2s ease-in-out 2;
+}
+

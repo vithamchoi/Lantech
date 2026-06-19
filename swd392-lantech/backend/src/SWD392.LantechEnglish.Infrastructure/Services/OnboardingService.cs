@@ -13,11 +13,13 @@ public class OnboardingService : IOnboardingService
 {
     private readonly AppDbContext _context;
     private readonly IAIProvider _aiProvider;
+    private readonly IGamificationService _gamificationService;
 
-    public OnboardingService(AppDbContext context, IAIProvider aiProvider)
+    public OnboardingService(AppDbContext context, IAIProvider aiProvider, IGamificationService gamificationService)
     {
         _context = context;
         _aiProvider = aiProvider;
+        _gamificationService = gamificationService;
     }
 
     public Task<OnboardingOptionsDto> GetOnboardingOptionsAsync(CancellationToken cancellationToken = default)
@@ -93,22 +95,8 @@ public class OnboardingService : IOnboardingService
         user.LevelSource = LevelSource.SelfReported;
         user.UpdatedAt = DateTime.UtcNow;
 
-        // Check if user has SELF_LEVEL_SELECTED badge
-        var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "SELF_LEVEL_SELECTED", cancellationToken);
-        if (badge != null)
-        {
-            var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == userId && ub.BadgeId == badge.Id, cancellationToken);
-            if (!alreadyHas)
-            {
-                _context.UserBadges.Add(new UserBadge
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    BadgeId = badge.Id,
-                    EarnedAt = DateTime.UtcNow
-                });
-            }
-        }
+        // Check and award badges dynamically
+        await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 

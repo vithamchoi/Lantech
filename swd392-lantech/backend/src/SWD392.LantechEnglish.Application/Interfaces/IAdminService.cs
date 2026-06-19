@@ -13,6 +13,8 @@ public interface IAdminService
     Task<IEnumerable<AdminUserDto>> GetUsersAsync(CancellationToken cancellationToken = default);
     Task<bool> UpdateUserRoleAsync(Guid id, string role, CancellationToken cancellationToken = default);
     Task<bool> UpdateUserStatusAsync(Guid id, string status, CancellationToken cancellationToken = default);
+    Task<bool> UpdateUserAsync(Guid id, UpdateUserRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteUserAsync(Guid id, CancellationToken cancellationToken = default);
 
     // Lessons
     Task<IEnumerable<AdminLessonDto>> GetLessonsAsync(CancellationToken cancellationToken = default);
@@ -34,4 +36,8 @@ public interface IAdminService
     
     // Badges
     Task<IEnumerable<AdminBadgeDto>> GetBadgesAsync(CancellationToken cancellationToken = default);
+    Task<AdminBadgeDto?> GetBadgeByIdAsync(Guid id, CancellationToken cancellationToken = default);
+    Task<AdminBadgeDto> CreateBadgeAsync(CreateBadgeRequest request, CancellationToken cancellationToken = default);
+    Task<AdminBadgeDto> UpdateBadgeAsync(Guid id, CreateBadgeRequest request, CancellationToken cancellationToken = default);
+    Task<bool> DeleteBadgeAsync(Guid id, CancellationToken cancellationToken = default);
 }

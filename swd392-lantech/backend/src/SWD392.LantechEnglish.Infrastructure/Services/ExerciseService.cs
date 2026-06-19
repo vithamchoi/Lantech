@@ -11,10 +11,12 @@ namespace SWD392.LantechEnglish.Infrastructure.Services;
 public class ExerciseService : IExerciseService
 {
     private readonly AppDbContext _context;
+    private readonly IGamificationService _gamificationService;
 
-    public ExerciseService(AppDbContext context)
+    public ExerciseService(AppDbContext context, IGamificationService gamificationService)
     {
         _context = context;
+        _gamificationService = gamificationService;
     }
 
     public async Task<ExerciseDto?> GetExerciseByIdAsync(Guid exerciseId, CancellationToken cancellationToken = default)
@@ -80,8 +82,8 @@ public class ExerciseService : IExerciseService
                 CreatedAt = DateTime.UtcNow
             });
 
-            // Check PERFECT_LESSON badge
-            await CheckPerfectLessonBadgeAsync(userId, exercise.LessonId, cancellationToken);
+            // Check and award badges dynamically
+            await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -97,43 +99,6 @@ public class ExerciseService : IExerciseService
             Feedback = attempt.Feedback,
             CreatedAt = attempt.CreatedAt
         };
-    }
-
-    private async Task CheckPerfectLessonBadgeAsync(Guid userId, Guid lessonId, CancellationToken cancellationToken)
-    {
-        // Check if all exercises of this lesson are answered correctly by this user
-        var exercises = await _context.Exercises
-            .Where(e => e.LessonId == lessonId)
-            .Select(e => e.Id)
-            .ToListAsync(cancellationToken);
-
-        if (exercises.Count == 0) return;
-
-        var correctAttempts = await _context.ExerciseAttempts
-            .Where(a => a.UserId == userId && exercises.Contains(a.ExerciseId) && a.IsCorrect)
-            .Select(a => a.ExerciseId)
-            .Distinct()
-            .ToListAsync(cancellationToken);
-
-        if (correctAttempts.Count == exercises.Count)
-        {
-            // Award PERFECT_LESSON badge
-            var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "PERFECT_LESSON", cancellationToken);
-            if (badge != null)
-            {
-                var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == userId && ub.BadgeId == badge.Id, cancellationToken);
-                if (!alreadyHas)
-                {
-                    _context.UserBadges.Add(new UserBadge
-                    {
-                        Id = Guid.NewGuid(),
-                        UserId = userId,
-                        BadgeId = badge.Id,
-                        EarnedAt = DateTime.UtcNow
-                    });
-                }
-            }
-        }
     }
 
     private static string CleanAnswer(string? json)

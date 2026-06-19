@@ -4,6 +4,7 @@ import { pronunciationService, PronunciationAttemptDto } from "../services/pronu
 import { useAppStore } from "../store/appStore";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import { motion, AnimatePresence } from "motion/react";
 
 interface Phrase {
   id: string;
@@ -102,6 +103,7 @@ export default function PronunciationClinic() {
   const [tagPage, setTagPage] = useState(0);
   const [history, setHistory] = useState<PronunciationAttemptDto[]>([]);
   const [isLoadingHistory, setIsLoadingHistory] = useState(true);
+  const [hoveredWordIndex, setHoveredWordIndex] = useState<number | null>(null);
   const { darkMode, user } = useAppStore(state => ({
     darkMode: state.darkMode,
     user: state.user
@@ -352,23 +354,35 @@ export default function PronunciationClinic() {
         <p style={{ fontSize: 12.5, color: "var(--muted-foreground)", marginBottom: 16 }}>{t("selectPhraseSub")}</p>
 
         {/* Category filter */}
-        <div className="flex gap-1.5 flex-wrap mb-4">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => { setActiveCategory(cat); setSelectedTag("All"); setTagPage(0); }}
-              type="button"
-              className="px-3 py-1 rounded-full cursor-pointer border-none outline-none"
-              style={{
-                background: activeCategory === cat ? "var(--brand)" : "var(--muted)",
-                color: activeCategory === cat ? "#fff" : "var(--muted-foreground)",
-                fontWeight: 700,
-                fontSize: 11.5,
-              }}
-            >
-              {cat === "All" ? t("all") : cat}
-            </button>
-          ))}
+        <div className="flex gap-1.5 flex-wrap mb-4 relative">
+          {categories.map(cat => {
+            const isActive = activeCategory === cat;
+            return (
+              <motion.button
+                key={cat}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => { setActiveCategory(cat); setSelectedTag("All"); setTagPage(0); }}
+                type="button"
+                className={`px-3 py-1 rounded-full cursor-pointer border-none outline-none relative text-[11.5px] font-bold transition-all duration-200 ${
+                  isActive ? "text-white" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60"
+                }`}
+                style={{
+                  background: "transparent",
+                }}
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="activeClinicCategory"
+                    className="absolute inset-0 rounded-full -z-10"
+                    style={{ background: "var(--brand)" }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <span className="relative z-10">{cat === "All" ? t("all") : cat}</span>
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Tag filter */}
@@ -403,22 +417,34 @@ export default function PronunciationClinic() {
               )}
             </div>
             <div className="flex gap-1 flex-wrap min-h-[44px]">
-              {visibleTags.map(tag => (
-                <button
-                  key={tag}
-                  onClick={() => setSelectedTag(tag)}
-                  type="button"
-                  className="px-2 py-0.5 rounded cursor-pointer border-none outline-none transition-all"
-                  style={{
-                    background: selectedTag === tag ? "var(--brand)" : "var(--muted)",
-                    color: selectedTag === tag ? "#fff" : "var(--muted-foreground)",
-                    fontWeight: 700,
-                    fontSize: 10.5,
-                  }}
-                >
-                  {tag === "All" ? t("all") : `#${tag}`}
-                </button>
-              ))}
+              {visibleTags.map(tag => {
+                const isActive = selectedTag === tag;
+                return (
+                  <motion.button
+                    key={tag}
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => setSelectedTag(tag)}
+                    type="button"
+                    className={`px-2 py-0.5 rounded cursor-pointer border-none outline-none relative text-[10.5px] font-bold transition-all duration-200 ${
+                      isActive ? "text-white" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60"
+                    }`}
+                    style={{
+                      background: "transparent",
+                    }}
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeClinicTag"
+                        className="absolute inset-0 rounded -z-10"
+                        style={{ background: "var(--brand)" }}
+                        transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                      />
+                    )}
+                    <span className="relative z-10">{tag === "All" ? t("all") : `#${tag}`}</span>
+                  </motion.button>
+                );
+              })}
             </div>
           </div>
         )}
@@ -476,27 +502,17 @@ export default function PronunciationClinic() {
                     const colors = grade ? GRADE_COLORS[grade] : null;
 
                     return (
-                      <button
+                      <motion.button
                         key={phrase.id}
                         onClick={() => { setSelectedPhrase(phrase); setRecordingDone(false); setFeedback(null); }}
                         type="button"
-                        className="text-left p-5 rounded-2xl cursor-pointer transition-all w-full outline-none flex flex-col justify-between h-[170px]"
+                        whileHover={{ y: -3, scale: 1.02, borderColor: "var(--brand)", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" }}
+                        whileTap={{ scale: 0.98 }}
+                        className="text-left p-5 rounded-2xl cursor-pointer w-full outline-none flex flex-col justify-between h-[170px] transition-colors duration-200"
                         style={{
                           background: "var(--card)",
                           border: "2px solid var(--border)",
                           boxShadow: "0 4px 6px -1px rgba(0,0,0,0.1)",
-                          transform: "translateY(0px)",
-                          transition: "all 0.2s cubic-bezier(0.16, 1, 0.3, 1)",
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.borderColor = "var(--brand)";
-                          e.currentTarget.style.transform = "translateY(-2px)";
-                          e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0,0,0,0.1)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.borderColor = "var(--border)";
-                          e.currentTarget.style.transform = "translateY(0px)";
-                          e.currentTarget.style.boxShadow = "0 4px 6px -1px rgba(0,0,0,0.1)";
                         }}
                       >
                         <div>
@@ -546,7 +562,7 @@ export default function PronunciationClinic() {
                             )}
                           </div>
                         )}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -556,25 +572,29 @@ export default function PronunciationClinic() {
             {/* Pagination controls */}
             {Math.ceil(filtered.length / 6) > 1 && (
               <div className="flex items-center justify-center gap-3 mt-8 pt-4 border-t" style={{ borderColor: "var(--border)" }}>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
                   disabled={currentPage === 1}
                   className="px-4 py-2 rounded-xl cursor-pointer hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed border-none outline-none font-bold text-sm transition-all"
                   style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--foreground)" }}
                 >
                   {t("previous")}
-                </button>
+                </motion.button>
                 <span className="text-sm font-bold text-muted-foreground">
                   {t("page")} {currentPage} {t("of")} {Math.ceil(filtered.length / 6)}
                 </span>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => setCurrentPage(prev => Math.min(Math.ceil(filtered.length / 6), prev + 1))}
                   disabled={currentPage === Math.ceil(filtered.length / 6)}
                   className="px-4 py-2 rounded-xl cursor-pointer hover:bg-neutral-800 disabled:opacity-30 disabled:cursor-not-allowed border-none outline-none font-bold text-sm transition-all"
                   style={{ background: "var(--card)", border: "1px solid var(--border)", color: "var(--foreground)" }}
                 >
                   {t("next")}
-                </button>
+                </motion.button>
               </div>
             )}
           </div>
@@ -604,14 +624,16 @@ export default function PronunciationClinic() {
                     {selectedPhrase.category}
                   </span>
                 </div>
-                <button
+                <motion.button
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
                   onClick={() => handleSpeak(selectedPhrase.text)}
                   type="button"
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none hover:bg-blue-100 transition-colors"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none hover:bg-blue-200 transition-colors"
                   style={{ background: "#eff6ff", color: "#1d4ed8", fontWeight: 600, fontSize: 12 }}
                 >
                   <Volume2 size={12} /> {t("listen")}
-                </button>
+                </motion.button>
               </div>
 
               <div style={{ fontSize: 24, fontWeight: 800, color: "var(--foreground)", lineHeight: 1.6, marginBottom: 8 }}>
@@ -636,27 +658,45 @@ export default function PronunciationClinic() {
 
             {/* Recording area */}
             <div className="flex flex-col items-center gap-5 mb-8">
-              <button
+              <motion.button
                 onClick={handleRecord}
                 type="button"
-                className="w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all border-none outline-none"
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                className="w-24 h-24 rounded-full flex items-center justify-center cursor-pointer transition-all border-none outline-none select-none relative"
                 style={{
                   background: isRecording ? "#FF4B4B" : "var(--brand)",
                   boxShadow: isRecording
-                    ? "0 0 0 12px rgba(255,75,75,0.2), 0 0 0 24px rgba(255,75,75,0.08)"
+                    ? "0 0 0 12px rgba(255,75,75,0.25), 0 0 0 24px rgba(255,75,75,0.12)"
                     : "0 8px 0 var(--brand-dark), 0 12px 32px rgba(88,204,2,0.25)",
                 }}
               >
-                {isRecording ? <MicOff size={32} color="#fff" /> : <Mic size={32} color="#fff" />}
-              </button>
+                {isRecording ? (
+                  <motion.div
+                    animate={{ scale: [1, 1.15, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.2 }}
+                  >
+                    <MicOff size={32} color="#fff" />
+                  </motion.div>
+                ) : (
+                  <Mic size={32} color="#fff" />
+                )}
+              </motion.button>
 
               {isRecording && (
-                <div className="flex gap-1.5 items-end h-10">
-                  {[2, 5, 3, 8, 4, 7, 3, 6, 5, 8, 3].map((h, i) => (
-                    <div
+                <div className="flex gap-1 items-end h-10 px-4 py-1 bg-rose-50/50 dark:bg-rose-950/10 rounded-full">
+                  {[0.4, 0.7, 0.5, 0.9, 0.6, 0.8, 0.5, 0.7, 0.4, 0.9, 0.6, 0.8, 0.5, 0.7, 0.4].map((duration, i) => (
+                    <motion.div
                       key={i}
-                      className="w-1.5 rounded-full animate-bounce"
-                      style={{ height: h * 4, background: "#FF4B4B", animationDelay: `${i * 0.07}s`, animationDuration: "0.4s" }}
+                      className="w-1 rounded-full bg-[#FF4B4B]"
+                      initial={{ height: 4 }}
+                      animate={{ height: [4, 28, 4] }}
+                      transition={{
+                        repeat: Infinity,
+                        duration: duration,
+                        delay: i * 0.04,
+                        ease: "easeInOut"
+                      }}
                     />
                   ))}
                 </div>
@@ -668,127 +708,185 @@ export default function PronunciationClinic() {
             </div>
 
             {/* AI feedback */}
-            {feedback && (
-              <div className="space-y-6">
-                {/* Score */}
-                <div
-                  className="rounded-2xl px-6 py-5 flex items-center justify-between text-left"
-                  style={{
-                    background: overallScore! >= 80 
-                      ? (darkMode ? "rgba(88,204,2,0.15)" : "var(--brand-light)") 
-                      : overallScore! >= 60 
-                        ? (darkMode ? "rgba(251,191,36,0.15)" : "#fef9c3") 
-                        : (darkMode ? "rgba(248,113,113,0.15)" : "#fee2e2"),
-                    border: `2px solid ${overallScore! >= 80 ? "var(--brand)" : overallScore! >= 60 ? "#fbbf24" : "#f87171"}`,
-                  }}
+            <AnimatePresence>
+              {feedback && (
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  transition={{ type: "spring", stiffness: 350, damping: 28 }}
+                  className="space-y-6"
                 >
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>{t("pronunciationScore")}</div>
-                    <div style={{ 
-                      fontSize: 36, 
-                      fontWeight: 900, 
-                      color: overallScore! >= 80 
-                        ? (darkMode ? "var(--brand)" : "var(--brand-dark)") 
+                  {/* Score */}
+                  <motion.div
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    transition={{ delay: 0.1 }}
+                    className="rounded-2xl px-6 py-5 flex items-center justify-between text-left shadow-diffuse"
+                    style={{
+                      background: overallScore! >= 80 
+                        ? (darkMode ? "rgba(88,204,2,0.15)" : "var(--brand-light)") 
                         : overallScore! >= 60 
-                          ? (darkMode ? "#fbbf24" : "#854d0e") 
-                          : (darkMode ? "#f87171" : "#991b1b") 
-                    }}>
-                      {overallScore}%
+                          ? (darkMode ? "rgba(251,191,36,0.15)" : "#fef9c3") 
+                          : (darkMode ? "rgba(248,113,113,0.15)" : "#fee2e2"),
+                      border: `2px solid ${overallScore! >= 80 ? "var(--brand)" : overallScore! >= 60 ? "#fbbf24" : "#f87171"}`,
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#888", textTransform: "uppercase", letterSpacing: 1 }}>{t("pronunciationScore")}</div>
+                      <div style={{ 
+                        fontSize: 36, 
+                        fontWeight: 900, 
+                        color: overallScore! >= 80 
+                          ? (darkMode ? "var(--brand)" : "var(--brand-dark)") 
+                          : overallScore! >= 60 
+                            ? (darkMode ? "#fbbf24" : "#854d0e") 
+                            : (darkMode ? "#f87171" : "#991b1b") 
+                      }}>
+                        {overallScore}%
+                      </div>
+                    </div>
+                    <motion.div 
+                      initial={{ rotate: -15, scale: 0.5 }}
+                      animate={{ rotate: 0, scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
+                      style={{ fontSize: 48 }}
+                    >
+                      {overallScore! >= 80 ? "🌟" : overallScore! >= 60 ? "😊" : "💪"}
+                    </motion.div>
+                  </motion.div>
+
+                  {/* Color-coded phoneme breakdown */}
+                  <div
+                    className="rounded-2xl p-6 shadow-diffuse"
+                    style={{ background: "var(--card)", border: "2px solid var(--border)" }}
+                  >
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
+                      {t("wordByWordAnalysis")}
+                    </div>
+                    <div className="flex flex-wrap gap-x-2 gap-y-3 mb-5">
+                      {(feedback.wordLevelFeedback || []).map((f, i) => {
+                        const grade = getGrade(f.accuracyScore);
+                        const colors = GRADE_COLORS[grade];
+                        const isWordHovered = hoveredWordIndex === i;
+                        return (
+                          <div
+                            key={i}
+                            className="relative"
+                            onMouseEnter={() => setHoveredWordIndex(i)}
+                            onMouseLeave={() => setHoveredWordIndex(null)}
+                          >
+                            <motion.div
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              transition={{ type: "spring", stiffness: 400, damping: 20, delay: 0.15 + i * 0.04 }}
+                              className="px-3 py-1.5 rounded-xl border select-none cursor-help transition-all duration-200"
+                              style={{
+                                background: colors.bg,
+                                borderColor: colors.border,
+                                color: colors.text,
+                                fontWeight: 700,
+                                fontSize: 14,
+                                transform: isWordHovered ? "translateY(-2px)" : "none",
+                                boxShadow: isWordHovered ? "0 4px 12px rgba(0,0,0,0.08)" : "none"
+                              }}
+                            >
+                              {f.word}
+                            </motion.div>
+                            
+                            <AnimatePresence>
+                              {isWordHovered && (
+                                <motion.div
+                                  initial={{ opacity: 0, y: 5, scale: 0.95 }}
+                                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                                  exit={{ opacity: 0, y: 5, scale: 0.95 }}
+                                  transition={{ duration: 0.12, ease: "easeOut" }}
+                                  className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 px-2.5 py-1.5 rounded-lg shadow-xl text-[11px] font-bold z-50 pointer-events-none border border-solid text-center whitespace-nowrap"
+                                  style={{
+                                    background: "var(--foreground)",
+                                    color: "var(--background)",
+                                    borderColor: "var(--border)",
+                                  }}
+                                >
+                                  <div style={{ fontSize: 11.5, fontWeight: 900 }}>{f.accuracyScore}%</div>
+                                  <div style={{ fontSize: 9.5, opacity: 0.8, marginTop: 1 }}>{GRADE_LABELS[grade]}</div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Legend */}
+                    <div className="flex gap-4 flex-wrap">
+                      {(["excellent", "weak", "incorrect"] as const).map(g => {
+                        const colors = GRADE_COLORS[g];
+                        const count = (feedback.wordLevelFeedback || []).filter(f => getGrade(f.accuracyScore) === g).length;
+                        return (
+                          <div key={g} className="flex items-center gap-2">
+                            <div
+                              className="w-3 h-3 rounded-full"
+                              style={{ background: colors.border }}
+                            />
+                            <span style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>
+                              {GRADE_LABELS[g].replace("✓ ", "").replace("~ ", "").replace("✗ ", "")} ({count})
+                            </span>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
-                  <div style={{ fontSize: 48 }}>
-                    {overallScore! >= 80 ? "🌟" : overallScore! >= 60 ? "😊" : "💪"}
-                  </div>
-                </div>
 
-                {/* Color-coded phoneme breakdown */}
-                <div
-                  className="rounded-2xl p-6"
-                  style={{ background: "var(--card)", border: "2px solid var(--border)" }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 14 }}>
-                    {t("wordByWordAnalysis")}
-                  </div>
-                  <div className="flex flex-wrap gap-2 mb-5">
-                    {(feedback.wordLevelFeedback || []).map((f, i) => {
-                      const grade = getGrade(f.accuracyScore);
-                      const colors = GRADE_COLORS[grade];
-                      return (
-                        <div
-                          key={i}
-                          className="px-3 py-1.5 rounded-xl border"
-                          style={{ background: colors.bg, borderColor: colors.border, color: colors.text, fontWeight: 700, fontSize: 14 }}
-                          title={`${f.accuracyScore}% — ${GRADE_LABELS[grade]}`}
-                        >
-                          {f.word}
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Legend */}
-                  <div className="flex gap-4 flex-wrap">
-                    {(["excellent", "weak", "incorrect"] as const).map(g => {
-                      const colors = GRADE_COLORS[g];
-                      const count = (feedback.wordLevelFeedback || []).filter(f => getGrade(f.accuracyScore) === g).length;
-                      return (
-                        <div key={g} className="flex items-center gap-2">
-                          <div
-                            className="w-3 h-3 rounded-full"
-                            style={{ background: colors.border }}
-                          />
-                          <span style={{ fontSize: 12, fontWeight: 600, color: "#888" }}>
-                            {GRADE_LABELS[g].replace("✓ ", "").replace("~ ", "").replace("✗ ", "")} ({count})
-                          </span>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-
-                {/* Tips */}
-                <div
-                  className="rounded-2xl px-5 py-4"
-                  style={{ 
-                    background: darkMode ? "rgba(59,130,246,0.15)" : "#eff6ff", 
-                    border: `2px solid ${darkMode ? "rgba(59,130,246,0.3)" : "#bfdbfe"}` 
-                  }}
-                >
-                  <div style={{ fontSize: 13, fontWeight: 700, color: darkMode ? "#60a5fa" : "#1d4ed8", marginBottom: 6 }}>{t("improvementTips")}</div>
-                  <ul className="flex flex-col gap-1.5 list-none p-0 m-0 text-left">
-                    {feedback.suggestions && feedback.suggestions.length > 0 ? (
-                      feedback.suggestions.map((tip, i) => (
-                        <li key={i} style={{ fontSize: 13, color: darkMode ? "#93c5fd" : "#1e40af" }}>
-                          • {tip}
-                        </li>
-                      ))
-                    ) : (
-                      <li style={{ fontSize: 13, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>{t("excellentPronunciation")}</li>
-                    )}
-                  </ul>
-                </div>
-
-                <div className="flex gap-3">
-                  <button
-                    onClick={() => { setFeedback(null); setRecordingDone(false); }}
-                    type="button"
-                    className="flex-1 py-3.5 rounded-2xl cursor-pointer border font-bold text-base transition-all hover:bg-neutral-800"
-                    style={{ background: "transparent", borderColor: "var(--border)", color: "var(--foreground)" }}
+                  {/* Tips */}
+                  <motion.div
+                    initial={{ y: 10, opacity: 0 }}
+                    animate={{ y: 0, opacity: 1 }}
+                    transition={{ delay: 0.35 }}
+                    className="rounded-2xl px-5 py-4 shadow-diffuse text-left"
+                    style={{ 
+                      background: darkMode ? "rgba(59,130,246,0.15)" : "#eff6ff", 
+                      border: `2px solid ${darkMode ? "rgba(59,130,246,0.3)" : "#bfdbfe"}` 
+                    }}
                   >
-                    <BarChart2 size={15} className="inline mr-2" />
-                    {t("tryAgain")}
-                  </button>
-                  <button
-                    onClick={() => { setSelectedPhrase(null); setFeedback(null); setRecordingDone(false); }}
-                    type="button"
-                    className="flex-1 py-3.5 rounded-2xl cursor-pointer border-none outline-none font-bold text-white text-base shadow-md transition-all"
-                    style={{ background: "var(--brand)" }}
-                  >
-                    {t("practiceAnother")}
-                  </button>
-                </div>
-              </div>
-            )}
+                    <div style={{ fontSize: 13, fontWeight: 700, color: darkMode ? "#60a5fa" : "#1d4ed8", marginBottom: 6 }}>{t("improvementTips")}</div>
+                    <ul className="flex flex-col gap-1.5 list-none p-0 m-0 text-left">
+                      {feedback.suggestions && feedback.suggestions.length > 0 ? (
+                        feedback.suggestions.map((tip, i) => (
+                          <li key={i} style={{ fontSize: 13, color: darkMode ? "#93c5fd" : "#1e40af" }}>
+                            • {tip}
+                          </li>
+                        ))
+                      ) : (
+                        <li style={{ fontSize: 13, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>{t("excellentPronunciation")}</li>
+                      )}
+                    </ul>
+                  </motion.div>
+
+                  <div className="flex gap-3">
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { setFeedback(null); setRecordingDone(false); }}
+                      type="button"
+                      className="flex-1 py-3.5 rounded-2xl cursor-pointer border font-bold text-base transition-all btn-3d-secondary bg-transparent"
+                    >
+                      <BarChart2 size={15} className="inline mr-2" />
+                      {t("tryAgain")}
+                    </motion.button>
+                    <motion.button
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => { setSelectedPhrase(null); setFeedback(null); setRecordingDone(false); }}
+                      type="button"
+                      className="flex-1 py-3.5 rounded-2xl cursor-pointer font-bold text-white text-base btn-3d"
+                    >
+                      {t("practiceAnother")}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
         )}
       </div>

@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2, Search, ShieldCheck, Users, BookOpen, HelpCircle,
 import { adminService, AdminStatsDto, AdminUserDto, AdminLessonDto, AdminQuestionDto, AdminVocabularyDto, AdminBadgeDto, AdminPronunciationPhraseDto } from "../services/adminService";
 import { toast } from "sonner";
 import apiClient from "../api/apiClient";
+import { motion, AnimatePresence } from "motion/react";
 
 type AdminSection = "overview" | "questions" | "lessons" | "vocabulary" | "users" | "badges" | "pronunciation";
 
@@ -58,7 +59,28 @@ const translateDifficulty = (difficulty: string | number) => {
 export default function AdminDashboard() {
   const location = useLocation();
   const navigate = useNavigate();
-  const [activeSection, setActiveSection] = useState<AdminSection>("overview");
+
+  // Dynamically initialize the active section to avoid tab jump / flickering
+  const [activeSection, setActiveSection] = useState<AdminSection>(() => {
+    const path = window.location.pathname;
+    const navState = window.history.state?.usr as { section?: AdminSection } | null;
+    if (path === "/ranger/curriculum") {
+      if (navState?.section === "lessons" || navState?.section === "questions") {
+        return navState.section;
+      }
+      return "lessons";
+    }
+    if (path === "/ranger/vocabulary-badges") {
+      if (navState?.section === "vocabulary" || navState?.section === "badges") {
+        return navState.section;
+      }
+      return "vocabulary";
+    }
+    if (path === "/ranger/users") return "users";
+    if (path === "/ranger/translations") return "pronunciation";
+    return "overview";
+  });
+
   const [deleteConfirm, setDeleteConfirm] = useState<{
     isOpen: boolean;
     title: string;
@@ -85,22 +107,28 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const path = location.pathname;
+    const state = location.state as { section?: AdminSection } | null;
+    
     if (path === "/ranger/curriculum") {
-      if (activeSection !== "lessons" && activeSection !== "questions") {
-        setActiveSection("lessons");
+      if (state?.section === "lessons" || state?.section === "questions") {
+        setActiveSection(state.section);
+      } else {
+        setActiveSection(prev => (prev === "lessons" || prev === "questions") ? prev : "lessons");
       }
     } else if (path === "/ranger/vocabulary-badges") {
-      if (activeSection !== "vocabulary" && activeSection !== "badges") {
-        setActiveSection("vocabulary");
+      if (state?.section === "vocabulary" || state?.section === "badges") {
+        setActiveSection(state.section);
+      } else {
+        setActiveSection(prev => (prev === "vocabulary" || prev === "badges") ? prev : "vocabulary");
       }
     } else if (path === "/ranger/users") {
       setActiveSection("users");
     } else if (path === "/ranger/translations") {
       setActiveSection("pronunciation");
-    } else {
+    } else if (path === "/ranger") {
       setActiveSection("overview");
     }
-  }, [location.pathname]);
+  }, [location.pathname, location.state]);
 
   const handleTabClick = (sectionId: AdminSection) => {
     setActiveSection(sectionId);
@@ -108,16 +136,15 @@ export default function AdminDashboard() {
     if (sectionId === "overview") {
       navigate("/ranger");
     } else if (sectionId === "lessons" || sectionId === "questions") {
-      navigate("/ranger/curriculum");
+      navigate("/ranger/curriculum", { state: { section: sectionId } });
     } else if (sectionId === "vocabulary" || sectionId === "badges") {
-      navigate("/ranger/vocabulary-badges");
+      navigate("/ranger/vocabulary-badges", { state: { section: sectionId } });
     } else if (sectionId === "users") {
       navigate("/ranger/users");
     } else if (sectionId === "pronunciation") {
       navigate("/ranger/translations");
     }
   };
-
   // State for data from API
   const [stats, setStats] = useState<AdminStatsDto | null>(null);
   const [users, setUsers] = useState<AdminUserDto[]>([]);
@@ -201,6 +228,25 @@ export default function AdminDashboard() {
     orderIndex: 1
   });
 
+  // Badge form state
+  const [selectedBadge, setSelectedBadge] = useState<AdminBadgeDto | null>(null);
+  const [badgeForm, setBadgeForm] = useState({
+    code: "",
+    title: "",
+    description: "",
+    iconUrl: "🏅",
+    conditionType: "XP",
+    conditionValue: 100
+  });
+
+  // User form state
+  const [selectedUser, setSelectedUser] = useState<AdminUserDto | null>(null);
+  const [userForm, setUserForm] = useState({
+    username: "",
+    email: "",
+    xp: 0
+  });
+
   // Fetch data when section changes
   useEffect(() => {
     const fetchData = async () => {
@@ -272,6 +318,62 @@ export default function AdminDashboard() {
     } catch (error) {
       toast.error("Cập nhật trạng thái thất bại");
     }
+  };
+
+  const handleOpenEditUser = (user: AdminUserDto) => {
+    setSelectedUser(user);
+    setUserForm({
+      username: user.username,
+      email: user.email,
+      xp: user.xp
+    });
+    setShowAddModal(true);
+  };
+
+  const handleSaveUser = async () => {
+    if (!userForm.username.trim() || !userForm.email.trim()) {
+      toast.error("Vui lòng nhập tên đăng nhập và email");
+      return;
+    }
+
+    try {
+      if (selectedUser?.id) {
+        await adminService.updateUser(selectedUser.id, {
+          username: userForm.username.trim(),
+          email: userForm.email.trim(),
+          xp: userForm.xp
+        });
+        setUsers(prev => prev.map(u => u.id === selectedUser.id ? { 
+          ...u, 
+          username: userForm.username.trim(), 
+          email: userForm.email.trim(), 
+          xp: userForm.xp 
+        } : u));
+        toast.success("Đã cập nhật thông tin tài khoản thành công");
+      }
+      setShowAddModal(false);
+    } catch (err) {
+      console.error(err);
+      toast.error("Cập nhật thông tin tài khoản thất bại");
+    }
+  };
+
+  const handleDeleteUser = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Xóa tài khoản người dùng",
+      message: "Bạn có chắc chắn muốn xóa vĩnh viễn tài khoản người dùng này không? Hành động này sẽ xóa toàn bộ tiến độ học tập và các dữ liệu liên quan.",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteUser(id);
+          setUsers(prev => prev.filter(u => u.id !== id));
+          toast.success("Xóa tài khoản người dùng thành công");
+        } catch (err) {
+          console.error(err);
+          toast.error("Xóa tài khoản người dùng thất bại");
+        }
+      }
+    });
   };
 
   const fetchPhrases = async () => {
@@ -550,6 +652,83 @@ export default function AdminDashboard() {
     });
   };
 
+  // Badge handlers
+  const handleOpenAddBadge = () => {
+    setSelectedBadge(null);
+    setBadgeForm({
+      code: "",
+      title: "",
+      description: "",
+      iconUrl: "🏅",
+      conditionType: "XP",
+      conditionValue: 100
+    });
+    setShowAddModal(true);
+  };
+
+  const handleOpenEditBadge = (b: AdminBadgeDto) => {
+    setSelectedBadge(b);
+    setBadgeForm({
+      code: b.code,
+      title: b.title,
+      description: b.description,
+      iconUrl: b.iconUrl || "🏅",
+      conditionType: b.conditionType || "XP",
+      conditionValue: b.conditionValue || 0
+    });
+    setShowAddModal(true);
+  };
+
+  const handleSaveBadge = async () => {
+    if (!badgeForm.code.trim() || !badgeForm.title.trim()) {
+      toast.error("Vui lòng nhập mã code và tên huy hiệu");
+      return;
+    }
+    const payload = {
+      code: badgeForm.code.trim(),
+      name: badgeForm.title.trim(),
+      description: badgeForm.description.trim(),
+      iconUrl: badgeForm.iconUrl.trim() || "🏅",
+      conditionType: badgeForm.conditionType,
+      conditionValue: badgeForm.conditionType === "SELFLEVELSELECTED" ? 0 : Number(badgeForm.conditionValue)
+    };
+    try {
+      if (selectedBadge?.id) {
+        await adminService.updateBadge(selectedBadge.id, payload);
+        toast.success("Cập nhật huy hiệu thành công");
+      } else {
+        await adminService.createBadge(payload);
+        toast.success("Tạo huy hiệu thành công");
+      }
+      setShowAddModal(false);
+      // Fetch badges to update list
+      const data = await adminService.getBadges();
+      setBadges(data || []);
+    } catch (err) {
+      console.error(err);
+      toast.error("Lưu huy hiệu thất bại");
+    }
+  };
+
+  const handleDeleteBadge = (id: string) => {
+    setDeleteConfirm({
+      isOpen: true,
+      title: "Xóa huy hiệu",
+      message: "Bạn có chắc chắn muốn xóa vĩnh viễn huy hiệu này không?",
+      onConfirm: async () => {
+        try {
+          await adminService.deleteBadge(id);
+          toast.success("Xóa huy hiệu thành công");
+          const data = await adminService.getBadges();
+          setBadges(data || []);
+        } catch (err) {
+          console.error(err);
+          toast.error("Xóa huy hiệu thất bại");
+        }
+      }
+    });
+  };
+
   // Questions handlers
   const handleOpenAddQuestion = () => {
     setSelectedQuestion(null);
@@ -656,12 +835,17 @@ export default function AdminDashboard() {
         <div className="p-6 text-left">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-7">
             {[
-              { label: "Tổng học viên", value: stats.totalUsers, sub: `${stats.activeUsers} đang hoạt động`, Icon: Users, color: "#6366f1", bg: darkMode ? "rgba(99, 102, 241, 0.15)" : "#eef2ff" },
-              { label: "Bài học giáo trình", value: stats.totalLessons, sub: "Đã xuất bản", Icon: BookOpen, color: "#ec4899", bg: darkMode ? "rgba(236, 72, 153, 0.15)" : "#fce7f3" },
-              { label: "Ngân hàng câu hỏi", value: stats.totalQuestions, sub: "Đang được sử dụng", Icon: HelpCircle, color: "#f59e0b", bg: darkMode ? "rgba(245, 158, 11, 0.15)" : "#fef9c3" },
-              { label: "Huy hiệu & Danh hiệu", value: stats.totalBadges, sub: "Loại thành tích", Icon: Award, color: "#22c55e", bg: darkMode ? "rgba(34, 197, 94, 0.15)" : "#dcfce7" },
+              { id: "users", label: "Tổng học viên", value: stats.totalUsers, sub: `${stats.activeUsers} đang hoạt động`, Icon: Users, color: "#6366f1", bg: darkMode ? "rgba(99, 102, 241, 0.15)" : "#eef2ff" },
+              { id: "lessons", label: "Bài học giáo trình", value: stats.totalLessons, sub: "Đã xuất bản", Icon: BookOpen, color: "#ec4899", bg: darkMode ? "rgba(236, 72, 153, 0.15)" : "#fce7f3" },
+              { id: "questions", label: "Ngân hàng câu hỏi", value: stats.totalQuestions, sub: "Đang được sử dụng", Icon: HelpCircle, color: "#f59e0b", bg: darkMode ? "rgba(245, 158, 11, 0.15)" : "#fef9c3" },
+              { id: "badges", label: "Huy hiệu & Danh hiệu", value: stats.totalBadges, sub: "Loại thành tích", Icon: Award, color: "#22c55e", bg: darkMode ? "rgba(34, 197, 94, 0.15)" : "#dcfce7" },
             ].map(s => (
-              <div key={s.label} className="rounded-2xl p-5" style={{ background: "var(--card)", border: "1px solid var(--border)" }}>
+              <div
+                key={s.label}
+                onClick={() => handleTabClick(s.id as AdminSection)}
+                className="rounded-2xl p-5 cursor-pointer transition-all duration-200 hover:scale-102 hover:shadow-md border border-solid"
+                style={{ background: "var(--card)", borderColor: "var(--border)" }}
+              >
                 <div className="flex items-center justify-between mb-4">
                   <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: s.bg }}>
                     <s.Icon size={18} style={{ color: s.color }} />
@@ -680,7 +864,7 @@ export default function AdminDashboard() {
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--card)" }}>
               <div className="px-5 py-4 flex items-center justify-between border-b" style={{ borderColor: "var(--border)" }}>
                 <div style={{ fontWeight: 800, fontSize: 13.5, color: "var(--foreground)" }}>Học viên mới tham gia</div>
-                <button onClick={() => setActiveSection("users")} style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
+                <button onClick={() => handleTabClick("users")} style={{ fontSize: 12, fontWeight: 700, color: "#6366f1", background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
               </div>
               {users.slice(0, 5).map((u, i) => (
                 <div key={u.id} className="flex items-center gap-3 px-5 py-3" style={{ borderTop: i > 0 ? "1px solid var(--border)" : "none" }}>
@@ -705,7 +889,7 @@ export default function AdminDashboard() {
             <div className="rounded-2xl overflow-hidden" style={{ border: "1px solid var(--border)", background: "var(--card)" }}>
               <div className="px-5 py-4 flex items-center justify-between border-b" style={{ borderColor: "var(--border)" }}>
                 <div style={{ fontWeight: 800, fontSize: 13.5, color: "var(--foreground)" }}>Mức độ phổ biến của bài học</div>
-                <button onClick={() => setActiveSection("lessons")} style={{ fontSize: 12, fontWeight: 700, color: "#ec4899", background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
+                <button onClick={() => handleTabClick("lessons")} style={{ fontSize: 12, fontWeight: 700, color: "#ec4899", background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
               </div>
               <div className="px-5 py-4 flex flex-col gap-4">
                 {lessons.map(l => (
@@ -760,22 +944,24 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleOpenEditQuestion(q)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(59, 130, 246, 0.15)" : "#eff6ff" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
                       >
-                        <Pencil size={12} style={{ color: "#3b82f6" }} />
-                      </button>
-                      <button
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeleteQuestion(q.id)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(220, 38, 38, 0.15)" : "#fee2e2" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
                       >
-                        <Trash2 size={12} style={{ color: "#dc2626" }} />
-                      </button>
+                        <Trash2 size={12} />
+                      </motion.button>
                     </div>
                   </td>
                 </tr>
@@ -821,22 +1007,24 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleOpenEditLesson(l)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(59, 130, 246, 0.15)" : "#eff6ff" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
                       >
-                        <Pencil size={12} style={{ color: "#3b82f6" }} />
-                      </button>
-                      <button
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeleteLesson(l.id)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(220, 38, 38, 0.15)" : "#fee2e2" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
                       >
-                        <Trash2 size={12} style={{ color: "#dc2626" }} />
-                      </button>
+                        <Trash2 size={12} />
+                      </motion.button>
                     </div>
                   </td>
                 </tr>
@@ -896,7 +1084,28 @@ export default function AdminDashboard() {
                       {u.status === "active" ? "Hoạt động" : "Tạm khóa"}
                     </button>
                   </td>
-                  <td className="px-5 py-3.5"><ActionButtons /></td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        type="button" 
+                        onClick={() => handleOpenEditUser(u)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                      >
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button 
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        type="button" 
+                        onClick={() => handleDeleteUser(u.id)}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                      >
+                        <Trash2 size={12} />
+                      </motion.button>
+                    </div>
+                  </td>
                 </tr>
               )) : (
                 <tr>
@@ -934,22 +1143,24 @@ export default function AdminDashboard() {
                   <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{v.added}</td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleOpenEditVocabulary(v)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(59, 130, 246, 0.15)" : "#eff6ff" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
                       >
-                        <Pencil size={12} style={{ color: "#3b82f6" }} />
-                      </button>
-                      <button
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeleteVocabulary(v.id)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(220, 38, 38, 0.15)" : "#fee2e2" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
                       >
-                        <Trash2 size={12} style={{ color: "#dc2626" }} />
-                      </button>
+                        <Trash2 size={12} />
+                      </motion.button>
                     </div>
                   </td>
                 </tr>
@@ -970,7 +1181,7 @@ export default function AdminDashboard() {
           <table className="w-full">
             <thead>
               <tr style={{ background: "var(--muted)" }}>
-                {["ID", "Tên huy hiệu", "Mô tả", "XP yêu cầu", "Số người đạt", "Thao tác"].map(h => (
+                {["ID", "Huy hiệu", "Mô tả", "Điều kiện nhận", "Số người đạt", "Thao tác"].map(h => (
                   <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
                 ))}
               </tr>
@@ -979,11 +1190,47 @@ export default function AdminDashboard() {
               {badges.length > 0 ? badges.map((b, i) => (
                 <tr key={b.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
                   <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{b.id}</td>
-                  <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 14, color: "var(--foreground)" }}>{b.title}</td>
+                  <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 14, color: "var(--foreground)" }}>
+                    <span className="mr-2 text-lg select-none">{b.iconUrl || '🏅'}</span>
+                    {b.title}
+                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-slate-500 rounded font-mono font-bold uppercase select-none">{b.code}</span>
+                  </td>
                   <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{b.description}</td>
-                  <td className="px-5 py-3.5"><span style={{ fontWeight: 700, fontSize: 13, color: "#f59e0b" }}>{b.requiredXP} XP</span></td>
+                  <td className="px-5 py-3.5">
+                    <span style={{ fontWeight: 700, fontSize: 12.5, color: "#f59e0b" }}>
+                      {b.conditionType?.toUpperCase() === 'XP' && `Tích lũy ${b.conditionValue} XP`}
+                      {b.conditionType?.toUpperCase() === 'STREAK' && `Học liên tục ${b.conditionValue} ngày`}
+                      {b.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `Hoàn thành ${b.conditionValue} bài học`}
+                      {b.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `Ôn tập ${b.conditionValue} flashcard`}
+                      {b.conditionType?.toUpperCase() === 'PERFECTLESSON' && `Đạt 100% ${b.conditionValue} bài học`}
+                      {b.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `Làm ${b.conditionValue} bài đánh giá`}
+                      {b.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `Tự chọn trình độ đầu vào`}
+                      {!['XP', 'STREAK', 'LESSONCOMPLETED', 'FLASHCARDREVIEWED', 'PERFECTLESSON', 'ASSESSMENTCOMPLETED', 'SELFLEVELSELECTED'].includes(b.conditionType?.toUpperCase() || '') && `${b.conditionType}: ${b.conditionValue}`}
+                    </span>
+                  </td>
                   <td className="px-5 py-3.5" style={{ fontSize: 13, fontWeight: 700, color: "#6366f1" }}>{b.holders} học viên</td>
-                  <td className="px-5 py-3.5"><ActionButtons /></td>
+                  <td className="px-5 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleOpenEditBadge(b)}
+                        type="button"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                      >
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
+                        onClick={() => handleDeleteBadge(b.id)}
+                        type="button"
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                      >
+                        <Trash2 size={12} />
+                      </motion.button>
+                    </div>
+                  </td>
                 </tr>
               )) : (
                 <tr>
@@ -1025,22 +1272,24 @@ export default function AdminDashboard() {
                   </td>
                   <td className="px-5 py-3.5">
                     <div className="flex items-center gap-2">
-                      <button
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleOpenEditPhrase(p)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(59, 130, 246, 0.15)" : "#eff6ff" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
                       >
-                        <Pencil size={12} style={{ color: "#3b82f6" }} />
-                      </button>
-                      <button
+                        <Pencil size={12} />
+                      </motion.button>
+                      <motion.button
+                        whileHover={{ scale: 1.1 }}
+                        whileTap={{ scale: 0.9 }}
                         onClick={() => handleDeletePhrase(p.id!)}
                         type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none"
-                        style={{ background: darkMode ? "rgba(220, 38, 38, 0.15)" : "#fee2e2" }}
+                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
                       >
-                        <Trash2 size={12} style={{ color: "#dc2626" }} />
-                      </button>
+                        <Trash2 size={12} />
+                      </motion.button>
                     </div>
                   </td>
                 </tr>
@@ -1073,7 +1322,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Section Tabs */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
+        <div className="flex gap-2 overflow-x-auto pb-1 relative">
           {SECTIONS.map(s => {
             const isActive = activeSection === s.id;
             const Icon = s.icon;
@@ -1082,15 +1331,29 @@ export default function AdminDashboard() {
                 key={s.id}
                 onClick={() => handleTabClick(s.id)}
                 type="button"
-                className="px-4 py-1.5 rounded-full cursor-pointer shrink-0 transition-all outline-none border flex items-center gap-2 text-xs font-bold"
+                className={`px-4 py-1.5 rounded-full cursor-pointer shrink-0 relative outline-none border flex items-center gap-2 text-xs font-bold transition-all duration-200 ${
+                  isActive 
+                    ? "" 
+                    : "hover:border-[#ec4899]/50 hover:text-[#ec4899] hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+                }`}
                 style={{
-                  background: isActive ? (darkMode ? "rgba(236, 72, 153, 0.2)" : "#fce7f3") : "var(--card)",
+                  background: "transparent",
                   color: isActive ? "#ec4899" : "var(--muted-foreground)",
                   borderColor: isActive ? "#ec4899" : "var(--border)",
                 }}
               >
-                <Icon size={14} style={{ color: isActive ? "#ec4899" : "var(--muted-foreground)" }} />
-                {s.label}
+                {isActive && (
+                  <motion.div
+                    layoutId="activeAdminTabIndicator"
+                    className="absolute inset-0 rounded-full -z-10"
+                    style={{
+                      background: darkMode ? "rgba(236, 72, 153, 0.15)" : "#fce7f3",
+                    }}
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  />
+                )}
+                <Icon size={14} className="relative z-10" style={{ color: isActive ? "#ec4899" : "var(--muted-foreground)" }} />
+                <span className="relative z-10">{s.label}</span>
               </button>
             );
           })}
@@ -1115,21 +1378,24 @@ export default function AdminDashboard() {
                 style={{ fontSize: 13, color: "var(--foreground)", width: 150, fontFamily: "var(--font-family)" }}
               />
             </div>
-            {activeSection !== "users" && activeSection !== "badges" && (
-              <button
+            {activeSection !== "users" && (
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
                 onClick={() => {
                   if (activeSection === "pronunciation") handleOpenAddPhrase();
                   else if (activeSection === "lessons") handleOpenAddLesson();
                   else if (activeSection === "vocabulary") handleOpenAddVocabulary();
                   else if (activeSection === "questions") handleOpenAddQuestion();
+                  else if (activeSection === "badges") handleOpenAddBadge();
                   else setShowAddModal(true);
                 }}
                 type="button"
-                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md transition-all hover:brightness-95"
+                className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md transition-all hover:brightness-95 hover:shadow-lg"
                 style={{ background: "#ec4899" }}
               >
                 <Plus size={14} /> Thêm mới
-              </button>
+              </motion.button>
             )}
           </div>
         </div>
@@ -1137,13 +1403,24 @@ export default function AdminDashboard() {
 
       {/* Content area */}
       <div className="flex-1 overflow-auto px-8 py-5">
-        {activeSection === "overview" ? (
-          renderContent()
-        ) : (
-          <div className="rounded-3xl overflow-hidden border" style={{ background: "var(--card)", borderColor: "var(--border)", boxShadow: "0 2px 12px rgba(0,0,0,0.02)" }}>
-            {renderContent()}
-          </div>
-        )}
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${activeSection}-${isLoading}`}
+            initial={{ opacity: 0, y: 6 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -6 }}
+            transition={{ duration: 0.15, ease: "easeInOut" }}
+            className="w-full min-h-full flex flex-col"
+          >
+            {activeSection === "overview" ? (
+              renderContent()
+            ) : (
+              <div className="rounded-3xl overflow-hidden border flex-1 flex flex-col" style={{ background: "var(--card)", borderColor: "var(--border)", boxShadow: "0 2px 12px rgba(0,0,0,0.02)" }}>
+                {renderContent()}
+              </div>
+            )}
+          </motion.div>
+        </AnimatePresence>
       </div>
 
       {/* Pagination */}
@@ -1166,6 +1443,8 @@ export default function AdminDashboard() {
                 {activeSection === "lessons" && (selectedLesson ? "Chỉnh sửa bài học" : "Thêm bài học mới")}
                 {activeSection === "vocabulary" && (selectedVocabulary ? "Chỉnh sửa từ vựng" : "Thêm từ vựng mới")}
                 {activeSection === "questions" && (selectedQuestion ? "Chỉnh sửa câu hỏi" : "Thêm câu hỏi mới")}
+                {activeSection === "badges" && (selectedBadge ? "Chỉnh sửa huy hiệu" : "Thêm huy hiệu mới")}
+                {activeSection === "users" && "Chỉnh sửa thông tin tài khoản"}
               </h3>
               <button onClick={() => setShowAddModal(false)} type="button" className="background-none border-none cursor-pointer outline-none bg-transparent" style={{ color: "var(--muted-foreground)" }}>
                 <X size={18} />
@@ -1533,22 +1812,171 @@ export default function AdminDashboard() {
               </div>
             )}
 
+            {activeSection === "badges" && (
+              <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-3 gap-3 items-end">
+                  <div className="col-span-1">
+                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Biểu tượng</label>
+                    <select
+                      value={badgeForm.iconUrl}
+                      onChange={e => setBadgeForm(prev => ({ ...prev, iconUrl: e.target.value }))}
+                      className="w-full px-3 py-2.5 rounded-xl outline-none cursor-pointer"
+                      style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    >
+                      {["🏅", "🔥", "🎓", "⚡", "🏆", "🌟", "📚", "🧠", "👑", "🎯", "🛡️", "⚔️"].map(emoji => (
+                        <option key={emoji} value={emoji}>{emoji}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="col-span-2">
+                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Hoặc tự nhập emoji/URL</label>
+                    <input
+                      value={badgeForm.iconUrl}
+                      onChange={e => setBadgeForm(prev => ({ ...prev, iconUrl: e.target.value }))}
+                      className="w-full px-4 py-2.5 rounded-xl outline-none"
+                      style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                      placeholder="Ví dụ: 🏅"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Mã Code (Duy nhất)</label>
+                  <input
+                    value={badgeForm.code}
+                    onChange={e => setBadgeForm(prev => ({ ...prev, code: e.target.value.toUpperCase() }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    placeholder="Ví dụ: XP_1000"
+                    disabled={!!selectedBadge?.id}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Tên Huy hiệu</label>
+                  <input
+                    value={badgeForm.title}
+                    onChange={e => setBadgeForm(prev => ({ ...prev, title: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    placeholder="Ví dụ: Chiến Binh Chăm Chỉ"
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Mô tả cách đạt được</label>
+                  <textarea
+                    value={badgeForm.description}
+                    onChange={e => setBadgeForm(prev => ({ ...prev, description: e.target.value }))}
+                    rows={2}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none resize-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    placeholder="Ví dụ: Đạt tích lũy 1,000 XP từ các bài học..."
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Loại điều kiện đạt</label>
+                  <select
+                    value={badgeForm.conditionType}
+                    onChange={e => setBadgeForm(prev => ({ ...prev, conditionType: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                  >
+                    <option value="XP">Tích lũy XP (XP)</option>
+                    <option value="STREAK">Chuỗi ngày liên tục (STREAK)</option>
+                    <option value="LESSONCOMPLETED">Hoàn thành bài học (LESSONCOMPLETED)</option>
+                    <option value="FLASHCARDREVIEWED">Ôn tập Flashcard (FLASHCARDREVIEWED)</option>
+                    <option value="PERFECTLESSON">Đạt 100% điểm bài học (PERFECTLESSON)</option>
+                    <option value="ASSESSMENTCOMPLETED">Làm bài đánh giá (ASSESSMENTCOMPLETED)</option>
+                    <option value="SELFLEVELSELECTED">Tự chọn trình độ đầu vào (SELFLEVELSELECTED)</option>
+                  </select>
+                </div>
+
+                {badgeForm.conditionType !== "SELFLEVELSELECTED" && (
+                  <div>
+                    <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Giá trị yêu cầu</label>
+                    <input
+                      type="number"
+                      value={badgeForm.conditionValue}
+                      onChange={e => setBadgeForm(prev => ({ ...prev, conditionValue: Number(e.target.value) }))}
+                      className="w-full px-4 py-2.5 rounded-xl outline-none"
+                      style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                      min={1}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {activeSection === "users" && (
+              <div className="flex flex-col gap-4">
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Tên đăng nhập / Họ tên</label>
+                  <input
+                    value={userForm.username}
+                    onChange={e => setUserForm(prev => ({ ...prev, username: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    placeholder="Nhập tên người dùng..."
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Địa chỉ Email</label>
+                  <input
+                    type="email"
+                    value={userForm.email}
+                    onChange={e => setUserForm(prev => ({ ...prev, email: e.target.value }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    placeholder="Nhập địa chỉ email..."
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Điểm tích lũy (XP)</label>
+                  <input
+                    type="number"
+                    value={userForm.xp}
+                    onChange={e => setUserForm(prev => ({ ...prev, xp: Number(e.target.value) }))}
+                    className="w-full px-4 py-2.5 rounded-xl outline-none"
+                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
+                    min={0}
+                  />
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3 mt-6 pt-3 border-t" style={{ borderColor: "var(--border)" }}>
-              <button onClick={() => setShowAddModal(false)} type="button" className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>Hủy bỏ</button>
-              <button
+              <motion.button 
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setShowAddModal(false)} 
+                type="button" 
+                className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs hover:bg-neutral-200 dark:hover:bg-neutral-800 transition-colors" 
+                style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
+              >
+                Hủy bỏ
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => {
                   if (activeSection === "pronunciation") handleSavePhrase();
                   else if (activeSection === "lessons") handleSaveLesson();
                   else if (activeSection === "vocabulary") handleSaveVocabulary();
                   else if (activeSection === "questions") handleSaveQuestion();
+                  else if (activeSection === "badges") handleSaveBadge();
+                  else if (activeSection === "users") handleSaveUser();
                   else setShowAddModal(false);
                 }}
                 type="button"
-                className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md"
+                className="flex-1 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md hover:brightness-95 transition-all"
                 style={{ background: "#ec4899" }}
               >
                 Lưu lại
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -1560,25 +1988,29 @@ export default function AdminDashboard() {
             <h3 className="text-lg font-bold mb-2" style={{ color: "var(--foreground)" }}>{deleteConfirm.title}</h3>
             <p className="text-sm mb-6" style={{ color: "var(--muted-foreground)" }}>{deleteConfirm.message}</p>
             <div className="flex justify-end gap-3">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => setDeleteConfirm(prev => ({ ...prev, isOpen: false }))}
-                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none transition-all"
+                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none transition-all hover:bg-neutral-200 dark:hover:bg-neutral-800"
                 style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
               >
                 Hủy bỏ
-              </button>
-              <button
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 type="button"
                 onClick={() => {
                   deleteConfirm.onConfirm();
                   setDeleteConfirm(prev => ({ ...prev, isOpen: false }));
                 }}
-                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none text-white transition-all hover:opacity-90"
+                className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none text-white transition-all hover:brightness-95"
                 style={{ background: "var(--destructive)" }}
               >
                 Xóa
-              </button>
+              </motion.button>
             </div>
           </div>
         </div>
@@ -1590,12 +2022,22 @@ export default function AdminDashboard() {
 function ActionButtons() {
   return (
     <div className="flex items-center gap-2">
-      <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-80" style={{ background: "rgba(59, 130, 246, 0.15)" }}>
-        <Pencil size={12} style={{ color: "#3b82f6" }} />
-      </button>
-      <button type="button" className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all hover:opacity-80" style={{ background: "rgba(220, 38, 38, 0.15)" }}>
-        <Trash2 size={12} style={{ color: "#dc2626" }} />
-      </button>
+      <motion.button 
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        type="button" 
+        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+      >
+        <Pencil size={12} />
+      </motion.button>
+      <motion.button 
+        whileHover={{ scale: 1.1 }}
+        whileTap={{ scale: 0.9 }}
+        type="button" 
+        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+      >
+        <Trash2 size={12} />
+      </motion.button>
     </div>
   );
 }

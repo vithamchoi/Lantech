@@ -8,6 +8,9 @@ export function parseMarkdownToHtml(markdown: string): string {
   let inCodeBlock = false;
   let codeBlockContent: string[] = [];
   let codeLanguage = '';
+  let inTable = false;
+  let tableRows: string[][] = [];
+  let tableAlignments: ('left' | 'center' | 'right')[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
@@ -29,6 +32,12 @@ export function parseMarkdownToHtml(markdown: string): string {
           inList = false;
           listType = null;
         }
+        if (inTable) {
+          html.push(renderTable(tableRows, tableAlignments));
+          inTable = false;
+          tableRows = [];
+          tableAlignments = [];
+        }
         inCodeBlock = true;
         codeLanguage = trimmedLine.substring(3).trim();
       }
@@ -40,7 +49,51 @@ export function parseMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    // 2. Handle Horizontal Rule
+    // 2. Handle Tables
+    const isRow = trimmedLine.startsWith('|') && trimmedLine.endsWith('|');
+    if (isRow) {
+      if (inList) {
+        html.push(listType === 'ul' ? '</ul>' : '</ol>');
+        inList = false;
+        listType = null;
+      }
+      
+      const cells = trimmedLine
+        .split('|')
+        .map(c => c.trim())
+        .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1);
+        
+      const isSeparator = cells.length > 0 && cells.every(c => /^[:\s-]*-[:\s-]*$/.test(c));
+      
+      if (isSeparator) {
+        if (inTable) {
+          tableAlignments = cells.map(c => {
+            const left = c.startsWith(':');
+            const right = c.endsWith(':');
+            if (left && right) return 'center';
+            if (right) return 'right';
+            return 'left';
+          });
+        }
+        continue;
+      }
+      
+      if (!inTable) {
+        inTable = true;
+        tableRows = [cells];
+        tableAlignments = cells.map(() => 'left');
+      } else {
+        tableRows.push(cells);
+      }
+      continue;
+    } else if (inTable) {
+      html.push(renderTable(tableRows, tableAlignments));
+      inTable = false;
+      tableRows = [];
+      tableAlignments = [];
+    }
+
+    // 3. Handle Horizontal Rule
     if (trimmedLine === '---' || trimmedLine === '***' || trimmedLine === '___') {
       if (inList) {
         html.push(listType === 'ul' ? '</ul>' : '</ol>');
@@ -51,7 +104,7 @@ export function parseMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    // 3. Handle Blockquotes
+    // 4. Handle Blockquotes
     if (trimmedLine.startsWith('>')) {
       if (inList) {
         html.push(listType === 'ul' ? '</ul>' : '</ol>');
@@ -59,11 +112,11 @@ export function parseMarkdownToHtml(markdown: string): string {
         listType = null;
       }
       const quoteText = trimmedLine.substring(1).trim();
-      html.push(`<blockquote class="border-l-4 border-purple-500 pl-4 py-1 my-2 italic text-muted-foreground">${parseInline(quoteText)}</blockquote>`);
+      html.push(`<blockquote class="border-l-4 border-purple-500 pl-4 py-1 my-2 italic text-foreground/90" style="color: var(--foreground); opacity: 0.9;">${parseInline(quoteText)}</blockquote>`);
       continue;
     }
 
-    // 4. Handle Headers
+    // 5. Handle Headers
     const headerMatch = trimmedLine.match(/^(#{1,6})\s+(.*)$/);
     if (headerMatch) {
       if (inList) {
@@ -84,7 +137,7 @@ export function parseMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    // 5. Handle Unordered Lists
+    // 6. Handle Unordered Lists
     const ulMatch = trimmedLine.match(/^([\-\*\+])\s+(.*)$/);
     if (ulMatch) {
       if (!inList || listType !== 'ul') {
@@ -97,7 +150,7 @@ export function parseMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    // 6. Handle Ordered Lists
+    // 7. Handle Ordered Lists
     const olMatch = trimmedLine.match(/^(\d+)\.\s+(.*)$/);
     if (olMatch) {
       const startValue = parseInt(olMatch[1], 10);
@@ -125,7 +178,7 @@ export function parseMarkdownToHtml(markdown: string): string {
       return false;
     };
 
-    // 7. Handle Empty Lines
+    // 8. Handle Empty Lines
     if (trimmedLine === '') {
       if (inList && !nextLineIsListItem(i, listType!)) {
         html.push(listType === 'ul' ? '</ul>' : '</ol>');
@@ -135,7 +188,7 @@ export function parseMarkdownToHtml(markdown: string): string {
       continue;
     }
 
-    // 8. Normal Paragraph Line
+    // 9. Normal Paragraph Line
     if (inList) {
       html.push(listType === 'ul' ? '</ul>' : '</ol>');
       inList = false;
@@ -148,12 +201,36 @@ export function parseMarkdownToHtml(markdown: string): string {
   if (inList) {
     html.push(listType === 'ul' ? '</ul>' : '</ol>');
   }
+  if (inTable) {
+    html.push(renderTable(tableRows, tableAlignments));
+  }
   if (inCodeBlock) {
     const escapedCode = escapeHtml(codeBlockContent.join('\n'));
     html.push(`<pre class="bg-gray-100 dark:bg-gray-800 p-3 rounded-lg font-mono text-xs overflow-x-auto my-2 text-foreground"><code>${escapedCode}</code></pre>`);
   }
 
   return html.join('\n');
+}
+
+function renderTable(rows: string[][], alignments: ('left' | 'center' | 'right')[]): string {
+  if (rows.length === 0) return "";
+  const headers = rows[0];
+  const body = rows.slice(1);
+  
+  const headerHtml = headers.map((h, i) => {
+    const align = alignments[i] || 'left';
+    return `<th class="px-4 py-2 border-b-2 border-slate-200 dark:border-slate-700 text-left font-bold text-xs uppercase text-foreground" style="text-align: ${align}; color: var(--foreground);">${parseInline(h)}</th>`;
+  }).join('');
+  
+  const bodyHtml = body.map(row => {
+    const cellHtml = row.map((cell, i) => {
+      const align = alignments[i] || 'left';
+      return `<td class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 text-foreground text-xs" style="text-align: ${align}; color: var(--foreground);">${parseInline(cell)}</td>`;
+    }).join('');
+    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">${cellHtml}</tr>`;
+  }).join('');
+  
+  return `<div class="overflow-x-auto my-3 border border-slate-100 dark:border-slate-800 rounded-xl"><table class="min-w-full table-auto border-collapse"><thead class="bg-slate-50 dark:bg-slate-800/60">${headerHtml}</thead><tbody>${bodyHtml}</tbody></table></div>`;
 }
 
 function escapeHtml(text: string): string {

@@ -55,8 +55,12 @@ public class AdminVocabularyDto
 public class AdminBadgeDto
 {
     public Guid Id { get; set; }
+    public string Code { get; set; } = null!;
     public string Title { get; set; } = null!;
     public string Description { get; set; } = null!;
+    public string? IconUrl { get; set; }
+    public string ConditionType { get; set; } = null!;
+    public int ConditionValue { get; set; }
     public int RequiredXP { get; set; }
     public int Holders { get; set; }
 }

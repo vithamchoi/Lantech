@@ -114,8 +114,12 @@ export interface AdminVocabularyDto {
 
 export interface AdminBadgeDto {
   id: string;
+  code: string;
   title: string;
   description: string;
+  iconUrl?: string;
+  conditionType: string;
+  conditionValue: number;
   requiredXP: number;
   holders: number;
 }
@@ -142,6 +146,12 @@ export const adminService = {
   },
   updateUserStatus: async (userId: string, status: string): Promise<void> => {
     return await apiClient.patch(`/admin/users/${userId}/status`, { status });
+  },
+  updateUser: async (userId: string, data: { username: string; email: string; xp: number }): Promise<void> => {
+    return await apiClient.put(`/admin/users/${userId}`, data);
+  },
+  deleteUser: async (userId: string): Promise<void> => {
+    return await apiClient.delete(`/admin/users/${userId}`);
   },
 
   // Lessons
@@ -189,6 +199,15 @@ export const adminService = {
   // Badges
   getBadges: async (): Promise<AdminBadgeDto[]> => {
     return await apiClient.get('/admin/badges');
+  },
+  createBadge: async (data: { code: string; name: string; description: string; iconUrl?: string; conditionType: string; conditionValue: number }): Promise<AdminBadgeDto> => {
+    return await apiClient.post('/admin/badges', data);
+  },
+  updateBadge: async (id: string, data: { code: string; name: string; description: string; iconUrl?: string; conditionType: string; conditionValue: number }): Promise<AdminBadgeDto> => {
+    return await apiClient.put(`/admin/badges/${id}`, data);
+  },
+  deleteBadge: async (id: string): Promise<void> => {
+    return await apiClient.delete(`/admin/badges/${id}`);
   },
 
   // Pronunciation Phrases
