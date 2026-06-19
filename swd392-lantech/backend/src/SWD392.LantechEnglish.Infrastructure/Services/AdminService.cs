@@ -239,16 +239,45 @@ public class AdminService : IAdminService
 
     public async Task<IEnumerable<AdminQuestionDto>> GetQuestionsAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.Exercises
-            .Select(e => new AdminQuestionDto
-            {
-                Id = e.Id,
-                Text = e.Prompt,
-                Skill = e.Type.ToString(),
-                Level = "Unknown", // Can be joined with Lesson.CefrLevel if needed
-                Difficulty = e.Difficulty.ToString()
-            })
-            .ToListAsync(cancellationToken);
+        var exercises = await (from e in _context.Exercises
+                               join l in _context.Lessons on e.LessonId equals l.Id into lj
+                               from l in lj.DefaultIfEmpty()
+                               select new
+                               {
+                                   e.Id,
+                                   e.Prompt,
+                                   e.Type,
+                                   e.Difficulty,
+                                   e.LessonId,
+                                   e.Instruction,
+                                   e.CorrectAnswerJson,
+                                   e.OptionsJson,
+                                   e.Explanation,
+                                   e.XpReward,
+                                   e.OrderIndex,
+                                   Skill = l != null ? l.Skill : SkillType.Grammar,
+                                   Level = l != null ? l.CefrLevel : CefrLevel.A1
+                               })
+                               .ToListAsync(cancellationToken);
+
+        return exercises.Select(e => new AdminQuestionDto
+        {
+            Id = e.Id,
+            Text = e.Prompt,
+            Skill = e.Skill.ToString(),
+            Level = e.Level.ToString(),
+            Difficulty = e.Difficulty.ToString(),
+            LessonId = e.LessonId,
+            Type = e.Type.ToString(),
+            Instruction = e.Instruction,
+            CorrectAnswer = CleanAnswer(e.CorrectAnswerJson),
+            Options = string.IsNullOrEmpty(e.OptionsJson)
+                ? new List<string>()
+                : JsonSerializer.Deserialize<List<string>>(e.OptionsJson) ?? new List<string>(),
+            Explanation = e.Explanation,
+            XpReward = e.XpReward,
+            OrderIndex = e.OrderIndex
+        });
     }
 
     public async Task<ExerciseDto> CreateExerciseAsync(CreateExerciseRequest request, CancellationToken cancellationToken = default)

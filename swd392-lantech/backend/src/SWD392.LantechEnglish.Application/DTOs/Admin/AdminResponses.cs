@@ -40,6 +40,14 @@ public class AdminQuestionDto
     public string Skill { get; set; } = null!;
     public string Level { get; set; } = null!;
     public string Difficulty { get; set; } = null!;
+    public Guid LessonId { get; set; }
+    public string Type { get; set; } = null!;
+    public string? Instruction { get; set; }
+    public string CorrectAnswer { get; set; } = null!;
+    public List<string>? Options { get; set; }
+    public string? Explanation { get; set; }
+    public int XpReward { get; set; }
+    public int OrderIndex { get; set; }
 }
 
 public class AdminVocabularyDto

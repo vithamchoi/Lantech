@@ -841,16 +841,16 @@ export default function AdminDashboard() {
   const handleOpenEditQuestion = (q: AdminQuestionDto) => {
     setSelectedQuestion(q);
     setQuestionForm({
-      lessonId: lessons[0]?.id || "",
-      type: "MultipleChoice",
+      lessonId: q.lessonId || lessons[0]?.id || "",
+      type: q.type || "MultipleChoice",
       prompt: q.text,
-      instruction: "Choose the correct answer",
-      correctAnswer: "",
-      options: "",
-      explanation: "",
-      difficulty: q.difficulty === "Hard" ? 3 : q.difficulty === "Medium" ? 2 : 1,
-      xpReward: 5,
-      orderIndex: 1
+      instruction: q.instruction || "",
+      correctAnswer: q.correctAnswer || "",
+      options: q.options ? q.options.join(", ") : "",
+      explanation: q.explanation || "",
+      difficulty: q.difficulty === "Hard" || q.difficulty === "3" ? 3 : q.difficulty === "Medium" || q.difficulty === "2" ? 2 : 1,
+      xpReward: q.xpReward || 5,
+      orderIndex: q.orderIndex || 1
     });
     setShowAddModal(true);
   };

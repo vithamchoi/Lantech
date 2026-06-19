@@ -101,6 +101,14 @@ export interface AdminQuestionDto {
   skill: string;
   level: string;
   difficulty: string;
+  lessonId: string;
+  type: string;
+  instruction?: string;
+  correctAnswer: string;
+  options?: string[];
+  explanation?: string;
+  xpReward: number;
+  orderIndex: number;
 }
 
 export interface AdminVocabularyDto {
