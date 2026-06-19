@@ -224,18 +224,7 @@ export default function ProfileCabin() {
           </div>
         </div>
 
-        {/* Logout */}
-        <motion.button
-          onClick={handleLogout}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          type="button"
-          className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl cursor-pointer w-full border-none outline-none font-bold text-white transition-all shadow-md active:translate-y-1 active:shadow-none"
-          style={{ background: "#dc2626" }}
-        >
-          <LogOut size={15} />
-          {t("signOutLabel")}
-        </motion.button>
+        {/* Left panel padding bottom placeholder or empty space */}
       </div>
 
       {/* Right panel */}

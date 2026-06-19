@@ -364,7 +364,7 @@ export default function PronunciationClinic() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => { setActiveCategory(cat); setSelectedTag("All"); setTagPage(0); }}
                 type="button"
-                className={`px-3 py-1 rounded-full cursor-pointer border-none outline-none relative text-[11.5px] font-bold transition-all duration-200 ${
+                className={`px-3 py-1 rounded-full cursor-pointer border-none outline-none relative z-0 text-[11.5px] font-bold transition-all duration-200 ${
                   isActive ? "text-white" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60"
                 }`}
                 style={{
@@ -426,7 +426,7 @@ export default function PronunciationClinic() {
                     whileTap={{ scale: 0.95 }}
                     onClick={() => setSelectedTag(tag)}
                     type="button"
-                    className={`px-2 py-0.5 rounded cursor-pointer border-none outline-none relative text-[10.5px] font-bold transition-all duration-200 ${
+                    className={`px-2 py-0.5 rounded cursor-pointer border-none outline-none relative z-0 text-[10.5px] font-bold transition-all duration-200 ${
                       isActive ? "text-white" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60"
                     }`}
                     style={{

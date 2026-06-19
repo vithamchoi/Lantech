@@ -33,6 +33,7 @@ public class AppDbContext : DbContext
     public DbSet<StudySession> StudySessions => Set<StudySession>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<Tag> Tags => Set<Tag>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

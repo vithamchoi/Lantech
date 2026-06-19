@@ -3,6 +3,7 @@ import { useAppStore } from "../store/appStore";
 import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic, Sun, Moon } from "lucide-react";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
+import { notificationService, NotificationDto } from "../services/notificationService";
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: "#60a5fa",
@@ -13,25 +14,43 @@ const LEVEL_COLORS: Record<string, string> = {
   C2: "#ec4899",
 };
 
+const ICON_MAP: Record<string, React.ComponentType<any>> = {
+  Trophy: Trophy,
+  Zap: Zap,
+  BookOpen: BookOpen,
+  Mic: Mic,
+};
+
 export default function AppHeader() {
-  const { user, darkMode, toggleDarkMode } = useAppStore();
-  const { t } = useTranslation();
+  const { user, darkMode, toggleDarkMode, role } = useAppStore();
+  const { t, language } = useTranslation();
   const [notifOpen, setNotifOpen] = useState(false);
-  const [readIds, setReadIds] = useState<Set<string>>(new Set());
+  const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
   if (!user) return null;
 
-  const notificationsList = [
-    { id: "1", icon: Trophy, iconColor: "#f59e0b", iconBg: "#fef9c3", title: t("notifTitle1"), body: t("notifBody1"), time: t("notifTime1"), unread: true },
-    { id: "2", icon: Zap, iconColor: "var(--brand)", iconBg: "var(--brand-light)", title: t("notifTitle2"), body: t("notifBody2"), time: t("notifTime2"), unread: true },
-    { id: "3", icon: BookOpen, iconColor: "#3b82f6", iconBg: "#dbeafe", title: t("notifTitle3"), body: t("notifBody3"), time: t("notifTime3"), unread: true },
-    { id: "4", icon: Mic, iconColor: "#8b5cf6", iconBg: "#ede9fe", title: t("notifTitle4"), body: t("notifBody4"), time: t("notifTime4"), unread: false },
-    { id: "5", icon: Trophy, iconColor: "#ec4899", iconBg: "#fce7f3", title: t("notifTitle5"), body: t("notifBody5"), time: t("notifTime5"), unread: false },
-  ];
+  const fetchNotifications = async () => {
+    try {
+      const data = await notificationService.getNotifications();
+      setNotifications(data);
+    } catch (err) {
+      console.error("Failed to fetch notifications", err);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  useEffect(() => {
+    if (notifOpen) {
+      fetchNotifications();
+    }
+  }, [notifOpen]);
 
   const levelColor = LEVEL_COLORS[user.cefr] || "#60a5fa";
-  const unreadCount = notificationsList.filter(n => n.unread && !readIds.has(n.id)).length;
+  const unreadCount = notifications.filter(n => !n.isRead).length;
 
   useEffect(() => {
     function handleClick(e: MouseEvent) {
@@ -43,7 +62,47 @@ export default function AppHeader() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [notifOpen]);
 
-  const markAllRead = () => setReadIds(new Set(notificationsList.map(n => n.id)));
+  const markAllRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    } catch (err) {
+      console.error("Failed to mark all as read", err);
+    }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await notificationService.markAsRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+    } catch (err) {
+      console.error("Failed to mark notification as read", err);
+    }
+  };
+
+  const formatTimeAgo = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    const isVi = language === "vi";
+    const isJa = language === "ja";
+    const isKo = language === "ko";
+
+    if (diffMins < 1) {
+      return isVi ? "Vừa xong" : isJa ? "たった今" : isKo ? "방금 전" : "Just now";
+    }
+    if (diffMins < 60) {
+      return isVi ? `${diffMins} phút trước` : isJa ? `${diffMins}分前` : isKo ? `${diffMins}분 전` : `${diffMins}m ago`;
+    }
+    if (diffHours < 24) {
+      return isVi ? `${diffHours} giờ trước` : isJa ? `${diffHours}時間前` : isKo ? `${diffHours}時間 전` : `${diffHours}h ago`;
+    }
+    return isVi ? `${diffDays} ngày trước` : isJa ? `${diffDays}日前` : isKo ? `${diffDays}일 전` : `${diffDays}d ago`;
+  };
 
   return (
     <header
@@ -64,56 +123,60 @@ export default function AppHeader() {
 
       {/* Right: stats */}
       <div className="flex items-center gap-4">
-        {/* Streak */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{
-            background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
-            border: `2px solid ${darkMode ? "rgba(249,115,22,0.4)" : "#fed7aa"}`,
-          }}
-          title={t("dayStreak")}
-        >
-          <Flame size={15} style={{ color: "#f97316" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
-        </motion.div>
+        {role !== "Admin" && (
+          <>
+            {/* Streak */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
+              style={{
+                background: darkMode ? "rgba(249,115,22,0.15)" : "#fff7ed",
+                border: `2px solid ${darkMode ? "rgba(249,115,22,0.4)" : "#fed7aa"}`,
+              }}
+              title={t("dayStreak")}
+            >
+              <Flame size={15} style={{ color: "#f97316" }} />
+              <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "#fdba74" : "#c2410c" }}>{user.streak}</span>
+            </motion.div>
 
-        {/* XP */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
-          style={{
-            background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
-            border: `2px solid ${darkMode ? "rgba(88,204,2,0.4)" : "var(--brand-light)"}`,
-          }}
-          title={t("totalXp")}
-        >
-          <Sprout size={15} style={{ color: "var(--brand)" }} />
-          <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
-            {user.xp.toLocaleString()} XP
-          </span>
-        </motion.div>
+            {/* XP */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer"
+              style={{
+                background: darkMode ? "rgba(88,204,2,0.15)" : "#f0fdf4",
+                border: `2px solid ${darkMode ? "rgba(88,204,2,0.4)" : "var(--brand-light)"}`,
+              }}
+              title={t("totalXp")}
+            >
+              <Sprout size={15} style={{ color: "var(--brand)" }} />
+              <span style={{ fontWeight: 800, fontSize: 13.5, color: darkMode ? "var(--brand)" : "var(--brand-dark)" }}>
+                {user.xp.toLocaleString()} XP
+              </span>
+            </motion.div>
 
-        {/* CEFR Level */}
-        <motion.div
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 17 }}
-          className="px-3 py-1.5 rounded-full select-none"
-          style={{
-            background: levelColor + "22",
-            border: `2px solid ${levelColor}55`,
-            fontWeight: 800,
-            fontSize: 13,
-            color: levelColor,
-            letterSpacing: 1,
-          }}
-        >
-          {user.cefr}
-        </motion.div>
+            {/* CEFR Level */}
+            <motion.div
+              whileHover={{ scale: 1.05 }}
+              transition={{ type: "spring", stiffness: 400, damping: 17 }}
+              className="px-3 py-1.5 rounded-full select-none"
+              style={{
+                background: levelColor + "22",
+                border: `2px solid ${levelColor}55`,
+                fontWeight: 800,
+                fontSize: 13,
+                color: levelColor,
+                letterSpacing: 1,
+              }}
+            >
+              {user.cefr}
+            </motion.div>
+          </>
+        )}
 
         {/* Theme Toggle */}
         <motion.button
@@ -189,13 +252,13 @@ export default function AppHeader() {
 
                 {/* List */}
                 <div style={{ maxHeight: 380 }} className="overflow-y-auto">
-                  {notificationsList.map(n => {
-                    const isUnread = n.unread && !readIds.has(n.id);
-                    const Icon = n.icon;
+                  {notifications.map(n => {
+                    const isUnread = !n.isRead;
+                    const Icon = ICON_MAP[n.icon] || Bell;
                     return (
                       <div
                         key={n.id}
-                        onClick={() => setReadIds(prev => new Set([...prev, n.id]))}
+                        onClick={() => handleMarkAsRead(n.id)}
                         className="flex gap-3 px-5 py-4 cursor-pointer transition-colors"
                         style={{
                           background: isUnread ? (darkMode ? "rgba(88, 204, 2, 0.15)" : "rgba(88, 204, 2, 0.08)") : "transparent",
@@ -219,7 +282,7 @@ export default function AppHeader() {
                             )}
                           </div>
                           <div style={{ fontSize: 12, color: "var(--muted-foreground)", lineHeight: 1.5, marginTop: 2 }}>{n.body}</div>
-                          <div style={{ fontSize: 11, color: "var(--muted-foreground)", opacity: 0.6, marginTop: 4, fontWeight: 600 }}>{n.time}</div>
+                          <div style={{ fontSize: 11, color: "var(--muted-foreground)", opacity: 0.6, marginTop: 4, fontWeight: 600 }}>{formatTimeAgo(n.createdAt)}</div>
                         </div>
                       </div>
                     );

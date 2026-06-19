@@ -12,12 +12,12 @@ type AdminSection = "overview" | "questions" | "lessons" | "vocabulary" | "users
 
 const SECTIONS: { id: AdminSection; label: string; icon: any }[] = [
   { id: "overview", label: "Tổng quan", icon: BarChart2 },
-  { id: "questions", label: "Ngân hàng câu hỏi", icon: HelpCircle },
-  { id: "lessons", label: "Bài học", icon: BookOpen },
-  { id: "vocabulary", label: "Từ vựng", icon: BookOpen },
   { id: "pronunciation", label: "Luyện phát âm", icon: BookOpen },
-  { id: "users", label: "Tài khoản người dùng", icon: Users },
+  { id: "lessons", label: "Bài học", icon: BookOpen },
+  { id: "questions", label: "Ngân hàng câu hỏi", icon: HelpCircle },
+  { id: "vocabulary", label: "Từ vựng", icon: BookOpen },
   { id: "badges", label: "Huy hiệu & Thành tích", icon: Award },
+  { id: "users", label: "Tài khoản người dùng", icon: Users },
 ];
 
 type UserStatus = "active" | "suspended";

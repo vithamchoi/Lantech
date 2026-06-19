@@ -570,6 +570,79 @@ public static class DbSeeder
         };
         context.Exercises.AddRange(exercises);
         await context.SaveChangesAsync();
+
+        // Seed Notifications if none exist
+        if (!await context.Notifications.AnyAsync())
+        {
+            var users = await context.Users.ToListAsync();
+            foreach (var user in users)
+            {
+                context.Notifications.AddRange(new List<Notification>
+                {
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Title = "Đã mở khóa thành tích mới! 🏆",
+                        Body = "Bạn nhận được huy hiệu \"Chiến binh Tuần\" cho chuỗi học tập 7 ngày.",
+                        Icon = "Trophy",
+                        IconColor = "#f59e0b",
+                        IconBg = "#fef9c3",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow.AddMinutes(-2)
+                    },
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Title = "Sắp hoàn thành mục tiêu ngày! ⚡",
+                        Body = "Chỉ còn 60 XP nữa để hoàn thành mục tiêu 500 XP hôm nay.",
+                        Icon = "Zap",
+                        IconColor = "var(--brand)",
+                        IconBg = "var(--brand-light)",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow.AddHours(-1)
+                    },
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Title = "Có bài học mới 📖",
+                        Body = "Bài học \"Cuộc phiêu lưu quá khứ\" đã mở khóa — hãy duy trì chuỗi học tập nhé!",
+                        Icon = "BookOpen",
+                        IconColor = "#3b82f6",
+                        IconBg = "#dbeafe",
+                        IsRead = false,
+                        CreatedAt = DateTime.UtcNow.AddHours(-3)
+                    },
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Title = "Mẹo luyện phát âm 🎙️",
+                        Body = "Hãy luyện phát âm âm 'th' hôm nay — đây là phần phát âm yếu nhất của bạn.",
+                        Icon = "Mic",
+                        IconColor = "#8b5cf6",
+                        IconBg = "#ede9fe",
+                        IsRead = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    },
+                    new()
+                    {
+                        Id = Guid.NewGuid(),
+                        UserId = user.Id,
+                        Title = "Cập nhật Bảng xếp hạng 🏆",
+                        Body = "Bạn đã vươn lên vị trí thứ 3 tuần này. Alex đã vượt qua Sarah!",
+                        Icon = "Trophy",
+                        IconColor = "#ec4899",
+                        IconBg = "#fce7f3",
+                        IsRead = true,
+                        CreatedAt = DateTime.UtcNow.AddDays(-1)
+                    }
+                });
+            }
+            await context.SaveChangesAsync();
+        }
     }
 
     private static async Task EnsureVocabularyTagsLinkedAsync(AppDbContext context)

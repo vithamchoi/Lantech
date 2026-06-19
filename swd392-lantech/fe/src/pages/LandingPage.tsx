@@ -48,24 +48,6 @@ export default function LandingPage() {
           </span>
         </div>
 
-        {/* Navigation Links */}
-        <div className="hidden lg:flex items-center gap-7 nav mx-auto">
-          {[
-            { label: t("navDashboard") || "Bảng điều khiển", id: "features" },
-            { label: "Cách hoạt động", id: "how-it-works" },
-            { label: "Bảng giá", id: "pricing" },
-            { label: "Về chúng tôi", id: "about-us" }
-          ].map((link) => (
-            <a
-              key={link.id}
-              href={`#${link.id}`}
-              className="nav-link text-[#6b7280] dark:text-muted-foreground hover:text-[#45d300] font-bold text-base transition-colors whitespace-nowrap"
-            >
-              {link.label}
-            </a>
-          ))}
-        </div>
-
         {/* Action Buttons, Lang Dropdown & Theme Toggle */}
         <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
           {/* Light/Dark Toggle */}
@@ -191,7 +173,7 @@ export default function LandingPage() {
               onClick={() => handleEnterAuth("register")}
               className="btn-primary"
             >
-              <span>🌱</span> {t("landingCtaJoin")}
+              {t("landingCtaJoin")}
             </motion.button>
 
             {/* Secondary Button */}
