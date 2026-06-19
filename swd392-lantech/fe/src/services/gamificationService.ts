@@ -2,18 +2,21 @@ import apiClient from '../api/apiClient';
 
 export interface BadgeDto {
   id: string;
+  code: string;
   name: string;
   description: string;
-  imageUrl?: string;
-  criteriaType: string;
-  criteriaValue: number;
+  iconUrl?: string;
+  conditionType: string;
+  conditionValue: number;
+  xpBonus: number;
 }
 
 export interface UserBadgeDto {
   id: string;
+  userId: string;
   badgeId: string;
   badge: BadgeDto;
-  unlockedAt: string;
+  earnedAt: string;
 }
 
 export interface XpTransactionDto {

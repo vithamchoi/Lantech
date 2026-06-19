@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using SWD392.LantechEnglish.Application.DTOs.Gamification;
 using SWD392.LantechEnglish.Application.Interfaces;
 using SWD392.LantechEnglish.Domain.Entities;
+using SWD392.LantechEnglish.Domain.Enums;
 using SWD392.LantechEnglish.Infrastructure.Data;
 
 namespace SWD392.LantechEnglish.Infrastructure.Services;
@@ -88,6 +89,112 @@ public class GamificationService : IGamificationService
             Description = tx.Reason,
             CreatedAt = tx.CreatedAt
         };
+    }
+
+    public async Task CheckAndAwardBadgesAsync(Guid userId, CancellationToken cancellationToken = default)
+    {
+        var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
+        if (user == null) return;
+
+        // Fetch all badges and already earned badges
+        var badges = await _context.Badges.ToListAsync(cancellationToken);
+        var earnedBadgeIds = await _context.UserBadges
+            .Where(ub => ub.UserId == userId)
+            .Select(ub => ub.BadgeId)
+            .ToListAsync(cancellationToken);
+
+        // Fetch stats needed to evaluate the rules
+        int xp = user.Xp;
+        int streak = user.StreakCount;
+        
+        int completedLessons = await _context.LessonProgress
+            .CountAsync(lp => lp.UserId == userId && lp.Status == ProgressStatus.Completed, cancellationToken);
+
+        int flashcardReviews = await _context.FlashcardReviews
+            .CountAsync(fr => fr.UserId == userId, cancellationToken);
+
+        // Dynamically compute perfect lessons: lessons where all exercises are answered correctly
+        var userCorrectAttempts = await _context.ExerciseAttempts
+            .Where(ea => ea.UserId == userId && ea.IsCorrect)
+            .Join(_context.Exercises,
+                ea => ea.ExerciseId,
+                e => e.Id,
+                (ea, e) => new { e.LessonId, ea.ExerciseId })
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        var userCorrectAttemptCounts = userCorrectAttempts
+            .GroupBy(x => x.LessonId)
+            .Select(g => new { LessonId = g.Key, CorrectCount = g.Count() })
+            .ToList();
+
+        int perfectLessons = 0;
+        foreach (var attempt in userCorrectAttemptCounts)
+        {
+            var totalExercises = await _context.Exercises.CountAsync(e => e.LessonId == attempt.LessonId, cancellationToken);
+            if (totalExercises > 0 && attempt.CorrectCount == totalExercises)
+            {
+                perfectLessons++;
+            }
+        }
+
+        int assessmentsCompleted = await _context.Assessments
+            .CountAsync(a => a.UserId == userId && a.Status == AssessmentStatus.Completed, cancellationToken);
+
+        bool selfLevelSelected = await _context.UserSkillProfiles
+            .AnyAsync(p => p.UserId == userId && p.Source == LevelSource.SelfReported, cancellationToken);
+
+        var newEarnedBadges = new List<UserBadge>();
+
+        foreach (var badge in badges)
+        {
+            if (earnedBadgeIds.Contains(badge.Id)) continue;
+
+            bool isEligible = false;
+            string conditionType = badge.ConditionType?.Trim().ToUpper() ?? "";
+
+            switch (conditionType)
+            {
+                case "XP":
+                    isEligible = xp >= badge.ConditionValue;
+                    break;
+                case "STREAK":
+                    isEligible = streak >= badge.ConditionValue;
+                    break;
+                case "LESSONCOMPLETED":
+                    isEligible = completedLessons >= badge.ConditionValue;
+                    break;
+                case "FLASHCARDREVIEWED":
+                    isEligible = flashcardReviews >= badge.ConditionValue;
+                    break;
+                case "PERFECTLESSON":
+                    isEligible = perfectLessons >= badge.ConditionValue;
+                    break;
+                case "ASSESSMENTCOMPLETED":
+                    isEligible = assessmentsCompleted >= badge.ConditionValue;
+                    break;
+                case "SELFLEVELSELECTED":
+                    isEligible = selfLevelSelected;
+                    break;
+            }
+
+            if (isEligible)
+            {
+                newEarnedBadges.Add(new UserBadge
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    BadgeId = badge.Id,
+                    EarnedAt = DateTime.UtcNow
+                });
+            }
+        }
+
+        if (newEarnedBadges.Any())
+        {
+            _context.UserBadges.AddRange(newEarnedBadges);
+            await _context.SaveChangesAsync(cancellationToken);
+        }
     }
 
     private static BadgeDto MapToDto(Badge b) => new()

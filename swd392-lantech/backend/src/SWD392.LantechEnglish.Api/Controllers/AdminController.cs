@@ -37,6 +37,22 @@ namespace SWD392.LantechEnglish.Api.Controllers
         }
 
         [HttpGet("users/{id}")] public IActionResult GetUser(Guid id) => Ok();
+
+        [HttpPut("users/{id}")]
+        public async Task<IActionResult> UpdateUser(Guid id, [FromBody] UpdateUserRequest request)
+        {
+            var result = await _adminService.UpdateUserAsync(id, request);
+            if (!result) return NotFound(ApiResponse<object>.ErrorResponse("User not found"));
+            return Ok(ApiResponse<object>.SuccessResponse(true, "User updated successfully"));
+        }
+
+        [HttpDelete("users/{id}")]
+        public async Task<IActionResult> DeleteUser(Guid id)
+        {
+            var result = await _adminService.DeleteUserAsync(id);
+            if (!result) return NotFound(ApiResponse<object>.ErrorResponse("User not found"));
+            return Ok(ApiResponse<object>.SuccessResponse(true, "User deleted successfully"));
+        }
         
         public class UpdateRoleRequest { public string Role { get; set; } = null!; }
         [HttpPatch("users/{id}/role")] 
@@ -172,9 +188,43 @@ namespace SWD392.LantechEnglish.Api.Controllers
             var badges = await _adminService.GetBadgesAsync();
             return Ok(ApiResponse<object>.SuccessResponse(badges));
         }
-        [HttpGet("badges/{id}")] public IActionResult GetBadge(Guid id) => Ok();
-        [HttpPost("badges")] public IActionResult CreateBadge() => Ok();
-        [HttpPut("badges/{id}")] public IActionResult UpdateBadge(Guid id) => Ok();
-        [HttpDelete("badges/{id}")] public IActionResult DeleteBadge(Guid id) => Ok();
+        [HttpGet("badges/{id}")]
+        public async Task<IActionResult> GetBadge(Guid id)
+        {
+            var badge = await _adminService.GetBadgeByIdAsync(id);
+            if (badge == null) return NotFound(ApiResponse<object>.ErrorResponse("Badge not found."));
+            return Ok(ApiResponse<object>.SuccessResponse(badge));
+        }
+
+        [HttpPost("badges")]
+        public async Task<IActionResult> CreateBadge([FromBody] CreateBadgeRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.ErrorResponse("Invalid inputs."));
+            var badge = await _adminService.CreateBadgeAsync(request);
+            return Ok(ApiResponse<object>.SuccessResponse(badge));
+        }
+
+        [HttpPut("badges/{id}")]
+        public async Task<IActionResult> UpdateBadge(Guid id, [FromBody] CreateBadgeRequest request)
+        {
+            if (!ModelState.IsValid) return BadRequest(ApiResponse<object>.ErrorResponse("Invalid inputs."));
+            try
+            {
+                var badge = await _adminService.UpdateBadgeAsync(id, request);
+                return Ok(ApiResponse<object>.SuccessResponse(badge));
+            }
+            catch (KeyNotFoundException)
+            {
+                return NotFound(ApiResponse<object>.ErrorResponse("Badge not found."));
+            }
+        }
+
+        [HttpDelete("badges/{id}")]
+        public async Task<IActionResult> DeleteBadge(Guid id)
+        {
+            var success = await _adminService.DeleteBadgeAsync(id);
+            if (!success) return NotFound(ApiResponse<object>.ErrorResponse("Badge not found."));
+            return Ok(ApiResponse<object>.SuccessResponse("Badge deleted successfully."));
+        }
     }
 }

@@ -10,10 +10,12 @@ namespace SWD392.LantechEnglish.Infrastructure.Services;
 public class FlashcardService : IFlashcardService
 {
     private readonly AppDbContext _context;
+    private readonly IGamificationService _gamificationService;
 
-    public FlashcardService(AppDbContext context)
+    public FlashcardService(AppDbContext context, IGamificationService gamificationService)
     {
         _context = context;
+        _gamificationService = gamificationService;
     }
 
     public async Task<IEnumerable<FlashcardDto>> GetFlashcardsAsync(Guid userId, CancellationToken cancellationToken = default)
@@ -184,22 +186,8 @@ public class FlashcardService : IFlashcardService
             CreatedAt = DateTime.UtcNow
         });
 
-        // Award badge: FIRST_FLASHCARD_REVIEW
-        var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "FIRST_FLASHCARD_REVIEW", cancellationToken);
-        if (badge != null)
-        {
-            var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == userId && ub.BadgeId == badge.Id, cancellationToken);
-            if (!alreadyHas)
-            {
-                _context.UserBadges.Add(new UserBadge
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    BadgeId = badge.Id,
-                    EarnedAt = DateTime.UtcNow
-                });
-            }
-        }
+        // Award badges dynamically
+        await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
 
         await _context.SaveChangesAsync(cancellationToken);
 

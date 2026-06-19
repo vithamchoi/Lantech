@@ -70,7 +70,7 @@ function AdminGuard({ children }: { children: React.ReactNode }) {
 }
 
 export default function AppRoutes() {
-  const { role, login, logout } = useAppStore();
+  const { role, login, logout, darkMode } = useAppStore();
   const [isInitializing, setIsInitializing] = useState(true);
 
   useEffect(() => {
@@ -95,7 +95,10 @@ export default function AppRoutes() {
 
   if (isInitializing) {
     return (
-      <div className="h-screen w-full flex items-center justify-center bg-cream-50">
+      <div 
+        className="h-screen w-full flex items-center justify-center transition-colors duration-200"
+        style={{ background: "var(--background)", color: "var(--foreground)" }}
+      >
         <Loader2 className="w-10 h-10 animate-spin text-meadow" />
       </div>
     );

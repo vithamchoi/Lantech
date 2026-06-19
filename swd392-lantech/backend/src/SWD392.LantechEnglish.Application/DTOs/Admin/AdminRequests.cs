@@ -63,3 +63,29 @@ public class CreateVocabularyRequest
     public string ContentSource { get; set; } = "Curated";
     public List<AdminVocabularyTranslationRequest> Translations { get; set; } = new();
 }
+
+public class CreateBadgeRequest
+{
+    [Required]
+    public string Code { get; set; } = null!;
+    [Required]
+    public string Name { get; set; } = null!;
+    [Required]
+    public string Description { get; set; } = null!;
+    public string? IconUrl { get; set; }
+    [Required]
+    public string ConditionType { get; set; } = null!;
+    [Required]
+    public int ConditionValue { get; set; }
+}
+
+public class UpdateUserRequest
+{
+    [Required]
+    public string Username { get; set; } = null!;
+    [Required]
+    [EmailAddress]
+    public string Email { get; set; } = null!;
+    public int Xp { get; set; }
+}
+

@@ -10,10 +10,12 @@ namespace SWD392.LantechEnglish.Infrastructure.Services;
 public class LessonService : ILessonService
 {
     private readonly AppDbContext _context;
+    private readonly IGamificationService _gamificationService;
 
-    public LessonService(AppDbContext context)
+    public LessonService(AppDbContext context, IGamificationService gamificationService)
     {
         _context = context;
+        _gamificationService = gamificationService;
     }
 
     public async Task<IEnumerable<LessonDto>> GetLessonsAsync(string? level, string? skill, int page, int pageSize, Guid userId, CancellationToken cancellationToken = default)
@@ -148,7 +150,7 @@ public class LessonService : ILessonService
             UpdateUserStreak(user);
 
             // Award Badges
-            await AwardBadgesAsync(user, cancellationToken);
+            await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
         }
 
         await _context.SaveChangesAsync(cancellationToken);
@@ -182,48 +184,6 @@ public class LessonService : ILessonService
             user.StreakCount = 1;
         }
         user.LastStudyDate = DateTime.UtcNow;
-    }
-
-    private async Task AwardBadgesAsync(User user, CancellationToken cancellationToken)
-    {
-        // 1. FIRST_LESSON_COMPLETED
-        var firstBadge = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "FIRST_LESSON_COMPLETED", cancellationToken);
-        if (firstBadge != null)
-        {
-            var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == user.Id && ub.BadgeId == firstBadge.Id, cancellationToken);
-            if (!alreadyHas)
-            {
-                _context.UserBadges.Add(new UserBadge { Id = Guid.NewGuid(), UserId = user.Id, BadgeId = firstBadge.Id, EarnedAt = DateTime.UtcNow });
-            }
-        }
-
-        // 2. STREAK_3
-        if (user.StreakCount >= 3)
-        {
-            var streak3 = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "STREAK_3", cancellationToken);
-            if (streak3 != null)
-            {
-                var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == user.Id && ub.BadgeId == streak3.Id, cancellationToken);
-                if (!alreadyHas)
-                {
-                    _context.UserBadges.Add(new UserBadge { Id = Guid.NewGuid(), UserId = user.Id, BadgeId = streak3.Id, EarnedAt = DateTime.UtcNow });
-                }
-            }
-        }
-
-        // 3. XP_1000
-        if (user.Xp >= 1000)
-        {
-            var xp1000 = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "XP_1000", cancellationToken);
-            if (xp1000 != null)
-            {
-                var alreadyHas = await _context.UserBadges.AnyAsync(ub => ub.UserId == user.Id && ub.BadgeId == xp1000.Id, cancellationToken);
-                if (!alreadyHas)
-                {
-                    _context.UserBadges.Add(new UserBadge { Id = Guid.NewGuid(), UserId = user.Id, BadgeId = xp1000.Id, EarnedAt = DateTime.UtcNow });
-                }
-            }
-        }
     }
 
     private static LessonDto MapToDto(Lesson l, LessonProgress? p) => new()

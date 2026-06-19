@@ -8,4 +8,5 @@ public interface IGamificationService
     Task<IEnumerable<UserBadgeDto>> GetUserBadgesAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<IEnumerable<XpTransactionDto>> GetXpTransactionsAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<XpTransactionDto> AwardXpAsync(Guid userId, int amount, string description, CancellationToken cancellationToken = default);
+    Task CheckAndAwardBadgesAsync(Guid userId, CancellationToken cancellationToken = default);
 }

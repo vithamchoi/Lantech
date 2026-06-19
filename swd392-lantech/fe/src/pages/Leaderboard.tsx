@@ -4,6 +4,7 @@ import { gamificationService, LeaderboardEntryDto } from "../services/gamificati
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
+import { motion, AnimatePresence } from "motion/react";
 
 type Period = "weekly" | "monthly" | "all-time";
 
@@ -12,7 +13,7 @@ const PODIUM_EMOJIS = ["🥇", "🥈", "🥉"];
 const PODIUM_HEIGHTS = [120, 90, 70];
 
 export default function Leaderboard() {
-  const { user } = useAppStore();
+  const { user, darkMode } = useAppStore();
   const { t } = useTranslation();
   const [period, setPeriod] = useState<Period>("weekly");
   const [entries, setEntries] = useState<LeaderboardEntryDto[]>([]);
@@ -43,17 +44,28 @@ export default function Leaderboard() {
   // Podium logic: top 3
   const podiumEntries = [entries[1], entries[0], entries[2]].filter(e => !!e);
 
-  if (isLoading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="animate-spin" size={48} color="var(--brand)" />
-      </div>
-    );
-  }
-
   return (
-    <div className="overflow-y-auto h-full px-8 py-7 text-left bg-background text-foreground" style={{ fontFamily: "var(--font-family)" }}>
-      <div className="max-w-2xl mx-auto">
+    <div className="overflow-y-auto h-full px-8 py-7 text-left bg-background text-foreground relative w-full" style={{ fontFamily: "var(--font-family)" }}>
+      <AnimatePresence mode="wait">
+        {isLoading ? (
+          <motion.div
+            key="loader"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.15 }}
+            className="flex items-center justify-center absolute inset-0 z-50 bg-background h-full w-full"
+          >
+            <Loader2 className="animate-spin" size={48} color="var(--brand)" />
+          </motion.div>
+        ) : (
+          <motion.div
+            key="content"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.2 }}
+            className="max-w-2xl mx-auto w-full"
+          >
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-[26px] font-black text-foreground mb-1">🏆 {t("leaderboardTitle")}</h1>
@@ -62,23 +74,36 @@ export default function Leaderboard() {
 
         {/* Period tabs */}
         <div
-          className="flex rounded-2xl p-1 mb-8 bg-cream-200 dark:bg-slate-900/50 border border-sage/50 dark:border-[#2C3531]/50"
+          className="flex rounded-2xl p-1 mb-8 bg-cream-200 dark:bg-slate-900/50 border border-sage/50 dark:border-[#2C3531]/50 relative"
         >
-          {([["weekly", t("periodWeekly")], ["monthly", t("periodMonthly")], ["all-time", t("periodAllTime")]] as [Period, string][]).map(([p, label]) => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              type="button"
-              className="flex-1 py-2 rounded-xl cursor-pointer transition-all border-none outline-none font-bold text-[13.5px]"
-              style={{
-                background: period === p ? "var(--brand)" : "transparent",
-                color: period === p ? "#fff" : "var(--muted-foreground)",
-                boxShadow: period === p ? "0 4px 12px rgba(88, 204, 2, 0.25)" : "none",
-              }}
-            >
-              {label}
-            </button>
-          ))}
+          {([["weekly", t("periodWeekly")], ["monthly", t("periodMonthly")], ["all-time", t("periodAllTime")]] as [Period, string][]).map(([p, label]) => {
+            const isSelected = period === p;
+            return (
+              <motion.button
+                key={p}
+                onClick={() => setPeriod(p)}
+                type="button"
+                whileHover={{ 
+                  scale: isSelected ? 1 : 1.02,
+                  backgroundColor: isSelected 
+                    ? "var(--brand)" 
+                    : (darkMode ? "rgba(88, 204, 2, 0.25)" : "rgba(88, 204, 2, 0.15)"),
+                  color: isSelected 
+                    ? "#fff" 
+                    : (darkMode ? "var(--brand)" : "var(--brand-dark)") 
+                }}
+                whileTap={{ scale: 0.98 }}
+                className="flex-1 py-2 rounded-xl cursor-pointer border-none outline-none font-bold text-[13.5px] relative z-0"
+                style={{
+                  background: isSelected ? "var(--brand)" : "transparent",
+                  color: isSelected ? "#fff" : "var(--muted-foreground)",
+                  boxShadow: isSelected ? "0 4px 12px rgba(88, 204, 2, 0.25)" : "none",
+                }}
+              >
+                <span className="relative z-10">{label}</span>
+              </motion.button>
+            );
+          })}
         </div>
 
         {/* Top 3 podium */}
@@ -164,18 +189,30 @@ export default function Leaderboard() {
           </div>
 
           {/* Rows */}
-          {entries.map((player, i) => (
-            <div
-              key={player.userId}
-              className="grid items-center px-5 py-3.5 border-t border-sage dark:border-[#2C3531] transition-all"
-              style={{
-                gridTemplateColumns: "40px 1fr 100px",
-                background: player.isCurrentUser 
-                  ? "var(--accent)" 
-                  : i % 2 === 0 ? "var(--card)" : "var(--background)",
-                borderLeft: player.isCurrentUser ? "4px solid var(--brand)" : "4px solid transparent",
-              }}
-            >
+          {entries.map((player, i) => {
+            const isDarkMode = document.documentElement.classList.contains("dark");
+            const rowBg = player.isCurrentUser 
+              ? "var(--accent)" 
+              : i % 2 === 0 ? "var(--card)" : "var(--background)";
+            const hoverBg = player.isCurrentUser 
+              ? "var(--accent)" 
+              : (isDarkMode ? "rgba(88, 204, 2, 0.12)" : "rgba(88, 204, 2, 0.06)");
+
+            return (
+              <motion.div
+                layout
+                key={player.userId}
+                className="grid items-center px-5 py-3.5 border-t border-sage dark:border-[#2C3531] cursor-pointer"
+                whileHover={{ 
+                  scale: 1.005,
+                  backgroundColor: hoverBg 
+                }}
+                style={{
+                  gridTemplateColumns: "40px 1fr 100px",
+                  backgroundColor: rowBg,
+                  borderLeft: player.isCurrentUser ? "4px solid var(--brand)" : "4px solid transparent",
+                }}
+              >
               {/* Rank */}
               <div>
                 {player.rank <= 3 ? (
@@ -225,10 +262,13 @@ export default function Leaderboard() {
                 </span>
                 <span className="text-[11.5px] text-slate-400 dark:text-slate-500 ml-1">XP</span>
               </div>
-            </div>
-          ))}
+            </motion.div>
+            );
+          })}
         </div>
-      </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

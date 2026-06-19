@@ -13,11 +13,13 @@ public class AssessmentService : IAssessmentService
 {
     private readonly AppDbContext _context;
     private readonly IAIProvider _aiProvider;
+    private readonly IGamificationService _gamificationService;
 
-    public AssessmentService(AppDbContext context, IAIProvider aiProvider)
+    public AssessmentService(AppDbContext context, IAIProvider aiProvider, IGamificationService gamificationService)
     {
         _context = context;
         _aiProvider = aiProvider;
+        _gamificationService = gamificationService;
     }
 
     public Task<AssessmentAvailableDto> GetAvailableAssessmentAsync(CancellationToken cancellationToken = default)
@@ -378,22 +380,8 @@ public class AssessmentService : IAssessmentService
         user.LevelSource = LevelSource.Assessment;
         user.UpdatedAt = DateTime.UtcNow;
 
-        // Award Badge
-        var badge = await _context.Badges.FirstOrDefaultAsync(b => b.Code == "DIAGNOSTIC_COMPLETED", cancellationToken);
-        if (badge != null)
-        {
-            var hasBadge = await _context.UserBadges.AnyAsync(ub => ub.UserId == userId && ub.BadgeId == badge.Id, cancellationToken);
-            if (!hasBadge)
-            {
-                _context.UserBadges.Add(new UserBadge
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = userId,
-                    BadgeId = badge.Id,
-                    EarnedAt = DateTime.UtcNow
-                });
-            }
-        }
+        // Award Badge dynamically
+        await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
 
         // Save UserSkillProfile
         var profile = new UserSkillProfile
