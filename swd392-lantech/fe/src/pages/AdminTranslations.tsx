@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, Edit2, Trash2, Check, Globe } from 'lucide-react';
+import CustomSelect from '../components/CustomSelect';
 
 interface TranslationItem {
   id: string;
@@ -193,27 +194,27 @@ export default function AdminTranslations() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ngôn ngữ</label>
-                  <select
+                  <CustomSelect
                     value={editingItem.lang}
-                    onChange={(e) => setEditingItem({ ...editingItem, lang: e.target.value })}
-                    className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs"
-                  >
-                    <option value="Vietnamese">Vietnamese</option>
-                    <option value="Spanish">Spanish</option>
-                    <option value="Japanese">Japanese</option>
-                  </select>
+                    onChange={(val) => setEditingItem({ ...editingItem, lang: val })}
+                    options={[
+                      { value: "Vietnamese", label: "Vietnamese" },
+                      { value: "Spanish", label: "Spanish" },
+                      { value: "Japanese", label: "Japanese" },
+                    ]}
+                  />
                 </div>
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</label>
-                  <select
+                  <CustomSelect
                     value={editingItem.status}
-                    onChange={(e) => setEditingItem({ ...editingItem, status: e.target.value as 'Đã Duyệt' | 'Bản Nháp' })}
-                    className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs"
-                  >
-                    <option value="Đã Duyệt">Đã Duyệt</option>
-                    <option value="Bản Nháp">Bản Nháp</option>
-                  </select>
+                    onChange={(val) => setEditingItem({ ...editingItem, status: val as 'Đã Duyệt' | 'Bản Nháp' })}
+                    options={[
+                      { value: "Đã Duyệt", label: "Đã Duyệt" },
+                      { value: "Bản Nháp", label: "Bản Nháp" },
+                    ]}
+                  />
                 </div>
               </div>
             </div>

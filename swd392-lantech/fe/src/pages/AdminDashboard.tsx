@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
-import { Plus, Pencil, Trash2, Search, ShieldCheck, Users, BookOpen, HelpCircle, Award, BarChart2, TrendingUp, X, Loader2, Sparkles } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, ShieldCheck, Users, BookOpen, HelpCircle, Award, BarChart2, TrendingUp, X, Loader2, Sparkles, ChevronLeft, ChevronRight } from "lucide-react";
 import { adminService, AdminStatsDto, AdminUserDto, AdminLessonDto, AdminQuestionDto, AdminVocabularyDto, AdminBadgeDto, AdminPronunciationPhraseDto } from "../services/adminService";
 import { toast } from "sonner";
 import apiClient from "../api/apiClient";
 import { motion, AnimatePresence } from "motion/react";
+import CustomSelect from "../components/CustomSelect";
 
 type AdminSection = "overview" | "questions" | "lessons" | "vocabulary" | "users" | "badges" | "pronunciation";
 
@@ -97,6 +98,95 @@ export default function AdminDashboard() {
   const [isLoading, setIsLoading] = useState(false);
   const darkMode = useAppStore(state => state.darkMode);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 8;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeSection, search]);
+
+  const renderPagination = (totalPages: number, totalItems: number) => {
+    if (totalPages <= 1) return null;
+
+    const startItem = (currentPage - 1) * ITEMS_PER_PAGE + 1;
+    const endItem = Math.min(currentPage * ITEMS_PER_PAGE, totalItems);
+
+    const getPageNumbers = () => {
+      const pages: (number | string)[] = [];
+      if (totalPages <= 7) {
+        for (let i = 1; i <= totalPages; i++) pages.push(i);
+      } else {
+        if (currentPage <= 4) {
+          pages.push(1, 2, 3, 4, 5, "...", totalPages);
+        } else if (currentPage >= totalPages - 3) {
+          pages.push(1, "...", totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+        } else {
+          pages.push(1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages);
+        }
+      }
+      return pages;
+    };
+
+    return (
+      <div className="flex items-center justify-between px-6 py-4 border-t shrink-0" style={{ borderColor: "var(--border)", background: "var(--card)" }}>
+        <span style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 500 }}>
+          Hiển thị <span className="font-bold text-[var(--foreground)]">{startItem} - {endItem}</span> trong số <span className="font-bold text-[var(--foreground)]">{totalItems}</span> dòng
+        </span>
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+            className="w-8 h-8 rounded-xl border flex items-center justify-center cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            style={{ borderColor: "var(--border)", background: "transparent", color: "var(--foreground)" }}
+          >
+            <ChevronLeft size={14} />
+          </button>
+          
+          {getPageNumbers().map((p, idx) => {
+            if (p === "...") {
+              return (
+                <span key={`ell-${idx}`} className="w-8 h-8 flex items-center justify-center text-sm" style={{ color: "var(--muted-foreground)" }}>
+                  ...
+                </span>
+              );
+            }
+            const isCurrent = p === currentPage;
+            return (
+              <button
+                key={`page-${p}`}
+                type="button"
+                onClick={() => setCurrentPage(Number(p))}
+                className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-xs cursor-pointer transition-all duration-150 ${
+                  isCurrent
+                    ? "text-white shadow-sm"
+                    : "hover:bg-neutral-100 dark:hover:bg-neutral-800 border"
+                }`}
+                style={{
+                  background: isCurrent ? "var(--brand)" : "transparent",
+                  borderColor: isCurrent ? "var(--brand)" : "var(--border)",
+                  color: isCurrent ? "#ffffff" : "var(--foreground)",
+                }}
+              >
+                {p}
+              </button>
+            );
+          })}
+
+          <button
+            type="button"
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+            className="w-8 h-8 rounded-xl border flex items-center justify-center cursor-pointer transition-all duration-150 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-neutral-100 dark:hover:bg-neutral-800"
+            style={{ borderColor: "var(--border)", background: "transparent", color: "var(--foreground)" }}
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+    );
+  };
+
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add("dark");
@@ -133,6 +223,7 @@ export default function AdminDashboard() {
   const handleTabClick = (sectionId: AdminSection) => {
     setActiveSection(sectionId);
     setSearch("");
+    setCurrentPage(1);
     if (sectionId === "overview") {
       navigate("/ranger");
     } else if (sectionId === "lessons" || sectionId === "questions") {
@@ -914,392 +1005,454 @@ export default function AdminDashboard() {
 
     if (activeSection === "questions") {
       const filtered = questions.filter(q => q.text.toLowerCase().includes(search.toLowerCase()));
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      const paginatedQuestions = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["ID", "Nội dung câu hỏi", "Kỹ năng", "Trình độ", "Độ khó", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((q, i) => (
-                <tr key={q.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{q.id}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", maxWidth: 280 }}>{q.text}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="px-2.5 py-0.5 rounded-full" style={{ ...(SKILL_COLORS[q.skill] || SKILL_COLORS["Grammar"]), fontSize: 11.5, fontWeight: 700 }}>
-                      {translateSkill(q.skill)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[q.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{q.level}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span style={{ fontSize: 12.5, fontWeight: 700, color: q.difficulty === "Hard" ? "#dc2626" : q.difficulty === "Medium" ? "#d97706" : "#16a34a" }}>
-                      {translateDifficulty(q.difficulty)}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenEditQuestion(q)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeleteQuestion(q.id)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["ID", "Nội dung câu hỏi", "Kỹ năng", "Trình độ", "Độ khó", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy câu hỏi nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedQuestions.length > 0 ? paginatedQuestions.map((q, i) => (
+                  <tr key={q.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{q.id}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", maxWidth: 280 }}>{q.text}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded-full" style={{ ...(SKILL_COLORS[q.skill] || SKILL_COLORS["Grammar"]), fontSize: 11.5, fontWeight: 700 }}>
+                        {translateSkill(q.skill)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[q.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{q.level}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <span style={{ fontSize: 12.5, fontWeight: 700, color: q.difficulty === "Hard" ? "#dc2626" : q.difficulty === "Medium" ? "#d97706" : "#16a34a" }}>
+                        {translateDifficulty(q.difficulty)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleOpenEditQuestion(q)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeleteQuestion(q.id)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy câu hỏi nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, filtered.length)}
         </div>
       );
     }
 
     if (activeSection === "lessons") {
       const filtered = lessons.filter(l => l.title.toLowerCase().includes(search.toLowerCase()));
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      const paginatedLessons = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["STT", "Tiêu đề bài học", "Trình độ", "Bài tập", "Học viên", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((l, i) => (
-                <tr key={l.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)" }}>#{l.order}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", fontWeight: 600 }}>{l.title}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[l.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{l.level}</span>
-                  </td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>{l.exercises} bài tập</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-full overflow-hidden" style={{ width: 60, height: 5, background: "var(--muted)" }}>
-                        <div className="h-full rounded-full" style={{ width: `${Math.round((l.students / (stats?.totalUsers || 1)) * 100)}%`, background: "#ec4899" }} />
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["STT", "Tiêu đề bài học", "Trình độ", "Bài tập", "Học viên", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedLessons.length > 0 ? paginatedLessons.map((l, i) => (
+                  <tr key={l.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)" }}>#{l.order}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", fontWeight: 600 }}>{l.title}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[l.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{l.level}</span>
+                    </td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--muted-foreground)" }}>{l.exercises} bài tập</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <div className="rounded-full overflow-hidden" style={{ width: 60, height: 5, background: "var(--muted)" }}>
+                          <div className="h-full rounded-full" style={{ width: `${Math.round((l.students / (stats?.totalUsers || 1)) * 100)}%`, background: "#ec4899" }} />
+                        </div>
+                        <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--foreground)" }}>{l.students} học viên</span>
                       </div>
-                      <span style={{ fontSize: 12.5, fontWeight: 700, color: "var(--foreground)" }}>{l.students} học viên</span>
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenEditLesson(l)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeleteLesson(l.id)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
-                </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy bài học nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleOpenEditLesson(l)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeleteLesson(l.id)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy bài học nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, filtered.length)}
         </div>
       );
     }
 
     if (activeSection === "users") {
       const filtered = users.filter(u => u.username.toLowerCase().includes(search.toLowerCase()) || u.email.toLowerCase().includes(search.toLowerCase()));
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      const paginatedUsers = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["Tên đăng nhập", "Email", "XP", "Ngày tham gia", "Vai trò", "Trạng thái", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((u, i) => (
-                <tr key={u.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 13.5, color: "var(--foreground)" }}>{u.username}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{u.email}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>{u.xp.toLocaleString()}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>{u.joined}</td>
-                  <td className="px-5 py-3.5">
-                    <select
-                      value={u.role}
-                      onChange={e => handleUpdateRole(u.id, e.target.value)}
-                      className="px-2 py-1 rounded-lg outline-none cursor-pointer"
-                      style={{ border: "1.5px solid var(--border)", fontSize: 12.5, fontFamily: "var(--font-family)", background: "var(--background)", color: "var(--foreground)" }}
-                    >
-                      <option value="student" style={{ background: "var(--background)", color: "var(--foreground)" }}>Học viên</option>
-                      <option value="ranger" style={{ background: "var(--background)", color: "var(--foreground)" }}>Quản trị viên (Ranger)</option>
-                    </select>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <button
-                      onClick={() => handleUpdateStatus(u.id, u.status)}
-                      type="button"
-                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
-                      style={{
-                        background: u.status === "active" ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
-                        color: u.status === "active" ? "#22c55e" : "#ef4444",
-                        fontWeight: 700, fontSize: 12,
-                      }}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full" style={{ background: u.status === "active" ? "#22c55e" : "#ef4444" }} />
-                      {u.status === "active" ? "Hoạt động" : "Tạm khóa"}
-                    </button>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button 
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        type="button" 
-                        onClick={() => handleOpenEditUser(u)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button 
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        type="button" 
-                        onClick={() => handleDeleteUser(u.id)}
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["Tên đăng nhập", "Email", "XP", "Ngày tham gia", "Vai trò", "Trạng thái", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-400">Không tìm thấy người dùng nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedUsers.length > 0 ? paginatedUsers.map((u, i) => (
+                  <tr key={u.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 13.5, color: "var(--foreground)" }}>{u.username}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{u.email}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13, fontWeight: 700, color: "#f59e0b" }}>{u.xp.toLocaleString()}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>{u.joined}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="w-[170px]">
+                        <CustomSelect
+                          value={u.role}
+                          onChange={val => handleUpdateRole(u.id, val)}
+                          options={[
+                            { value: "student", label: "Học viên" },
+                            { value: "ranger", label: "Quản trị viên (Ranger)" }
+                          ]}
+                          className="!py-1 !px-2.5 !rounded-lg"
+                        />
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <button
+                        onClick={() => handleUpdateStatus(u.id, u.status)}
+                        type="button"
+                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-full cursor-pointer border-none outline-none"
+                        style={{
+                          background: u.status === "active" ? "rgba(34, 197, 94, 0.15)" : "rgba(239, 68, 68, 0.15)",
+                          color: u.status === "active" ? "#22c55e" : "#ef4444",
+                          fontWeight: 700, fontSize: 12,
+                        }}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full" style={{ background: u.status === "active" ? "#22c55e" : "#ef4444" }} />
+                        {u.status === "active" ? "Hoạt động" : "Tạm khóa"}
+                      </button>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button 
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          type="button" 
+                          onClick={() => handleOpenEditUser(u)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button 
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          type="button" 
+                          onClick={() => handleDeleteUser(u.id)}
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-slate-400">Không tìm thấy người dùng nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, filtered.length)}
         </div>
       );
     }
 
     if (activeSection === "vocabulary") {
       const filtered = vocabularies.filter(v => v.word.toLowerCase().includes(search.toLowerCase()));
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      const paginatedVocabularies = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["ID", "Từ vựng", "Phiên âm", "Trình độ", "Định nghĩa nghĩa", "Ngày thêm", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((v, i) => (
-                <tr key={v.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{v.id}</td>
-                  <td className="px-5 py-3.5" style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)" }}>{v.word}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "#1CB0F6", fontWeight: 600 }}>{v.phoneme}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[v.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{v.level}</span>
-                  </td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)", maxWidth: 200 }}>{v.definition}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{v.added}</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenEditVocabulary(v)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeleteVocabulary(v.id)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["ID", "Từ vựng", "Phiên âm", "Trình độ", "Định nghĩa nghĩa", "Ngày thêm", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={7} className="text-center py-10 text-slate-400">Không tìm thấy từ vựng nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedVocabularies.length > 0 ? paginatedVocabularies.map((v, i) => (
+                  <tr key={v.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{v.id}</td>
+                    <td className="px-5 py-3.5" style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)" }}>{v.word}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "#1CB0F6", fontWeight: 600 }}>{v.phoneme}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded-full" style={{ ...(LEVEL_COLORS[v.level] || LEVEL_COLORS["A1"]), fontSize: 11.5, fontWeight: 700 }}>{v.level}</span>
+                    </td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)", maxWidth: 200 }}>{v.definition}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)" }}>{v.added}</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleOpenEditVocabulary(v)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeleteVocabulary(v.id)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={7} className="text-center py-10 text-slate-400">Không tìm thấy từ vựng nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, filtered.length)}
         </div>
       );
     }
 
     if (activeSection === "badges") {
+      const totalPages = Math.ceil(badges.length / ITEMS_PER_PAGE);
+      const paginatedBadges = badges.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["ID", "Huy hiệu", "Mô tả", "Điều kiện nhận", "Số người đạt", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {badges.length > 0 ? badges.map((b, i) => (
-                <tr key={b.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{b.id}</td>
-                  <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 14, color: "var(--foreground)" }}>
-                    <span className="mr-2 text-lg select-none">{b.iconUrl || '🏅'}</span>
-                    {b.title}
-                    <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-slate-500 rounded font-mono font-bold uppercase select-none">{b.code}</span>
-                  </td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{b.description}</td>
-                  <td className="px-5 py-3.5">
-                    <span style={{ fontWeight: 700, fontSize: 12.5, color: "#f59e0b" }}>
-                      {b.conditionType?.toUpperCase() === 'XP' && `Tích lũy ${b.conditionValue} XP`}
-                      {b.conditionType?.toUpperCase() === 'STREAK' && `Học liên tục ${b.conditionValue} ngày`}
-                      {b.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `Hoàn thành ${b.conditionValue} bài học`}
-                      {b.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `Ôn tập ${b.conditionValue} flashcard`}
-                      {b.conditionType?.toUpperCase() === 'PERFECTLESSON' && `Đạt 100% ${b.conditionValue} bài học`}
-                      {b.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `Làm ${b.conditionValue} bài đánh giá`}
-                      {b.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `Tự chọn trình độ đầu vào`}
-                      {!['XP', 'STREAK', 'LESSONCOMPLETED', 'FLASHCARDREVIEWED', 'PERFECTLESSON', 'ASSESSMENTCOMPLETED', 'SELFLEVELSELECTED'].includes(b.conditionType?.toUpperCase() || '') && `${b.conditionType}: ${b.conditionValue}`}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13, fontWeight: 700, color: "#6366f1" }}>{b.holders} học viên</td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenEditBadge(b)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeleteBadge(b.id)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["ID", "Huy hiệu", "Mô tả", "Điều kiện nhận", "Số người đạt", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy huy hiệu nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedBadges.length > 0 ? paginatedBadges.map((b, i) => (
+                  <tr key={b.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12, color: "var(--muted-foreground)", fontWeight: 600 }}>{b.id}</td>
+                    <td className="px-5 py-3.5" style={{ fontWeight: 700, fontSize: 14, color: "var(--foreground)" }}>
+                      <span className="mr-2 text-lg select-none">{b.iconUrl || '🏅'}</span>
+                      {b.title}
+                      <span className="ml-2 text-[10px] px-1.5 py-0.5 bg-neutral-200 dark:bg-neutral-800 text-slate-500 rounded font-mono font-bold uppercase select-none">{b.code}</span>
+                    </td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13, color: "var(--muted-foreground)" }}>{b.description}</td>
+                    <td className="px-5 py-3.5">
+                      <span style={{ fontWeight: 700, fontSize: 12.5, color: "#f59e0b" }}>
+                        {b.conditionType?.toUpperCase() === 'XP' && `Tích lũy ${b.conditionValue} XP`}
+                        {b.conditionType?.toUpperCase() === 'STREAK' && `Học liên tục ${b.conditionValue} ngày`}
+                        {b.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `Hoàn thành ${b.conditionValue} bài học`}
+                        {b.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `Ôn tập ${b.conditionValue} flashcard`}
+                        {b.conditionType?.toUpperCase() === 'PERFECTLESSON' && `Đạt 100% ${b.conditionValue} bài học`}
+                        {b.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `Làm ${b.conditionValue} bài đánh giá`}
+                        {b.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `Tự chọn trình độ đầu vào`}
+                        {!['XP', 'STREAK', 'LESSONCOMPLETED', 'FLASHCARDREVIEWED', 'PERFECTLESSON', 'ASSESSMENTCOMPLETED', 'SELFLEVELSELECTED'].includes(b.conditionType?.toUpperCase() || '') && `${b.conditionType}: ${b.conditionValue}`}
+                      </span>
+                    </td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13, fontWeight: 700, color: "#6366f1" }}>{b.holders} học viên</td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleOpenEditBadge(b)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeleteBadge(b.id)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={6} className="text-center py-10 text-slate-400">Không tìm thấy huy hiệu nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, badges.length)}
         </div>
       );
     }
 
     if (activeSection === "pronunciation") {
       const filtered = phrases.filter(p => p.text.toLowerCase().includes(search.toLowerCase()) || p.category.toLowerCase().includes(search.toLowerCase()));
+      const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
+      const paginatedPhrases = filtered.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
       return (
-        <div className="overflow-x-auto text-left">
-          <table className="w-full">
-            <thead>
-              <tr style={{ background: "var(--muted)" }}>
-                {["Cụm từ", "Phiên âm", "Chủ đề", "Thẻ (Tags)", "Thao tác"].map(h => (
-                  <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {filtered.length > 0 ? filtered.map((p, i) => (
-                <tr key={p.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
-                  <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", fontWeight: 600 }}>{p.text}</td>
-                  <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "#1CB0F6", fontWeight: 600 }}>{p.phonetic}</td>
-                  <td className="px-5 py-3.5">
-                    <span className="px-2.5 py-0.5 rounded-full" style={{ background: darkMode ? "rgba(28, 176, 246, 0.15)" : "#e0f2fe", color: "#1cb0f6", fontSize: 11.5, fontWeight: 700 }}>{p.category}</span>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex flex-wrap gap-1">
-                      {p.tags.map(tag => (
-                        <span key={tag} className="px-1.5 py-0.5 text-[10px] font-semibold rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{tag}</span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <div className="flex items-center gap-2">
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleOpenEditPhrase(p)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
-                      >
-                        <Pencil size={12} />
-                      </motion.button>
-                      <motion.button
-                        whileHover={{ scale: 1.1 }}
-                        whileTap={{ scale: 0.9 }}
-                        onClick={() => handleDeletePhrase(p.id!)}
-                        type="button"
-                        className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
-                      >
-                        <Trash2 size={12} />
-                      </motion.button>
-                    </div>
-                  </td>
+        <div className="flex flex-col text-left flex-1 justify-between">
+          <div className="overflow-x-auto w-full flex-1" style={{ minHeight: "440px" }}>
+            <table className="w-full">
+              <thead>
+                <tr style={{ background: "var(--muted)" }}>
+                  {["Cụm từ", "Phiên âm", "Chủ đề", "Thẻ (Tags)", "Thao tác"].map(h => (
+                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                  ))}
                 </tr>
-              )) : (
-                <tr>
-                  <td colSpan={5} className="text-center py-10 text-slate-400">Không tìm thấy cụm từ nào</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <motion.tbody
+                key={currentPage}
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.18, ease: "easeOut" }}
+              >
+                {paginatedPhrases.length > 0 ? paginatedPhrases.map((p, i) => (
+                  <tr key={p.id} style={{ background: i % 2 === 0 ? "var(--card)" : "var(--background)", borderTop: "1px solid var(--border)" }}>
+                    <td className="px-5 py-3.5" style={{ fontSize: 13.5, color: "var(--foreground)", fontWeight: 600 }}>{p.text}</td>
+                    <td className="px-5 py-3.5" style={{ fontSize: 12.5, color: "#1CB0F6", fontWeight: 600 }}>{p.phonetic}</td>
+                    <td className="px-5 py-3.5">
+                      <span className="px-2.5 py-0.5 rounded-full" style={{ background: darkMode ? "rgba(28, 176, 246, 0.15)" : "#e0f2fe", color: "#1cb0f6", fontSize: 11.5, fontWeight: 700 }}>{p.category}</span>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex flex-wrap gap-1">
+                        {p.tags.map(tag => (
+                          <span key={tag} className="px-1.5 py-0.5 text-[10px] font-semibold rounded" style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}>{tag}</span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-5 py-3.5">
+                      <div className="flex items-center gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleOpenEditPhrase(p)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-blue-50/80 dark:bg-blue-950/40 hover:bg-blue-500 hover:text-white text-[#3b82f6]"
+                        >
+                          <Pencil size={12} />
+                        </motion.button>
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => handleDeletePhrase(p.id!)}
+                          type="button"
+                          className="w-7 h-7 rounded-lg flex items-center justify-center cursor-pointer border-none transition-all duration-200 bg-red-50/80 dark:bg-red-950/40 hover:bg-red-500 hover:text-white text-[#dc2626]"
+                        >
+                          <Trash2 size={12} />
+                        </motion.button>
+                      </div>
+                    </td>
+                  </tr>
+                )) : (
+                  <tr>
+                    <td colSpan={5} className="text-center py-10 text-slate-400">Không tìm thấy cụm từ nào</td>
+                  </tr>
+                )}
+              </motion.tbody>
+            </table>
+          </div>
+          {renderPagination(totalPages, filtered.length)}
         </div>
       );
     }
@@ -1423,15 +1576,7 @@ export default function AdminDashboard() {
         </AnimatePresence>
       </div>
 
-      {/* Pagination */}
-      {activeSection !== "overview" && (
-        <div className="flex items-center justify-between px-8 py-4 shrink-0 bg-transparent">
-          <span style={{ fontSize: 12.5, color: "var(--muted-foreground)" }}>Đang hiển thị tất cả các dòng</span>
-          <div className="flex gap-1">
-            <button type="button" className="w-8 h-8 rounded-lg cursor-pointer border-none outline-none font-bold text-white shadow-sm flex items-center justify-center text-xs" style={{ background: "#ec4899" }}>1</button>
-          </div>
-        </div>
-      )}
+      {/* Pagination rendering inside table panels */}
 
       {/* Add modal */}
       {showAddModal && (
@@ -1521,27 +1666,25 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Trình độ CEFR</label>
-                    <select
+                    <CustomSelect
                       value={lessonForm.cefrLevel}
-                      onChange={e => setLessonForm(prev => ({ ...prev, cefrLevel: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                    </select>
+                      onChange={val => setLessonForm(prev => ({ ...prev, cefrLevel: val }))}
+                      options={["A1", "A2", "B1", "B2", "C1", "C2"]}
+                    />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Kỹ năng</label>
-                    <select
+                    <CustomSelect
                       value={lessonForm.skill}
-                      onChange={e => setLessonForm(prev => ({ ...prev, skill: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {[["Reading", "Đọc"], ["Listening", "Nghe"], ["Speaking", "Nói"], ["Writing", "Viết"], ["Grammar", "Ngữ pháp"]].map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
+                      onChange={val => setLessonForm(prev => ({ ...prev, skill: val }))}
+                      options={[
+                        ["Reading", "Đọc"],
+                        ["Listening", "Nghe"],
+                        ["Speaking", "Nói"],
+                        ["Writing", "Viết"],
+                        ["Grammar", "Ngữ pháp"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
@@ -1645,28 +1788,28 @@ export default function AdminDashboard() {
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Từ loại</label>
-                    <select
+                    <CustomSelect
                       value={vocabForm.partOfSpeech}
-                      onChange={e => setVocabForm(prev => ({ ...prev, partOfSpeech: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {[["Noun", "Danh từ"], ["Verb", "Động từ"], ["Adjective", "Tính từ"], ["Adverb", "Trạng từ"], ["Pronoun", "Đại từ"], ["Preposition", "Giới từ"], ["Conjunction", "Liên từ"]].map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
+                      onChange={val => setVocabForm(prev => ({ ...prev, partOfSpeech: val }))}
+                      options={[
+                        ["Noun", "Danh từ"],
+                        ["Verb", "Động từ"],
+                        ["Adjective", "Tính từ"],
+                        ["Adverb", "Trạng từ"],
+                        ["Pronoun", "Đại từ"],
+                        ["Preposition", "Giới từ"],
+                        ["Conjunction", "Liên từ"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Trình độ CEFR</label>
-                  <select
+                  <CustomSelect
                     value={vocabForm.cefrLevel}
-                    onChange={e => setVocabForm(prev => ({ ...prev, cefrLevel: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    {["A1", "A2", "B1", "B2", "C1", "C2"].map(lvl => <option key={lvl} value={lvl}>{lvl}</option>)}
-                  </select>
+                    onChange={val => setVocabForm(prev => ({ ...prev, cefrLevel: val }))}
+                    options={["A1", "A2", "B1", "B2", "C1", "C2"]}
+                  />
                 </div>
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Nghĩa (Bản dịch Tiếng Việt)</label>
@@ -1696,43 +1839,40 @@ export default function AdminDashboard() {
               <div className="flex flex-col gap-4">
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Chọn bài học</label>
-                  <select
+                  <CustomSelect
                     value={questionForm.lessonId}
-                    onChange={e => setQuestionForm(prev => ({ ...prev, lessonId: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    <option value="">-- Chọn một bài học --</option>
-                    {lessons.map(l => <option key={l.id} value={l.id}>{l.title} ({l.level})</option>)}
-                  </select>
+                    onChange={val => setQuestionForm(prev => ({ ...prev, lessonId: val }))}
+                    options={[
+                      { value: "", label: "-- Chọn một bài học --" },
+                      ...lessons.map(l => ({ value: l.id, label: `${l.title} (${l.level})` }))
+                    ]}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Loại câu hỏi</label>
-                    <select
+                    <CustomSelect
                       value={questionForm.type}
-                      onChange={e => setQuestionForm(prev => ({ ...prev, type: e.target.value }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      <option value="MultipleChoice">Trắc nghiệm (MCQ)</option>
-                      <option value="FillInTheBlank">Điền vào chỗ trống</option>
-                      <option value="TrueFalse">Đúng hoặc Sai</option>
-                      <option value="TextResponse">Tự luận ngắn</option>
-                    </select>
+                      onChange={val => setQuestionForm(prev => ({ ...prev, type: val }))}
+                      options={[
+                        ["MultipleChoice", "Trắc nghiệm (MCQ)"],
+                        ["FillInTheBlank", "Điền vào chỗ trống"],
+                        ["TrueFalse", "Đúng hoặc Sai"],
+                        ["TextResponse", "Tự luận ngắn"]
+                      ]}
+                    />
                   </div>
                   <div>
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Độ khó</label>
-                    <select
-                      value={questionForm.difficulty}
-                      onChange={e => setQuestionForm(prev => ({ ...prev, difficulty: Number(e.target.value) }))}
-                      className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, fontFamily: "var(--font-family)", color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      <option value={1}>Dễ</option>
-                      <option value={2}>Trung bình</option>
-                      <option value={3}>Khó</option>
-                    </select>
+                    <CustomSelect
+                      value={String(questionForm.difficulty)}
+                      onChange={val => setQuestionForm(prev => ({ ...prev, difficulty: Number(val) }))}
+                      options={[
+                        ["1", "Dễ"],
+                        ["2", "Trung bình"],
+                        ["3", "Khó"]
+                      ]}
+                    />
                   </div>
                 </div>
                 <div>
@@ -1817,16 +1957,11 @@ export default function AdminDashboard() {
                 <div className="grid grid-cols-3 gap-3 items-end">
                   <div className="col-span-1">
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Biểu tượng</label>
-                    <select
+                    <CustomSelect
                       value={badgeForm.iconUrl}
-                      onChange={e => setBadgeForm(prev => ({ ...prev, iconUrl: e.target.value }))}
-                      className="w-full px-3 py-2.5 rounded-xl outline-none cursor-pointer"
-                      style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
-                    >
-                      {["🏅", "🔥", "🎓", "⚡", "🏆", "🌟", "📚", "🧠", "👑", "🎯", "🛡️", "⚔️"].map(emoji => (
-                        <option key={emoji} value={emoji}>{emoji}</option>
-                      ))}
-                    </select>
+                      onChange={val => setBadgeForm(prev => ({ ...prev, iconUrl: val }))}
+                      options={["🏅", "🔥", "🎓", "⚡", "🏆", "🌟", "📚", "🧠", "👑", "🎯", "🛡️", "⚔️"]}
+                    />
                   </div>
                   <div className="col-span-2">
                     <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Hoặc tự nhập emoji/URL</label>
@@ -1877,20 +2012,19 @@ export default function AdminDashboard() {
 
                 <div>
                   <label style={{ fontSize: 12, fontWeight: 700, color: "var(--muted-foreground)", display: "block", marginBottom: 6 }}>Loại điều kiện đạt</label>
-                  <select
+                  <CustomSelect
                     value={badgeForm.conditionType}
-                    onChange={e => setBadgeForm(prev => ({ ...prev, conditionType: e.target.value }))}
-                    className="w-full px-4 py-2.5 rounded-xl outline-none cursor-pointer"
-                    style={{ border: "2px solid var(--border)", fontSize: 13.5, color: "var(--foreground)", background: "var(--background)" }}
-                  >
-                    <option value="XP">Tích lũy XP (XP)</option>
-                    <option value="STREAK">Chuỗi ngày liên tục (STREAK)</option>
-                    <option value="LESSONCOMPLETED">Hoàn thành bài học (LESSONCOMPLETED)</option>
-                    <option value="FLASHCARDREVIEWED">Ôn tập Flashcard (FLASHCARDREVIEWED)</option>
-                    <option value="PERFECTLESSON">Đạt 100% điểm bài học (PERFECTLESSON)</option>
-                    <option value="ASSESSMENTCOMPLETED">Làm bài đánh giá (ASSESSMENTCOMPLETED)</option>
-                    <option value="SELFLEVELSELECTED">Tự chọn trình độ đầu vào (SELFLEVELSELECTED)</option>
-                  </select>
+                    onChange={val => setBadgeForm(prev => ({ ...prev, conditionType: val }))}
+                    options={[
+                      ["XP", "Tích lũy XP (XP)"],
+                      ["STREAK", "Chuỗi ngày liên tục (STREAK)"],
+                      ["LESSONCOMPLETED", "Hoàn thành bài học (LESSONCOMPLETED)"],
+                      ["FLASHCARDREVIEWED", "Ôn tập Flashcard (FLASHCARDREVIEWED)"],
+                      ["PERFECTLESSON", "Đạt 100% điểm bài học (PERFECTLESSON)"],
+                      ["ASSESSMENTCOMPLETED", "Làm bài đánh giá (ASSESSMENTCOMPLETED)"],
+                      ["SELFLEVELSELECTED", "Tự chọn trình độ đầu vào (SELFLEVELSELECTED)"]
+                    ]}
+                  />
                 </div>
 
                 {badgeForm.conditionType !== "SELFLEVELSELECTED" && (

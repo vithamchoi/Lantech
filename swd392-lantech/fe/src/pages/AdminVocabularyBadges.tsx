@@ -4,6 +4,7 @@ import { ArrowLeft, Award, BookOpen, Plus, Edit2, Trash2, Check, Sparkles, Loade
 import { adminService, AdminVocabularyDto, AdminBadgeDto } from '../services/adminService';
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
+import CustomSelect from '../components/CustomSelect';
 
 export default function AdminVocabularyBadges() {
   const navigate = useNavigate();
@@ -435,16 +436,16 @@ export default function AdminVocabularyBadges() {
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phân loại CEFR</label>
-                <select
+                <CustomSelect
                   value={editingVocab.level}
-                  onChange={(e) => setEditingVocab({ ...editingVocab, level: e.target.value })}
-                  className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs"
-                >
-                  <option value="A1">A1</option>
-                  <option value="A2">A2</option>
-                  <option value="B1">B1</option>
-                  <option value="B2">B2</option>
-                </select>
+                  onChange={(val) => setEditingVocab({ ...editingVocab, level: val })}
+                  options={[
+                    { value: "A1", label: "A1" },
+                    { value: "A2", label: "A2" },
+                    { value: "B1", label: "B1" },
+                    { value: "B2", label: "B2" },
+                  ]}
+                />
               </div>
             </div>
 
@@ -529,19 +530,19 @@ export default function AdminVocabularyBadges() {
 
                 <div className="space-y-1">
                   <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loại Điều Kiện</label>
-                  <select
+                  <CustomSelect
                     value={editingBadge.conditionType}
-                    onChange={(e) => setEditingBadge({ ...editingBadge, conditionType: e.target.value })}
-                    className="w-full px-3 py-2 bg-cream-50 border border-sage rounded-control text-xs h-[38px] font-semibold"
-                  >
-                    <option value="XP">Tích Lũy XP</option>
-                    <option value="STREAK">Học Liên Tục (Streak)</option>
-                    <option value="LESSONCOMPLETED">Hoàn Thành Bài Học</option>
-                    <option value="FLASHCARDREVIEWED">Ôn Tập Flashcard</option>
-                    <option value="PERFECTLESSON">Bài Học Đạt 100%</option>
-                    <option value="ASSESSMENTCOMPLETED">Làm Bài Khảo Sát</option>
-                    <option value="SELFLEVELSELECTED">Đã Chọn Trình Độ</option>
-                  </select>
+                    onChange={(val) => setEditingBadge({ ...editingBadge, conditionType: val })}
+                    options={[
+                      { value: "XP", label: "Tích Lũy XP" },
+                      { value: "STREAK", label: "Học Liên Tục (Streak)" },
+                      { value: "LESSONCOMPLETED", label: "Hoàn Thành Bài Học" },
+                      { value: "FLASHCARDREVIEWED", label: "Ôn Tập Flashcard" },
+                      { value: "PERFECTLESSON", label: "Bài Học Đạt 100%" },
+                      { value: "ASSESSMENTCOMPLETED", label: "Làm Bài Khảo Sát" },
+                      { value: "SELFLEVELSELECTED", label: "Đã Chọn Trình Độ" },
+                    ]}
+                  />
                 </div>
               </div>
 
