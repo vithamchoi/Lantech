@@ -1183,8 +1183,8 @@ export default function AdminDashboard() {
                           value={u.role}
                           onChange={val => handleUpdateRole(u.id, val)}
                           options={[
-                            { value: "student", label: "Học viên" },
-                            { value: "ranger", label: "Quản trị viên (Ranger)" }
+                            { value: "user", label: "Học viên" },
+                            { value: "admin", label: "Quản trị viên (Ranger)" }
                           ]}
                           className="!py-1 !px-2.5 !rounded-lg"
                         />

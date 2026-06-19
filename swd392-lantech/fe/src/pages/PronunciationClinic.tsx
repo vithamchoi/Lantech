@@ -880,6 +880,7 @@ export default function PronunciationClinic() {
                       onClick={() => { setSelectedPhrase(null); setFeedback(null); setRecordingDone(false); }}
                       type="button"
                       className="flex-1 py-3.5 rounded-2xl cursor-pointer font-bold text-white text-base btn-3d"
+                      style={{ background: "var(--brand)" }}
                     >
                       {t("practiceAnother")}
                     </motion.button>

@@ -6,13 +6,10 @@ import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
 
-const CEFR_TABS = ["All", "A1", "A2", "B1", "B2", "C1", "C2"] as const;
-type CefrTab = typeof CEFR_TABS[number];
-
 export default function VocabularyList() {
   const { t } = useTranslation();
   const [query, setQuery] = useState("");
-  const [activeTab, setActiveTab] = useState<CefrTab>("All");
+  const [activeTab, setActiveTab] = useState<string>("All");
   const [vocabularies, setVocabularies] = useState<VocabularyDto[]>([]);
   const [selectedWord, setSelectedWord] = useState<VocabularyDto | null>(null);
   const [isPanelOpen, setIsPanelOpen] = useState(false);
@@ -30,7 +27,7 @@ export default function VocabularyList() {
       setIsLoading(true);
       try {
         const [vocabData, flashcardsData] = await Promise.all([
-          vocabularyService.getVocabularies(activeTab, query),
+          vocabularyService.getVocabularies(undefined, query),
           flashcardService.getFlashcards()
         ]);
         
@@ -53,7 +50,22 @@ export default function VocabularyList() {
 
     const timer = setTimeout(fetchVocabsAndFlashcards, 300); // Debounce search
     return () => clearTimeout(timer);
-  }, [activeTab, query]);
+  }, [query]);
+
+  // Dynamically extract unique tags from loaded vocabularies
+  const tagsTabs = React.useMemo(() => {
+    const tagsSet = new Set<string>();
+    vocabularies.forEach(v => {
+      v.tags?.forEach(t => tagsSet.add(t));
+    });
+    return ["All", ...Array.from(tagsSet)];
+  }, [vocabularies]);
+
+  useEffect(() => {
+    if (activeTab !== "All" && !tagsTabs.includes(activeTab)) {
+      setActiveTab("All");
+    }
+  }, [tagsTabs, activeTab]);
 
   const toggleDeck = async (id: string) => {
     if (isTogglingDeck[id]) return;
@@ -117,7 +129,9 @@ export default function VocabularyList() {
     setSelectedWord(word);
   };
 
-  const filtered = vocabularies;
+  const filtered = activeTab === "All"
+    ? vocabularies
+    : vocabularies.filter(v => v.tags?.includes(activeTab));
 
   return (
     <div className="flex h-full min-h-screen text-left" style={{ fontFamily: "var(--font-family)", background: "var(--background)", overflowX: "hidden" }}>
@@ -158,7 +172,7 @@ export default function VocabularyList() {
 
         {/* CEFR tabs */}
         <div className="flex gap-2 mb-6 overflow-x-auto relative">
-          {CEFR_TABS.map(tab => {
+          {tagsTabs.map(tab => {
             const isActive = activeTab === tab;
             return (
               <motion.button
@@ -167,8 +181,8 @@ export default function VocabularyList() {
                 whileTap={{ scale: 0.95 }}
                 onClick={() => setActiveTab(tab)}
                 type="button"
-                className={`px-4 py-1.5 rounded-full cursor-pointer shrink-0 relative outline-none border text-xs font-bold transition-all duration-200 ${
-                  isActive ? "text-white border-transparent" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60 border-solid"
+                className={`px-4 py-1.5 rounded-full cursor-pointer shrink-0 relative z-0 outline-none border text-xs font-bold transition-all duration-200 ${
+                  isActive ? "text-white border-transparent" : "bg-neutral-100 dark:bg-neutral-800/50 hover:bg-neutral-200 dark:hover:bg-neutral-700/60 border-solid text-slate-700 dark:text-neutral-300"
                 }`}
                 style={{
                   background: "transparent",
@@ -218,18 +232,15 @@ export default function VocabularyList() {
                       <div className="font-extrabold text-[17px] text-slate-800 dark:text-neutral-100">{word.word}</div>
                       <div style={{ fontSize: 12, color: "#1CB0F6", fontWeight: 600, marginTop: 2 }}>{word.ipa}</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="px-2.5 py-0.5 rounded-full"
-                        style={{ background: "#e0f2fe", color: "#0369a1", fontSize: 11, fontWeight: 700 }}
-                      >
-                        {word.cefrLevel}
-                      </span>
-                    </div>
                   </div>
                   <p className="text-[12.5px] text-slate-600 dark:text-neutral-300 leading-relaxed mb-3">{word.definition}</p>
                   <div className="flex items-center justify-between" onClick={e => e.stopPropagation()}>
-                    <div className="flex gap-1.5">
+                    <div className="flex gap-1.5 flex-wrap">
+                      <span
+                        className="px-2 py-0.5 rounded-full text-[10.5px] font-bold text-sky-700 bg-sky-100 dark:text-sky-300 dark:bg-sky-950/40"
+                      >
+                        {word.cefrLevel}
+                      </span>
                       {word.tags?.map(tag => (
                         <span
                           key={tag}
