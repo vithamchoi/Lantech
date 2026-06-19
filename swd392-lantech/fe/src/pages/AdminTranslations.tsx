@@ -197,7 +197,11 @@ export default function AdminTranslations() {
                   <CustomSelect
                     value={editingItem.lang}
                     onChange={(val) => setEditingItem({ ...editingItem, lang: val })}
-                    options={["Vietnamese", "Spanish", "Japanese"]}
+                    options={[
+                      { value: "Vietnamese", label: "Vietnamese" },
+                      { value: "Spanish", label: "Spanish" },
+                      { value: "Japanese", label: "Japanese" },
+                    ]}
                   />
                 </div>
 
@@ -207,8 +211,8 @@ export default function AdminTranslations() {
                     value={editingItem.status}
                     onChange={(val) => setEditingItem({ ...editingItem, status: val as 'Đã Duyệt' | 'Bản Nháp' })}
                     options={[
-                      ["Đã Duyệt", "Đã Duyệt"],
-                      ["Bản Nháp", "Bản Nháp"]
+                      { value: "Đã Duyệt", label: "Đã Duyệt" },
+                      { value: "Bản Nháp", label: "Bản Nháp" },
                     ]}
                   />
                 </div>

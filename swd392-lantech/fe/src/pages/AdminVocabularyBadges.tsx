@@ -439,7 +439,12 @@ export default function AdminVocabularyBadges() {
                 <CustomSelect
                   value={editingVocab.level}
                   onChange={(val) => setEditingVocab({ ...editingVocab, level: val })}
-                  options={["A1", "A2", "B1", "B2"]}
+                  options={[
+                    { value: "A1", label: "A1" },
+                    { value: "A2", label: "A2" },
+                    { value: "B1", label: "B1" },
+                    { value: "B2", label: "B2" },
+                  ]}
                 />
               </div>
             </div>
@@ -529,13 +534,13 @@ export default function AdminVocabularyBadges() {
                     value={editingBadge.conditionType}
                     onChange={(val) => setEditingBadge({ ...editingBadge, conditionType: val })}
                     options={[
-                      ["XP", "Tích Lũy XP"],
-                      ["STREAK", "Học Liên Tục (Streak)"],
-                      ["LESSONCOMPLETED", "Hoàn Thành Bài Học"],
-                      ["FLASHCARDREVIEWED", "Ôn Tập Flashcard"],
-                      ["PERFECTLESSON", "Bài Học Đạt 100%"],
-                      ["ASSESSMENTCOMPLETED", "Làm Bài Khảo Sát"],
-                      ["SELFLEVELSELECTED", "Đã Chọn Trình Độ"]
+                      { value: "XP", label: "Tích Lũy XP" },
+                      { value: "STREAK", label: "Học Liên Tục (Streak)" },
+                      { value: "LESSONCOMPLETED", label: "Hoàn Thành Bài Học" },
+                      { value: "FLASHCARDREVIEWED", label: "Ôn Tập Flashcard" },
+                      { value: "PERFECTLESSON", label: "Bài Học Đạt 100%" },
+                      { value: "ASSESSMENTCOMPLETED", label: "Làm Bài Khảo Sát" },
+                      { value: "SELFLEVELSELECTED", label: "Đã Chọn Trình Độ" },
                     ]}
                   />
                 </div>
