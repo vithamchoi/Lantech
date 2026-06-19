@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
-import { Sun, Moon, Globe, ChevronDown, Check } from "lucide-react";
+import { Sun, Moon, Globe, ChevronDown, Check, Map, Layers, Bot, Mic } from "lucide-react";
+import heroMascot from "../assets/hero-mascot.png";
 
 export default function LandingPage() {
   const navigate = useNavigate();
@@ -30,46 +31,55 @@ export default function LandingPage() {
 
   return (
     <div
-      className="min-h-screen w-full flex flex-col transition-colors duration-300 relative overflow-x-hidden"
+      className="min-h-screen w-full flex flex-col bg-[#fbfbf7] dark:bg-background transition-colors duration-300 relative overflow-x-hidden"
       style={{
-        background: "var(--background)",
         fontFamily: "var(--font-family)",
       }}
     >
-      {/* Decorative blurred backgrounds */}
-      <div className="absolute top-20 left-1/4 w-80 h-80 rounded-full bg-brand/10 blur-[100px] pointer-events-none z-0" />
-      <div className="absolute top-1/2 right-1/4 w-96 h-96 rounded-full bg-sky-500/10 blur-[120px] pointer-events-none z-0" />
-
-      {/* Top nav */}
-      <nav className="flex items-center justify-between px-6 sm:px-12 py-5 backdrop-blur-md sticky top-0 z-40 border-b border-border bg-background/80">
-        <div className="flex items-center gap-3">
-          <div
-            className="w-10 h-10 rounded-xl flex items-center justify-center shadow-lg transition-transform hover:rotate-12 duration-300"
-            style={{ background: "var(--brand)" }}
-          >
-            <span style={{ fontSize: 22 }}>🌱</span>
+      {/* Top Navbar */}
+      <nav className="header bg-[#fbfbf7] dark:bg-background z-40 relative w-full max-w-[1320px] mx-auto px-8 h-[86px] flex items-center justify-between">
+        {/* Logo */}
+        <div className="logo cursor-pointer flex items-center gap-3 flex-shrink-0" onClick={() => navigate("/")}>
+          <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-[#45d300] shadow-sm transition-transform hover:rotate-12 duration-300">
+            <span className="text-2xl">🌱</span>
           </div>
-          <div className="flex flex-col text-left">
-            <span className="font-extrabold text-xl tracking-tight leading-none text-foreground">
-              Lantech <span style={{ color: "var(--brand)" }}>English</span>
-            </span>
-            <span className="text-[10px] text-muted-foreground font-bold tracking-widest uppercase mt-1">Language Orchard</span>
-          </div>
+          <span className="logo-text text-[#101827] dark:text-foreground font-black text-2xl whitespace-nowrap">
+            Lantech <span className="text-[#45d300]">English</span>
+          </span>
         </div>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        {/* Navigation Links */}
+        <div className="hidden lg:flex items-center gap-7 nav mx-auto">
+          {[
+            { label: t("navDashboard") || "Bảng điều khiển", id: "features" },
+            { label: "Cách hoạt động", id: "how-it-works" },
+            { label: "Bảng giá", id: "pricing" },
+            { label: "Về chúng tôi", id: "about-us" }
+          ].map((link) => (
+            <a
+              key={link.id}
+              href={`#${link.id}`}
+              className="nav-link text-[#6b7280] dark:text-muted-foreground hover:text-[#45d300] font-bold text-base transition-colors whitespace-nowrap"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+
+        {/* Action Buttons, Lang Dropdown & Theme Toggle */}
+        <div className="flex items-center gap-3 sm:gap-4 flex-shrink-0">
           {/* Light/Dark Toggle */}
           <motion.button
             whileHover={{ scale: 1.08 }}
             whileTap={{ scale: 0.95 }}
             onClick={toggleDarkMode}
-            className="p-2.5 rounded-xl cursor-pointer border border-border bg-card text-foreground hover:bg-muted transition-colors outline-none shadow-sm flex items-center justify-center"
+            className="p-2.5 rounded-xl cursor-pointer border border-[#dfe3ea] bg-white text-[#101827] dark:bg-card dark:text-foreground hover:bg-gray-50 transition-colors outline-none shadow-sm flex items-center justify-center"
             title={darkMode ? t("lightModeTitle") : t("darkModeTitle")}
           >
             {darkMode ? (
-              <Sun className="w-4.5 h-4.5 text-brand-gold animate-pulse" />
+              <Sun className="w-4.5 h-4.5 text-yellow-500 animate-pulse" />
             ) : (
-              <Moon className="w-4.5 h-4.5 text-brand-purple" />
+              <Moon className="w-4.5 h-4.5 text-[#101827]" />
             )}
           </motion.button>
 
@@ -79,9 +89,9 @@ export default function LandingPage() {
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               onClick={() => setIsLangDropdownOpen(!isLangDropdownOpen)}
-              className="px-3.5 py-2.5 rounded-xl cursor-pointer border border-border bg-card text-foreground hover:bg-muted transition-all outline-none shadow-sm flex items-center gap-2 font-bold text-xs"
+              className="px-3.5 py-2.5 rounded-xl cursor-pointer border border-[#dfe3ea] bg-white text-[#101827] dark:bg-card dark:text-foreground hover:bg-gray-50 transition-all outline-none shadow-sm flex items-center gap-2 font-bold text-xs"
             >
-              <Globe className="w-4 h-4 text-muted-foreground" />
+              <Globe className="w-4 h-4 text-[#6b7280]" />
               <span>{currentLangObj.flag}</span>
               <span className="hidden md:inline">{currentLangObj.label}</span>
               <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
@@ -106,7 +116,7 @@ export default function LandingPage() {
                         }}
                         className={`w-full px-3 py-2 rounded-lg cursor-pointer border-none text-left flex items-center justify-between text-xs font-bold transition-colors ${
                           language === langItem.code
-                            ? "bg-brand/10 text-brand-dark dark:text-brand"
+                            ? "bg-brand/10 text-[#45d300] dark:text-[#45d300]"
                             : "bg-transparent text-foreground hover:bg-muted"
                         }`}
                       >
@@ -123,233 +133,171 @@ export default function LandingPage() {
             </AnimatePresence>
           </div>
 
-          <div className="h-6 w-px bg-border hidden sm:block" />
+          <div className="h-6 w-px bg-[#dfe3ea] hidden sm:block" />
 
+          {/* Sign In Button */}
           <motion.button
             onClick={() => handleEnterAuth("login")}
             whileHover={{ 
               scale: 1.05, 
-              backgroundColor: "rgba(88, 204, 2, 0.08)"
+              backgroundColor: "rgba(0, 0, 0, 0.02)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2.5 rounded-xl cursor-pointer border outline-none font-bold text-xs transition-colors hidden sm:block"
-            style={{
-              border: "2px solid var(--brand)",
-              color: "var(--brand)",
-              background: "transparent",
-            }}
+            className="px-6 py-2.5 rounded-full cursor-pointer border border-[#dfe3ea] bg-white text-[#101827] dark:bg-card dark:text-foreground font-extrabold text-base transition-colors hidden sm:block shadow-sm"
           >
             {t("landingSignIn")}
           </motion.button>
           
+          {/* Join Trail Button */}
           <motion.button
             onClick={() => handleEnterAuth("register")}
             whileHover={{ 
               scale: 1.05,
-              filter: "brightness(1.05)",
-              boxShadow: "0 4px 15px rgba(88, 204, 2, 0.3)"
+              filter: "brightness(1.05)"
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-4 py-2.5 rounded-xl cursor-pointer border-none outline-none font-bold text-xs text-white shadow-md transition-all"
-            style={{
-              background: "var(--brand)",
-            }}
+            className="px-6 py-2.5 bg-[#45d300] hover:bg-[#3db800] text-white rounded-full cursor-pointer border-none outline-none font-extrabold text-base hidden sm:block shadow-sm"
           >
-            {t("landingJoinTrail")}
+            Đăng ký học
           </motion.button>
         </div>
       </nav>
 
-      {/* Hero */}
-      <div className="flex-1 flex flex-col items-center justify-center text-center px-6 py-16 max-w-5xl mx-auto z-10">
-        {/* Mascot illustration */}
-        <div className="relative mb-10">
-          <motion.div
-            className="w-36 h-36 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
-            style={{ background: "linear-gradient(135deg, var(--brand) 0%, #34d399 100%)" }}
-            animate={{ 
-              y: [0, -8, 0],
-            }}
-            transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut"
-            }}
-          >
-            {/* Soft inner glow ring */}
-            <div className="absolute inset-1.5 rounded-full border-2 border-white/20 pointer-events-none" />
-            <span style={{ fontSize: 72 }}>🐣</span>
-          </motion.div>
-          
-          <motion.div
-            className="absolute -top-3 -right-3 w-12 h-12 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1E2522]"
-            style={{ background: "var(--brand-gold)", fontSize: 22 }}
-            animate={{ 
-              y: [0, 5, 0],
-            }}
-            transition={{
-              duration: 3,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.5
-            }}
-          >
-            ⭐
-          </motion.div>
-          <motion.div
-            className="absolute -bottom-2 -left-3 w-11 h-11 rounded-full flex items-center justify-center shadow-lg border-2 border-white dark:border-[#1E2522]"
-            style={{ background: darkMode ? "#2C3531" : "#e0f2fe", fontSize: 20 }}
-            animate={{ 
-              x: [0, 4, 0],
-            }}
-            transition={{
-              duration: 3.5,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: 0.8
-            }}
-          >
-            🌿
-          </motion.div>
-        </div>
+      {/* Hero Section */}
+      <div className="hero">
+        {/* Left Column (Content) */}
+        <div className="flex flex-col items-start text-left">
+          {/* Pill Badge */}
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E7F9D4] text-[#45d300] text-sm font-black tracking-wider uppercase mb-6 shadow-sm">
+            <span>🌱</span> HỌC • LUYỆN TẬP • TIẾN BỘ
+          </div>
 
-        <h1
-          className="mb-6 font-outfit text-foreground tracking-tight text-left sm:text-center"
-          style={{
-            fontSize: "clamp(2.2rem, 6vw, 3.5rem)",
-            fontWeight: 900,
-            lineHeight: 1.15,
-            maxWidth: 800,
-          }}
-        >
-          {t("landingHeroHeaderMain")}<br />
-          <span style={{ color: "var(--brand)" }}>{t("landingHeroHeaderSub")}</span>
-        </h1>
-        
-        <p
-          className="mb-12 text-muted-foreground font-medium max-w-2xl text-left sm:text-center"
-          style={{ fontSize: "clamp(1rem, 2vw, 1.125rem)", lineHeight: 1.8 }}
-        >
-          {t("landingHeroDesc")}
-        </p>
+          {/* Headline */}
+          <h1 className="hero-title">
+            Nuôi dưỡng<br />
+            Tiếng Anh của bạn
+            <span className="accent">Theo từng nhiệm vụ<br />mỗi ngày</span>
+          </h1>
 
-        {/* CTA buttons */}
-        <div className="flex items-center gap-5 flex-wrap justify-center mb-20">
-          <motion.button
-            onClick={() => handleEnterAuth("register")}
-            whileHover={{ 
-              y: -3,
-              boxShadow: "0 8px 0 var(--brand-dark), 0 12px 28px rgba(88,204,2,0.35)",
-              scale: 1.02
-            }}
-            whileTap={{ 
-              y: 3,
-              boxShadow: "0 2px 0 var(--brand-dark), 0 4px 10px rgba(88,204,2,0.15)",
-              scale: 0.98
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="px-10 py-4 rounded-2xl cursor-pointer border-none outline-none text-white font-black text-lg shadow-lg flex items-center gap-2"
-            style={{
-              background: "var(--brand)",
-              boxShadow: "0 6px 0 var(--brand-dark), 0 8px 20px rgba(88,204,2,0.25)",
-            }}
-          >
-            {t("landingCtaJoin")}
-          </motion.button>
-          
-          <motion.button
-            onClick={() => handleEnterAuth("login")}
-            whileHover={{ 
-              y: -3,
-              boxShadow: darkMode ? "0 6px 0 rgba(255,255,255,0.08), 0 10px 24px rgba(0,0,0,0.3)" : "0 6px 0 rgba(0,0,0,0.12), 0 10px 24px rgba(0,0,0,0.08)",
-              scale: 1.02
-            }}
-            whileTap={{ 
-              y: 1,
-              boxShadow: darkMode ? "0 2px 0 rgba(255,255,255,0.04)" : "0 2px 0 rgba(0,0,0,0.05)",
-              scale: 0.98
-            }}
-            transition={{ type: "spring", stiffness: 500, damping: 15 }}
-            className="px-10 py-4 rounded-2xl cursor-pointer border outline-none font-bold text-lg"
-            style={{
-              background: "var(--card)",
-              color: "var(--foreground)",
-              borderColor: "var(--border)",
-              boxShadow: darkMode ? "0 4px 0 rgba(255,255,255,0.06)" : "0 4px 0 rgba(0,0,0,0.08)",
-            }}
-          >
-            {t("landingCtaLogin")}
-          </motion.button>
-        </div>
+          {/* Description */}
+          <p className="hero-description">
+            {t("landingHeroDesc")}
+          </p>
 
-        {/* Features grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 max-w-4xl w-full text-left">
-          {[
-            { icon: "🗺️", titleKey: "landingFeat1Title", descKey: "landingFeat1Desc" },
-            { icon: "🃏", titleKey: "landingFeat2Title", descKey: "landingFeat2Desc" },
-            { icon: "🤖", titleKey: "landingFeat3Title", descKey: "landingFeat3Desc" },
-            { icon: "🎤", titleKey: "landingFeat4Title", descKey: "landingFeat4Desc" },
-            { icon: "🏆", titleKey: "landingFeat5Title", descKey: "landingFeat5Desc" },
-            { icon: "🎖️", titleKey: "landingFeat6Title", descKey: "landingFeat6Desc" },
-          ].map((f, i) => (
-            <motion.div
-              key={i}
-              whileHover={{ 
-                y: -6, 
-                scale: 1.03, 
-                borderColor: "var(--brand)",
-                boxShadow: darkMode ? "0 12px 30px rgba(0,0,0,0.5)" : "0 12px 28px rgba(0,0,0,0.08)"
-              }}
-              whileTap={{ scale: 0.98 }}
-              className="rounded-3xl p-6 cursor-pointer border border-solid transition-all duration-300 flex flex-col items-start gap-3"
-              style={{
-                background: "var(--card)",
-                borderColor: "var(--border)",
-                boxShadow: darkMode ? "none" : "0 4px 20px rgba(0,0,0,0.02)",
-              }}
+          {/* Action Buttons */}
+          <div className="hero-actions">
+            {/* Primary Button */}
+            <motion.button
+              onClick={() => handleEnterAuth("register")}
+              className="btn-primary"
             >
-              <div className="w-14 h-14 rounded-2xl bg-brand/5 dark:bg-brand/10 flex items-center justify-center text-3xl shadow-sm mb-1">
-                {f.icon}
-              </div>
-              <h3 className="font-extrabold text-[15px] text-foreground tracking-tight">
-                {t(f.titleKey)}
-              </h3>
-              <p className="text-[12.5px] text-muted-foreground leading-relaxed">
-                {t(f.descKey)}
-              </p>
-            </motion.div>
-          ))}
+              <span>🌱</span> {t("landingCtaJoin")}
+            </motion.button>
+
+            {/* Secondary Button */}
+            <motion.button
+              onClick={() => handleEnterAuth("login")}
+              className="btn-secondary"
+            >
+              <span>▶</span> {t("landingCtaLogin")}
+            </motion.button>
+          </div>
+
+          {/* Guarantee Text */}
+          <div className="flex items-center gap-6 mt-6 text-[#22c55e] font-extrabold text-base">
+            <div className="flex items-center gap-1.5">
+              <span>✓</span> 100% Miễn phí bắt đầu
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span>🛡️</span> Không cần thẻ tín dụng
+            </div>
+          </div>
+        </div>
+
+        {/* Right Column (Hero Visual) */}
+        <div className="hero-visual relative w-full h-full">
+          {/* Soft pale green blob behind the image */}
+          <div className="absolute w-[80%] h-[80%] rounded-full bg-[#e8fcdb] opacity-60 blur-[80px] pointer-events-none z-0" />
+          <img
+            src={heroMascot}
+            alt="Lantech English Mascot and App Dashboard"
+            className="select-none pointer-events-none z-10"
+          />
         </div>
       </div>
 
-      {/* Footer */}
-      <footer
-        className="px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4 z-10"
-        style={{ borderTop: "1px solid var(--border)", background: "var(--card)" }}
-      >
-        <div className="text-xs text-muted-foreground font-semibold">
-          {t("rightsReserved")}
-        </div>
-        
-        <div className="flex items-center gap-6 flex-wrap justify-center">
-          <motion.button
-            onClick={() => handleEnterAuth("login", "ranger")}
-            whileHover={{ scale: 1.05, color: "#f472b6" }}
-            whileTap={{ scale: 0.95 }}
-            className="cursor-pointer border-none outline-none bg-transparent"
-            style={{ fontSize: 12, color: "#ec4899", fontWeight: 700, textDecoration: "underline" }}
+      {/* Feature Cards Section */}
+      <div className="features">
+        {[
+          {
+            icon: <Map className="w-8 h-8 text-[#45d300]" />,
+            iconBg: "bg-[#e8fcdb] dark:bg-green-950/20",
+            title: t("landingFeat1Title"),
+            desc: t("landingFeat1Desc"),
+          },
+          {
+            icon: <Layers className="w-8 h-8 text-[#CE82FF]" />,
+            iconBg: "bg-purple-50 dark:bg-purple-950/20",
+            title: t("landingFeat2Title"),
+            desc: t("landingFeat2Desc"),
+          },
+          {
+            icon: <Bot className="w-8 h-8 text-[#1CB0F6]" />,
+            iconBg: "bg-sky-50 dark:bg-sky-950/20",
+            title: t("landingFeat3Title"),
+            desc: t("landingFeat3Desc"),
+          },
+          {
+            icon: <Mic className="w-8 h-8 text-[#6366f1]" />,
+            iconBg: "bg-indigo-50 dark:bg-indigo-950/20",
+            title: t("landingFeat4Title"),
+            desc: t("landingFeat4Desc"),
+          },
+        ].map((feature, i) => (
+          <motion.div
+            key={i}
+            whileHover={{ 
+              y: -6, 
+              scale: 1.02, 
+              borderColor: "#45d300",
+              boxShadow: darkMode ? "0 12px 30px rgba(0,0,0,0.4)" : "0 18px 50px rgba(15,23,42,0.12)"
+            }}
+            whileTap={{ scale: 0.98 }}
+            className="feature-card flex flex-col items-start cursor-pointer transition-all duration-200"
           >
-            {t("landingDemoAdmin")}
-          </motion.button>
-          
-          <div className="flex items-center gap-2">
-            <span
-              className="w-2.5 h-2.5 rounded-full inline-block animate-pulse"
-              style={{ background: "var(--brand)" }}
-            />
-            <span className="text-xs text-muted-foreground font-semibold">
-              {t("landingServerStatus")}
-            </span>
+            {/* Styled Icon */}
+            <div className={`p-4 rounded-[20px] ${feature.iconBg} mb-6 flex items-center justify-center w-fit`}>
+              {feature.icon}
+            </div>
+            {/* Title */}
+            <h3 className="text-[#101827] dark:text-foreground font-black text-xl mb-3">{feature.title}</h3>
+            {/* Description */}
+            <p className="text-[#6b7280] dark:text-muted-foreground text-base leading-relaxed">{feature.desc}</p>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-[#dfe3ea] bg-[#fbfbf7] dark:bg-background z-10">
+        <div className="w-full max-w-[1320px] mx-auto px-6 sm:px-12 py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="text-sm text-[#6b7280] dark:text-muted-foreground font-semibold">
+            {t("rightsReserved")}
+          </div>
+          <div className="flex items-center gap-6">
+            <motion.button
+              onClick={() => handleEnterAuth("login", "ranger")}
+              whileHover={{ scale: 1.05, color: "#f472b6" }}
+              whileTap={{ scale: 0.95 }}
+              className="cursor-pointer text-xs text-pink-500 font-bold hover:underline bg-none border-none"
+            >
+              {t("landingDemoAdmin")}
+            </motion.button>
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-[#45d300] inline-block animate-pulse" />
+              <span className="text-sm text-[#6b7280] dark:text-muted-foreground font-semibold">
+                {t("landingServerStatus")}
+              </span>
+            </div>
           </div>
         </div>
       </footer>
