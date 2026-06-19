@@ -1,7 +1,28 @@
 export function parseMarkdownToHtml(markdown: string): string {
   if (!markdown) return "";
 
-  const lines = markdown.split('\n');
+  // Split lines first to selectively handle <br> tags.
+  // We do NOT replace <br> with newlines inside table rows because it breaks table structure.
+  const rawLines = markdown.split('\n');
+  const lines: string[] = [];
+  
+  for (let i = 0; i < rawLines.length; i++) {
+    const rawLine = rawLines[i];
+    const trimmed = rawLine.trim();
+    if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+      // It's a table row, keep <br> inline (do not convert to newlines)
+      lines.push(rawLine);
+    } else {
+      // It's a normal line, replace <br> tags with newlines and split them
+      if (/<br\s*\/?>/i.test(rawLine)) {
+        const splitLines = rawLine.replace(/<br\s*\/?>/gi, '\n').split('\n');
+        lines.push(...splitLines);
+      } else {
+        lines.push(rawLine);
+      }
+    }
+  }
+
   const html: string[] = [];
   let inList = false;
   let listType: 'ul' | 'ol' | null = null;
@@ -219,13 +240,13 @@ function renderTable(rows: string[][], alignments: ('left' | 'center' | 'right')
   
   const headerHtml = headers.map((h, i) => {
     const align = alignments[i] || 'left';
-    return `<th class="px-4 py-2 border-b-2 border-slate-200 dark:border-slate-700 text-left font-bold text-xs uppercase text-foreground" style="text-align: ${align}; color: var(--foreground);">${parseInline(h)}</th>`;
+    return `<th class="px-4 py-2 border-b-2 border-r border-slate-200 dark:border-slate-700 last:border-r-0 text-left font-bold text-xs uppercase text-foreground" style="text-align: ${align}; color: var(--foreground);">${parseInline(h)}</th>`;
   }).join('');
   
   const bodyHtml = body.map(row => {
     const cellHtml = row.map((cell, i) => {
       const align = alignments[i] || 'left';
-      return `<td class="px-4 py-2 border-b border-slate-100 dark:border-slate-800 text-foreground text-xs" style="text-align: ${align}; color: var(--foreground);">${parseInline(cell)}</td>`;
+      return `<td class="px-4 py-2 border-b border-r border-slate-100 dark:border-slate-800 last:border-r-0 text-foreground text-xs" style="text-align: ${align}; color: var(--foreground);">${parseInline(cell)}</td>`;
     }).join('');
     return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">${cellHtml}</tr>`;
   }).join('');
@@ -242,6 +263,9 @@ function escapeHtml(text: string): string {
 
 function parseInline(text: string): string {
   let result = escapeHtml(text);
+
+  // Convert escaped <br> tags back to real <br /> tags
+  result = result.replace(/&lt;br\s*\/?&gt;/gi, '<br />');
 
   // Bold **text** or __text__
   result = result.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');

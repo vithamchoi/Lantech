@@ -591,7 +591,7 @@ export default function AICabin() {
                       {msg.role === "tutor" ? "🦉" : "A"}
                     </div>
                     <div
-                      className="px-4 py-3 rounded-2xl max-w-sm text-left shadow-sm"
+                      className="px-4 py-3 rounded-2xl max-w-[85%] lg:max-w-[80%] text-left shadow-sm"
                       style={{
                         background: msg.role === "tutor" ? "var(--card)" : "var(--brand)",
                         border: msg.role === "tutor" ? "1.5px solid var(--border)" : "none",
