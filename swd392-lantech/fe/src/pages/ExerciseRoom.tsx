@@ -3,6 +3,8 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { useAppStore } from '../store/appStore';
 import { ChevronLeft, Check, X, Award, ChevronRight, Loader2 } from 'lucide-react';
 import { exerciseService, ExerciseDto } from '../services/exerciseService';
+import { learningService } from '../services/learningService';
+import { authService } from '../services/authService';
 import { toast } from 'sonner';
 import { useTranslation } from '../hooks/useTranslation';
 import { motion, AnimatePresence } from "motion/react";
@@ -26,6 +28,11 @@ export default function ExerciseRoom() {
     const fetchExercises = async () => {
       if (!id) return;
       try {
+        try {
+          await learningService.startLesson(id);
+        } catch (startErr) {
+          console.warn("Failed to register start lesson in backend", startErr);
+        }
         const data = await exerciseService.getExercisesByLesson(id);
         setExercises(data);
       } catch (error: any) {
@@ -72,6 +79,25 @@ export default function ExerciseRoom() {
         spread: 80,
         origin: { y: 0.6 }
       });
+      if (id) {
+        learningService.completeLesson(id)
+          .then(async () => {
+            try {
+              const updatedUser = await authService.getMe();
+              const currentRole = useAppStore.getState().role;
+              const accessToken = localStorage.getItem('access_token');
+              const refreshToken = localStorage.getItem('refresh_token');
+              if (accessToken && refreshToken) {
+                login(currentRole, updatedUser, accessToken, refreshToken);
+              }
+            } catch (err) {
+              console.error("Failed to sync user profile after completing lesson", err);
+            }
+          })
+          .catch((err) => {
+            console.error("Failed to complete lesson in backend", err);
+          });
+      }
       toast.success(t("exerciseCompleteToast"));
       navigate('/dashboard');
     }

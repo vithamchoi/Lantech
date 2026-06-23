@@ -30,5 +30,13 @@ export const learningService = {
 
   getRecommendedLessons: async (): Promise<LessonDto[]> => {
     return (await apiClient.get('/learningpaths/recommended-lessons')) as LessonDto[];
+  },
+
+  startLesson: async (id: string): Promise<LessonDto> => {
+    return await apiClient.post(`/lessons/${id}/start`);
+  },
+
+  completeLesson: async (id: string): Promise<LessonDto> => {
+    return await apiClient.post(`/lessons/${id}/complete`);
   }
 };

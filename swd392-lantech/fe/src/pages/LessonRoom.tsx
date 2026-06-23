@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { useTranslation } from "../hooks/useTranslation";
@@ -51,6 +51,7 @@ const SLIDES = [
 
 export default function LessonRoom() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const { user, setUser, darkMode } = useAppStore();
   const { t } = useTranslation();
   const [slideIndex, setSlideIndex] = useState(0);
@@ -117,12 +118,18 @@ export default function LessonRoom() {
           </p>
           <div className="flex gap-3 justify-center">
             <button
-              onClick={() => navigate("/dashboard")}
+              onClick={() => {
+                if (id) {
+                  navigate(`/exercise/${id}`);
+                } else {
+                  navigate("/dashboard");
+                }
+              }}
               type="button"
               className="px-8 py-3.5 rounded-2xl cursor-pointer border-none outline-none font-bold text-white btn-3d"
               style={{ background: "var(--brand)" }}
             >
-              {t("backToTrail")}
+              {id ? (t("startPractice") || "Bắt đầu luyện tập") : t("backToTrail")}
             </button>
             <button
               onClick={() => { setSlideIndex(0); setCompleted(false); setAnswer(""); setSubmitted(false); }}
