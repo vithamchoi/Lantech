@@ -1015,7 +1015,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["ID", "Nội dung câu hỏi", "Kỹ năng", "Trình độ", "Độ khó", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1089,7 +1089,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["STT", "Tiêu đề bài học", "Trình độ", "Bài tập", "Học viên", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1162,7 +1162,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["Tên đăng nhập", "Email", "XP", "Ngày tham gia", "Vai trò", "Trạng thái", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1253,7 +1253,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["ID", "Từ vựng", "Phiên âm", "Trình độ", "Định nghĩa nghĩa", "Ngày thêm", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1319,7 +1319,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["ID", "Huy hiệu", "Mô tả", "Điều kiện nhận", "Số người đạt", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1398,7 +1398,7 @@ export default function AdminDashboard() {
               <thead>
                 <tr style={{ background: "var(--muted)" }}>
                   {["Cụm từ", "Phiên âm", "Chủ đề", "Thẻ (Tags)", "Thao tác"].map(h => (
-                    <th key={h} className="px-5 py-3 text-left" style={{ fontSize: 11, fontWeight: 700, color: "var(--muted-foreground)", textTransform: "uppercase", letterSpacing: 0.8 }}>{h}</th>
+                    <th key={h} className="px-5 py-3 text-left text-[11px] font-bold text-slate-600 dark:text-slate-400 uppercase tracking-[0.8px]">{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1487,14 +1487,9 @@ export default function AdminDashboard() {
                 type="button"
                 className={`px-4 py-1.5 rounded-full cursor-pointer shrink-0 relative outline-none border flex items-center gap-2 text-xs font-bold transition-all duration-200 ${
                   isActive 
-                    ? "" 
-                    : "hover:border-[#ec4899]/50 hover:text-[#ec4899] hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
+                    ? "text-[#ec4899] border-[#ec4899] bg-transparent" 
+                    : "text-[var(--muted-foreground)] border-[var(--border)] bg-transparent hover:border-[#ec4899]/50 hover:text-[#ec4899] hover:bg-neutral-100 dark:hover:bg-neutral-800/40"
                 }`}
-                style={{
-                  background: "transparent",
-                  color: isActive ? "#ec4899" : "var(--muted-foreground)",
-                  borderColor: isActive ? "#ec4899" : "var(--border)",
-                }}
               >
                 {isActive && (
                   <motion.div
@@ -1506,7 +1501,7 @@ export default function AdminDashboard() {
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
-                <Icon size={14} className="relative z-10" style={{ color: isActive ? "#ec4899" : "var(--muted-foreground)" }} />
+                <Icon size={14} className="relative z-10 transition-colors duration-200" />
                 <span className="relative z-10">{s.label}</span>
               </button>
             );

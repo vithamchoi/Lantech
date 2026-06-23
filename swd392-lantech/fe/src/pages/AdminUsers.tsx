@@ -88,7 +88,7 @@ export default function AdminUsers() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-cream-200 border-b border-sage text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="bg-cream-300 border-b border-sage text-xs font-bold text-slate-700 uppercase tracking-wider">
                 <th className="px-6 py-4">Tên Tài Khoản</th>
                 <th className="px-6 py-4">Địa chỉ Email</th>
                 <th className="px-6 py-4">CEFR</th>
