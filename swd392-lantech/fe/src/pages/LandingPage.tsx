@@ -1,18 +1,153 @@
-import React, { useState } from "react";
+import React, { useState, Suspense, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
-import { Sun, Moon, Globe, ChevronDown, Check, Map, Layers, Bot, Mic } from "lucide-react";
+import {
+  Sun,
+  Moon,
+  Globe,
+  ChevronDown,
+  Check,
+  Map,
+  Layers,
+  Bot,
+  Mic,
+} from "lucide-react";
+import { Canvas, useFrame } from "@react-three/fiber";
+import { OrbitControls, useFBX, Html } from "@react-three/drei";
+import * as THREE from "three";
 import heroMascot from "../assets/hero-mascot.png";
+
+function MascotModel({ darkMode }: { darkMode: boolean }) {
+  const fbx = useFBX("/Happy Idle.fbx");
+  const mixerRef = useRef<THREE.AnimationMixer | null>(null);
+
+  useEffect(() => {
+    if (fbx) {
+      // Calculate static geometry bounding box for automatic scale and placement
+      let minX = Infinity,
+        minY = Infinity,
+        minZ = Infinity;
+      let maxX = -Infinity,
+        maxY = -Infinity,
+        maxZ = -Infinity;
+
+      fbx.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          if (mesh.geometry) {
+            if (!mesh.geometry.boundingBox) {
+              mesh.geometry.computeBoundingBox();
+            }
+            const bbox = mesh.geometry.boundingBox;
+            if (bbox) {
+              minX = Math.min(minX, bbox.min.x);
+              minY = Math.min(minY, bbox.min.y);
+              minZ = Math.min(minZ, bbox.min.z);
+              maxX = Math.max(maxX, bbox.max.x);
+              maxY = Math.max(maxY, bbox.max.y);
+              maxZ = Math.max(maxZ, bbox.max.z);
+            }
+          }
+        }
+      });
+
+      let sizeX = 0,
+        sizeY = 0,
+        sizeZ = 0;
+      let centerX = 0,
+        centerZ = 0;
+
+      if (maxX > -Infinity) {
+        sizeX = maxX - minX;
+        sizeY = maxY - minY;
+        sizeZ = maxZ - minZ;
+        centerX = (minX + maxX) / 2;
+        centerZ = (minZ + maxZ) / 2;
+      } else {
+        const box = new THREE.Box3().setFromObject(fbx);
+        const size = box.getSize(new THREE.Vector3());
+        const center = box.getCenter(new THREE.Vector3());
+        sizeX = size.x;
+        sizeY = size.y;
+        sizeZ = size.z;
+        centerX = center.x;
+        centerZ = center.z;
+        minY = box.min.y;
+      }
+
+      const maxDim = Math.max(sizeX, sizeY, sizeZ);
+      // Mascot height target in ThreeJS units
+      const targetHeight = 2.0;
+      const scaleVal = targetHeight / (maxDim || 1);
+
+      fbx.scale.setScalar(scaleVal);
+
+      // Center horizontally and place feet at y = 0
+      fbx.position.x = -centerX * scaleVal;
+      fbx.position.y = -minY * scaleVal;
+      fbx.position.z = -centerZ * scaleVal;
+      fbx.rotation.set(0, 0, 0);
+
+      if (fbx.animations && fbx.animations.length > 0) {
+        const mixer = new THREE.AnimationMixer(fbx);
+        mixerRef.current = mixer;
+        const action = mixer.clipAction(fbx.animations[0]);
+        action.play();
+      }
+
+      fbx.traverse((child) => {
+        if ((child as THREE.Mesh).isMesh) {
+          const mesh = child as THREE.Mesh;
+          mesh.castShadow = true;
+          mesh.receiveShadow = true;
+          if (mesh.material) {
+            const mats = Array.isArray(mesh.material)
+              ? mesh.material
+              : [mesh.material];
+            mats.forEach((mat) => {
+              if (mat instanceof THREE.MeshStandardMaterial) {
+                mat.roughness = 0.6;
+                mat.metalness = 0.1;
+              }
+            });
+          }
+        }
+      });
+    }
+
+    return () => {
+      if (mixerRef.current) {
+        mixerRef.current.stopAllAction();
+      }
+    };
+  }, [fbx]);
+
+  useFrame((state, delta) => {
+    if (mixerRef.current) {
+      mixerRef.current.update(delta);
+    }
+  });
+
+  return (
+    <group rotation={[0.2, -0.1, 0]}>
+      <primitive object={fbx} />
+    </group>
+  );
+}
 
 export default function LandingPage() {
   const navigate = useNavigate();
-  const { role, login, darkMode, toggleDarkMode, language, setLanguage } = useAppStore();
+  const { role, login, darkMode, toggleDarkMode, language, setLanguage } =
+    useAppStore();
   const { t } = useTranslation();
   const [isLangDropdownOpen, setIsLangDropdownOpen] = useState(false);
 
-  const handleEnterAuth = (mode: "login" | "register", selectRole?: "student" | "ranger") => {
+  const handleEnterAuth = (
+    mode: "login" | "register",
+    selectRole?: "student" | "ranger",
+  ) => {
     if (selectRole === "ranger") {
       login("Admin", "ranger@lantech.org");
       navigate("/ranger");
@@ -27,7 +162,8 @@ export default function LandingPage() {
     { code: "ko", label: "한국어", flag: "🇰🇷" },
   ];
 
-  const currentLangObj = languagesList.find((l) => l.code === language) || languagesList[0];
+  const currentLangObj =
+    languagesList.find((l) => l.code === language) || languagesList[0];
 
   return (
     <div
@@ -39,7 +175,10 @@ export default function LandingPage() {
       {/* Top Navbar */}
       <nav className="header bg-[#fbfbf7] dark:bg-background z-40 relative w-full max-w-[1320px] mx-auto px-8 h-[86px] flex items-center justify-between">
         {/* Logo */}
-        <div className="logo cursor-pointer flex items-center gap-3 flex-shrink-0" onClick={() => navigate("/")}>
+        <div
+          className="logo cursor-pointer flex items-center gap-3 flex-shrink-0"
+          onClick={() => navigate("/")}
+        >
           <div className="w-11 h-11 rounded-xl flex items-center justify-center bg-[#45d300] shadow-sm transition-transform hover:rotate-12 duration-300">
             <span className="text-2xl">🌱</span>
           </div>
@@ -76,13 +215,18 @@ export default function LandingPage() {
               <Globe className="w-4 h-4 text-[#6b7280]" />
               <span>{currentLangObj.flag}</span>
               <span className="hidden md:inline">{currentLangObj.label}</span>
-              <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isLangDropdownOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown
+                className={`w-3.5 h-3.5 transition-transform duration-200 ${isLangDropdownOpen ? "rotate-180" : ""}`}
+              />
             </motion.button>
 
             <AnimatePresence>
               {isLangDropdownOpen && (
                 <>
-                  <div className="fixed inset-0 z-40" onClick={() => setIsLangDropdownOpen(false)} />
+                  <div
+                    className="fixed inset-0 z-40"
+                    onClick={() => setIsLangDropdownOpen(false)}
+                  />
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -106,7 +250,9 @@ export default function LandingPage() {
                           <span>{langItem.flag}</span>
                           <span>{langItem.label}</span>
                         </div>
-                        {language === langItem.code && <Check className="w-3.5 h-3.5" />}
+                        {language === langItem.code && (
+                          <Check className="w-3.5 h-3.5" />
+                        )}
                       </button>
                     ))}
                   </motion.div>
@@ -117,25 +263,23 @@ export default function LandingPage() {
 
           <div className="h-6 w-px bg-[#dfe3ea] hidden sm:block" />
 
-          {/* Sign In Button */}
           <motion.button
             onClick={() => handleEnterAuth("login")}
-            whileHover={{ 
-              scale: 1.05, 
-              backgroundColor: "rgba(0, 0, 0, 0.02)"
+            whileHover={{
+              scale: 1.05,
             }}
             whileTap={{ scale: 0.95 }}
-            className="px-6 py-2.5 rounded-full cursor-pointer border border-[#dfe3ea] bg-white text-[#101827] dark:bg-card dark:text-foreground font-extrabold text-base transition-colors hidden sm:block shadow-sm"
+            className="px-6 py-2.5 rounded-full cursor-pointer border border-[#dfe3ea] bg-white dark:bg-transparent text-[#101827] dark:text-white hover:bg-gray-50 dark:hover:bg-white/5 font-extrabold text-base transition-colors hidden sm:block shadow-sm"
           >
             {t("landingSignIn")}
           </motion.button>
-          
+
           {/* Join Trail Button */}
           <motion.button
             onClick={() => handleEnterAuth("register")}
-            whileHover={{ 
+            whileHover={{
               scale: 1.05,
-              filter: "brightness(1.05)"
+              filter: "brightness(1.05)",
             }}
             whileTap={{ scale: 0.95 }}
             className="px-6 py-2.5 bg-[#45d300] hover:bg-[#3db800] text-white rounded-full cursor-pointer border-none outline-none font-extrabold text-base hidden sm:block shadow-sm"
@@ -156,15 +300,18 @@ export default function LandingPage() {
 
           {/* Headline */}
           <h1 className="hero-title">
-            Nuôi dưỡng<br />
+            Nuôi dưỡng
+            <br />
             Tiếng Anh của bạn
-            <span className="accent">Theo từng nhiệm vụ<br />mỗi ngày</span>
+            <span className="accent">
+              Theo từng nhiệm vụ
+              <br />
+              mỗi ngày
+            </span>
           </h1>
 
           {/* Description */}
-          <p className="hero-description">
-            {t("landingHeroDesc")}
-          </p>
+          <p className="hero-description">{t("landingHeroDesc")}</p>
 
           {/* Action Buttons */}
           <div className="hero-actions">
@@ -197,14 +344,63 @@ export default function LandingPage() {
         </div>
 
         {/* Right Column (Hero Visual) */}
-        <div className="hero-visual relative w-full h-full">
+        <div className="hero-visual relative w-full h-[500px] lg:h-[580px] flex items-center justify-center">
           {/* Soft pale green blob behind the image */}
-          <div className="absolute w-[80%] h-[80%] rounded-full bg-[#e8fcdb] opacity-60 blur-[80px] pointer-events-none z-0" />
-          <img
-            src={heroMascot}
-            alt="Lantech English Mascot and App Dashboard"
-            className="select-none pointer-events-none z-10"
-          />
+          <div className="absolute w-[80%] h-[80%] rounded-full bg-[#e8fcdb] dark:bg-[#45d300]/10 opacity-60 blur-[80px] pointer-events-none z-0" />
+
+          <div className="w-full h-full z-10 relative cursor-grab active:cursor-grabbing">
+            <Canvas
+              shadows
+              camera={{ position: [0, 1.2, 5.8], fov: 40 }}
+              gl={{ antialias: true }}
+            >
+              <ambientLight intensity={darkMode ? 1.0 : 1.6} />
+              <directionalLight
+                position={[5, 10, 5]}
+                intensity={darkMode ? 1.2 : 1.8}
+                castShadow
+                shadow-mapSize-width={1024}
+                shadow-mapSize-height={1024}
+              />
+              <pointLight
+                position={[-5, 5, -5]}
+                intensity={darkMode ? 2.5 : 1.2}
+                color={darkMode ? "#45d300" : "#ffffff"}
+              />
+
+              <Suspense
+                fallback={
+                  <Html center>
+                    <img
+                      src={heroMascot}
+                      alt="Lantech English Mascot Loading Fallback"
+                      className="select-none pointer-events-none w-[320px] md:w-[480px] opacity-70 animate-pulse object-contain"
+                    />
+                  </Html>
+                }
+              >
+                <MascotModel darkMode={darkMode} />
+                <mesh
+                  rotation={[-Math.PI / 2, 0, 0]}
+                  position={[0, 0, 0]}
+                  receiveShadow
+                >
+                  <planeGeometry args={[100, 100]} />
+                  <shadowMaterial opacity={darkMode ? 0.35 : 0.15} />
+                </mesh>
+              </Suspense>
+
+              <OrbitControls
+                enableZoom={false}
+                enablePan={false}
+                target={[0, 1.2, 0]}
+                minPolarAngle={Math.PI / 2.5}
+                maxPolarAngle={Math.PI / 1.8}
+                minAzimuthAngle={-Math.PI / 4}
+                maxAzimuthAngle={Math.PI / 4}
+              />
+            </Canvas>
+          </div>
         </div>
       </div>
 
@@ -238,23 +434,31 @@ export default function LandingPage() {
         ].map((feature, i) => (
           <motion.div
             key={i}
-            whileHover={{ 
-              y: -6, 
-              scale: 1.02, 
+            whileHover={{
+              y: -6,
+              scale: 1.02,
               borderColor: "#45d300",
-              boxShadow: darkMode ? "0 12px 30px rgba(0,0,0,0.4)" : "0 18px 50px rgba(15,23,42,0.12)"
+              boxShadow: darkMode
+                ? "0 12px 30px rgba(0,0,0,0.4)"
+                : "0 18px 50px rgba(15,23,42,0.12)",
             }}
             whileTap={{ scale: 0.98 }}
             className="feature-card flex flex-col items-start cursor-pointer transition-all duration-200"
           >
             {/* Styled Icon */}
-            <div className={`p-4 rounded-[20px] ${feature.iconBg} mb-6 flex items-center justify-center w-fit`}>
+            <div
+              className={`p-4 rounded-[20px] ${feature.iconBg} mb-6 flex items-center justify-center w-fit`}
+            >
               {feature.icon}
             </div>
             {/* Title */}
-            <h3 className="text-[#101827] dark:text-foreground font-black text-xl mb-3">{feature.title}</h3>
+            <h3 className="text-[#101827] dark:text-foreground font-black text-xl mb-3">
+              {feature.title}
+            </h3>
             {/* Description */}
-            <p className="text-[#6b7280] dark:text-muted-foreground text-base leading-relaxed">{feature.desc}</p>
+            <p className="text-[#6b7280] dark:text-muted-foreground text-base leading-relaxed">
+              {feature.desc}
+            </p>
           </motion.div>
         ))}
       </div>

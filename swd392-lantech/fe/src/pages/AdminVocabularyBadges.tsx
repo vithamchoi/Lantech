@@ -283,7 +283,7 @@ export default function AdminVocabularyBadges() {
         <div className="bg-white rounded-card border border-sage shadow-diffuse overflow-hidden">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-cream-200 border-b border-sage text-xs font-bold text-slate-500 uppercase tracking-wider">
+              <tr className="bg-cream-300 border-b border-sage text-xs font-bold text-slate-700 uppercase tracking-wider">
                 <th className="px-6 py-4">Từ</th>
                 <th className="px-6 py-4">Phiên âm (IPA)</th>
                 <th className="px-6 py-4">Dịch nghĩa</th>

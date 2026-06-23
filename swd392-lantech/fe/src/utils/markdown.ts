@@ -240,18 +240,18 @@ function renderTable(rows: string[][], alignments: ('left' | 'center' | 'right')
   
   const headerHtml = headers.map((h, i) => {
     const align = alignments[i] || 'left';
-    return `<th class="px-4 py-2 border-b-2 border-r border-slate-200 dark:border-slate-700 last:border-r-0 text-left font-bold text-xs uppercase text-foreground" style="text-align: ${align}; color: var(--foreground);">${parseInline(h)}</th>`;
+    return `<th class="px-4 py-2 border-b-2 border-r border-slate-300 dark:border-slate-700 last:border-r-0 text-left font-bold text-xs uppercase text-foreground" style="text-align: ${align}; color: var(--foreground);">${parseInline(h)}</th>`;
   }).join('');
   
   const bodyHtml = body.map(row => {
     const cellHtml = row.map((cell, i) => {
       const align = alignments[i] || 'left';
-      return `<td class="px-4 py-2 border-b border-r border-slate-100 dark:border-slate-800 last:border-r-0 text-foreground text-xs" style="text-align: ${align}; color: var(--foreground);">${parseInline(cell)}</td>`;
+      return `<td class="px-4 py-2 border-b border-r border-slate-200 dark:border-slate-800 last:border-r-0 text-foreground text-xs" style="text-align: ${align}; color: var(--foreground);">${parseInline(cell)}</td>`;
     }).join('');
-    return `<tr class="hover:bg-slate-50 dark:hover:bg-slate-800/40">${cellHtml}</tr>`;
+    return `<tr class="hover:bg-slate-100/50 dark:hover:bg-slate-800/40 even:bg-slate-50/30 dark:even:bg-slate-900/10">${cellHtml}</tr>`;
   }).join('');
   
-  return `<div class="overflow-x-auto my-3 border border-slate-100 dark:border-slate-800 rounded-xl"><table class="min-w-full table-auto border-collapse"><thead class="bg-slate-50 dark:bg-slate-800/60">${headerHtml}</thead><tbody>${bodyHtml}</tbody></table></div>`;
+  return `<div class="overflow-x-auto my-3 border border-slate-200 dark:border-slate-800 rounded-xl"><table class="min-w-full table-auto border-collapse"><thead class="bg-slate-100 dark:bg-slate-800/60">${headerHtml}</thead><tbody>${bodyHtml}</tbody></table></div>`;
 }
 
 function escapeHtml(text: string): string {
