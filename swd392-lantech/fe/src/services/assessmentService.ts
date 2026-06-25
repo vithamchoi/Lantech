@@ -36,13 +36,11 @@ export interface AssessmentAnswerItem {
 
 export const assessmentService = {
   getLatestInfo: async (): Promise<any> => {
-    const response = await apiClient.get<any>('/assessments/info');
-    return response.data.data;
+    return await apiClient.get<any>('/assessments/info');
   },
 
   startAssessment: async (sourceLanguageCode: string = 'vi'): Promise<AssessmentDetailDto> => {
-    const response = await apiClient.post<any>('/assessments/start', { sourceLanguageCode });
-    return response.data.data;
+    return await apiClient.post<any>('/assessments/start', { sourceLanguageCode });
   },
 
   getAssessment: async (id: string): Promise<AssessmentDetailDto> => {

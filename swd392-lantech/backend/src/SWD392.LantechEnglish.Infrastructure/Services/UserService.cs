@@ -74,7 +74,10 @@ public class UserService : IUserService
             .FirstOrDefaultAsync(cancellationToken);
 
         var lessonsCompleted = await _context.LessonProgress
-            .CountAsync(p => p.UserId == userId && p.Status == ProgressStatus.Completed, cancellationToken);
+            .Where(p => p.UserId == userId && p.Status == ProgressStatus.Completed)
+            .Select(p => p.LessonId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
         var exercisesCompleted = await _context.ExerciseAttempts
             .CountAsync(a => a.UserId == userId && a.IsCorrect, cancellationToken);

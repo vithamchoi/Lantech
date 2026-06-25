@@ -10,6 +10,13 @@ public class AdminStatsDto
     public int TotalLessons { get; set; }
     public int TotalQuestions { get; set; }
     public int TotalBadges { get; set; }
+    public List<MonthlySignupDto> MonthlySignups { get; set; } = new();
+}
+
+public class MonthlySignupDto
+{
+    public string Month { get; set; } = null!;
+    public int Count { get; set; }
 }
 
 public class AdminUserDto

@@ -116,19 +116,21 @@ public class LearningPathService : ILearningPathService
         if (titles.Count > 0)
         {
             lessons = await _context.Lessons
-                .Where(l => titles.Contains(l.Title) && l.IsPublished)
+                .Where(l => l.CefrLevel == level && (titles.Contains(l.Title) || l.Title.StartsWith("Chương ")) && l.IsPublished)
                 .ToListAsync(cancellationToken);
 
-            // Reorder to match the recommended list sequence
+            // Reorder to match the recommended list sequence, putting the chapters first
             lessons = lessons
-                .OrderBy(l => titles.IndexOf(l.Title))
+                .OrderBy(l => l.Title.StartsWith("Chương ") ? 0 : 1)
+                .ThenBy(l => l.Title.StartsWith("Chương ") ? l.OrderIndex : titles.IndexOf(l.Title))
                 .ToList();
         }
         else
         {
             lessons = await _context.Lessons
                 .Where(l => l.CefrLevel == level && l.IsPublished)
-                .OrderBy(l => l.OrderIndex)
+                .OrderBy(l => l.Title.StartsWith("Chương ") ? 0 : 1)
+                .ThenBy(l => l.OrderIndex)
                 .ToListAsync(cancellationToken);
         }
 
@@ -139,7 +141,10 @@ public class LearningPathService : ILearningPathService
         var list = new List<LessonDto>();
         foreach (var l in lessons)
         {
-            var p = progressList.FirstOrDefault(pr => pr.LessonId == l.Id);
+            var p = progressList
+                .Where(pr => pr.LessonId == l.Id)
+                .OrderByDescending(pr => pr.Status)
+                .FirstOrDefault();
             list.Add(new LessonDto
             {
                 Id = l.Id,

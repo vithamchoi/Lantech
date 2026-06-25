@@ -38,5 +38,9 @@ export const learningService = {
 
   completeLesson: async (id: string): Promise<LessonDto> => {
     return await apiClient.post(`/lessons/${id}/complete`);
+  },
+
+  getLessonById: async (id: string): Promise<LessonDto> => {
+    return await apiClient.get(`/lessons/${id}`);
   }
 };

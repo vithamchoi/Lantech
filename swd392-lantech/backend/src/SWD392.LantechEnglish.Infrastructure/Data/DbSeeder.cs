@@ -62,6 +62,9 @@ public static class DbSeeder
         // Seed Tags and link to Vocabulary (independent of Users seeded check)
         await EnsureVocabularyTagsLinkedAsync(context);
 
+        // Seed new 3 chapters (lessons/units)
+        await SeedNewChaptersAsync(context);
+
         // Check if already seeded (for other entities)
         if (await context.Users.AnyAsync())
         {
@@ -475,101 +478,18 @@ public static class DbSeeder
         }
         context.VocabularyTranslations.AddRange(translations);
 
-        // Seed Lessons
-        var lesson1 = new Lesson
+        // Remove old lessons and their exercises
+        var oldLessons = await context.Lessons
+            .Where(l => l.Title == "Greetings and Introductions" || l.Title == "Family Members" || l.Title == "Present Simple Tense")
+            .ToListAsync();
+        if (oldLessons.Any())
         {
-            Id = Guid.NewGuid(),
-            CefrLevel = CefrLevel.A1,
-            TargetLanguageCode = "en",
-            SourceLanguageCode = "vi",
-            Title = "Greetings and Introductions",
-            Description = "Learn basic greetings and how to introduce yourself",
-            Skill = SkillType.Vocabulary,
-            Topic = "Daily Life",
-            ContentSource = ContentSource.Curated,
-            OrderIndex = 1,
-            EstimatedMinutes = 15,
-            XpReward = 50,
-            IsPublished = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var lesson2 = new Lesson
-        {
-            Id = Guid.NewGuid(),
-            CefrLevel = CefrLevel.A1,
-            TargetLanguageCode = "en",
-            SourceLanguageCode = "vi",
-            Title = "Family Members",
-            Description = "Learn vocabulary about family relationships",
-            Skill = SkillType.Vocabulary,
-            Topic = "Family",
-            ContentSource = ContentSource.Curated,
-            OrderIndex = 2,
-            EstimatedMinutes = 20,
-            XpReward = 50,
-            IsPublished = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        var lesson3 = new Lesson
-        {
-            Id = Guid.NewGuid(),
-            CefrLevel = CefrLevel.A1,
-            TargetLanguageCode = "en",
-            SourceLanguageCode = "vi",
-            Title = "Present Simple Tense",
-            Description = "Learn how to use present simple tense for daily routines",
-            Skill = SkillType.Grammar,
-            Topic = "Grammar",
-            ContentSource = ContentSource.Curated,
-            OrderIndex = 3,
-            EstimatedMinutes = 25,
-            XpReward = 75,
-            IsPublished = true,
-            CreatedAt = DateTime.UtcNow,
-            UpdatedAt = DateTime.UtcNow
-        };
-
-        context.Lessons.AddRange(lesson1, lesson2, lesson3);
-
-        // Seed Exercises for Lesson 1
-        var exercises = new List<Exercise>
-        {
-            new()
-            {
-                Id = Guid.NewGuid(),
-                LessonId = lesson1.Id,
-                Type = ExerciseType.MultipleChoice,
-                Prompt = "What do you say when you meet someone?",
-                Instruction = "Choose the correct greeting",
-                OptionsJson = "[\"Hello\", \"Goodbye\", \"Thank you\", \"Sorry\"]",
-                CorrectAnswerJson = "\"Hello\"",
-                Explanation = "'Hello' is used when meeting someone",
-                Difficulty = 1,
-                XpReward = 10,
-                OrderIndex = 1,
-                IsAiGenerated = false,
-                CreatedAt = DateTime.UtcNow
-            },
-            new()
-            {
-                Id = Guid.NewGuid(),
-                LessonId = lesson1.Id,
-                Type = ExerciseType.FillBlank,
-                Prompt = "_____, how are you?",
-                Instruction = "Fill in the blank with the correct word",
-                CorrectAnswerJson = "\"Hello\"",
-                Explanation = "'Hello, how are you?' is a common greeting",
-                Difficulty = 1,
-                XpReward = 10,
-                OrderIndex = 2,
-            }
-        };
-        context.Exercises.AddRange(exercises);
-        await context.SaveChangesAsync();
+            var oldLessonIds = oldLessons.Select(ol => ol.Id).ToList();
+            var oldExercises = await context.Exercises.Where(e => oldLessonIds.Contains(e.LessonId)).ToListAsync();
+            context.Exercises.RemoveRange(oldExercises);
+            context.Lessons.RemoveRange(oldLessons);
+            await context.SaveChangesAsync();
+        }
 
         // Seed Notifications if none exist
         if (!await context.Notifications.AnyAsync())
@@ -706,5 +626,245 @@ public static class DbSeeder
         {
             await context.SaveChangesAsync();
         }
+    }
+
+    private static async Task SeedNewChaptersAsync(AppDbContext context)
+    {
+        var chapterDefinitions = new List<(CefrLevel Level, string Title, string Description, string Topic, List<Exercise> Exercises)>
+        {
+            // === A1 ===
+            (
+                CefrLevel.A1, "Chương 1: Daily Communications", 
+                "Practice basic speaking, reading comprehension, and daily routine essay writing", "Daily Life",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Hãy đọc to câu tiếng Anh sau:", TargetText = "Hello! My name is Nguyen, and I am learning English.", CorrectAnswerJson = "\"Hello! My name is Nguyen, and I am learning English.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Tìm lỗi sai trong câu: 'Yesterday, I go to the store.'", OptionsJson = "[\"Yesterday\", \"I go\", \"to the\", \"store\"]", CorrectAnswerJson = "\"I go\"", Explanation = "Phải dùng quá khứ đơn 'went' thay vì 'go'.", Instruction = "Tìm lỗi sai ngữ pháp", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.Writing, Prompt = "Viết đoạn văn ngắn khoảng 100-200 từ kể về thói quen ngày hôm qua của bạn.", Instruction = "Viết đoạn văn tự do", Difficulty = 1, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A1, "Chương 2: Greeting & Family", 
+                "Introduce yourself and describe your family members.", "Family",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "What is the meaning of 'mother' in Vietnamese?", OptionsJson = "[\"Bố\", \"Mẹ\", \"Anh trai\", \"Chị gái\"]", CorrectAnswerJson = "\"Mẹ\"", Explanation = "'Mother' nghĩa là mẹ.", Instruction = "Chọn từ đúng nghĩa", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "This is my mother. ______ name is Mary. (Her/His/Their)", CorrectAnswerJson = "\"Her\"", Explanation = "Dùng tính từ sở hữu 'Her' cho giống cái.", Instruction = "Điền đại từ thích hợp", Difficulty = 1, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A1, "Chương 3: School & Food", 
+                "Talk about school subjects and your favorite food.", "School & Food",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Which one is a school subject?", OptionsJson = "[\"Apple\", \"Math\", \"Dog\", \"Car\"]", CorrectAnswerJson = "\"Math\"", Explanation = "'Math' là môn toán học.", Instruction = "Chọn từ vựng theo chủ đề", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "I usually eat ______ for breakfast. (bread/read/book)", CorrectAnswerJson = "\"bread\"", Explanation = "'Bread' là bánh mì, món ăn sáng phổ biến.", Instruction = "Điền từ thích hợp", Difficulty = 1, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A1, "Chương 4: Numbers & Shopping", 
+                "Learn numbers and basic conversation when shopping.", "Shopping",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "How much is 20 plus 30?", OptionsJson = "[\"Fifty\", \"Forty\", \"Sixty\", \"Thirty\"]", CorrectAnswerJson = "\"Fifty\"", Explanation = "20 + 30 = 50 (Fifty).", Instruction = "Chọn đáp án đúng", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "How ______ is this shirt? (much/many/price)", CorrectAnswerJson = "\"much\"", Explanation = "'How much' dùng để hỏi giá cả.", Instruction = "Điền từ thích hợp hỏi giá", Difficulty = 1, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A1, "Chương 5: Hobbies & Pets", 
+                "Describe your favorite hobbies and pets.", "Hobbies",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Hãy đọc to câu sau:", TargetText = "I have a small dog and I love playing soccer.", CorrectAnswerJson = "\"I have a small dog and I love playing soccer.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 1, XpReward = 20 },
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Which animal is commonly kept as a pet?", OptionsJson = "[\"Lion\", \"Cat\", \"Shark\", \"Bear\"]", CorrectAnswerJson = "\"Cat\"", Explanation = "'Cat' (mèo) là thú cưng phổ biến.", Instruction = "Chọn đáp án đúng", Difficulty = 1, XpReward = 20 }
+                }
+            ),
+
+            // === A2 ===
+            (
+                CefrLevel.A2, "Chương 1: Hobbies and Leisure", 
+                "Practice hobbies speaking, context fill-in-the-blanks, and favorite hobby essay writing at A2 level.", "Hobbies",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Hãy đọc to câu tiếng Anh sau:", TargetText = "I enjoy reading books and playing soccer with my friends on weekends.", CorrectAnswerJson = "\"I enjoy reading books and playing soccer with my friends on weekends.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 2, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "My favorite hobby is reading. It helps me to (1) ______ my knowledge. (expand/eat/play)", CorrectAnswerJson = "\"expand\"", Explanation = "'expand knowledge' nghĩa là mở rộng kiến thức.", Instruction = "Điền từ thích hợp", Difficulty = 2, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A2, "Chương 2: Daily Routines & Weather", 
+                "Discuss daily routines and describe different weather patterns.", "Daily Routines",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "If it is raining hard, it is raining cats and ______.", OptionsJson = "[\"dogs\", \"birds\", \"cows\", \"fish\"]", CorrectAnswerJson = "\"dogs\"", Explanation = "Thành ngữ 'rain cats and dogs' nghĩa là mưa như trút nước.", Instruction = "Chọn thành ngữ đúng", Difficulty = 2, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "I always wake up ______ 6 AM. (at/on/in)", CorrectAnswerJson = "\"at\"", Explanation = "Dùng giới từ 'at' trước giờ giấc cụ thể.", Instruction = "Điền giới từ thích hợp", Difficulty = 2, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A2, "Chương 3: Healthy Living & Nutrition", 
+                "Learn vocabulary about health, food choices, and staying active.", "Health",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Which food is considered healthy?", OptionsJson = "[\"Pizza\", \"Apple\", \"Donut\", \"Soda\"]", CorrectAnswerJson = "\"Apple\"", Explanation = "Táo là hoa quả tốt cho sức khỏe.", Instruction = "Chọn thực phẩm lành mạnh", Difficulty = 2, XpReward = 20 },
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu sau:", TargetText = "Drinking enough water every day is essential for your body.", CorrectAnswerJson = "\"Drinking enough water every day is essential for your body.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 2, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A2, "Chương 4: Jobs & Workplace Basics", 
+                "Describe common jobs and standard workplace responsibilities.", "Workplace",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "A person who designs buildings is an ______.", OptionsJson = "[\"Architect\", \"Teacher\", \"Doctor\", \"Chef\"]", CorrectAnswerJson = "\"Architect\"", Explanation = "Architect là kiến trúc sư, người thiết kế các tòa nhà.", Instruction = "Chọn nghề nghiệp phù hợp", Difficulty = 2, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "She ______ in a hospital. She is a nurse. (works/plays/dances)", CorrectAnswerJson = "\"works\"", Explanation = "Y tá làm việc ở bệnh viện.", Instruction = "Điền động từ thích hợp", Difficulty = 2, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.A2, "Chương 5: Neighborhood & Directions", 
+                "Ask for and give directions in a city or neighborhood.", "Directions",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu hỏi đường sau:", TargetText = "Excuse me, how do I get to the post office from here?", CorrectAnswerJson = "\"Excuse me, how do I get to the post office from here?\"", Instruction = "Đọc to câu hỏi đường", Difficulty = 2, XpReward = 20 },
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "What is the opposite of 'turn left'?", OptionsJson = "[\"Turn right\", \"Go straight\", \"Go back\", \"Stop\"]", CorrectAnswerJson = "\"Turn right\"", Explanation = "Đối lập của rẽ trái là rẽ phải.", Instruction = "Chọn từ trái nghĩa", Difficulty = 2, XpReward = 20 }
+                }
+            ),
+
+            // === B1 ===
+            (
+                CefrLevel.B1, "Chương 1: Travel and Exploration", 
+                "Practice travel speaking, correct verb tense choices, and request letter writing.", "Travel",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Hãy đọc to câu tiếng Anh sau:", TargetText = "Could you please tell me how to get to the nearest train station?", CorrectAnswerJson = "\"Could you please tell me how to get to the nearest train station?\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 3, XpReward = 20 },
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Choose the correct past tense form: 'Last year, when we ______ London, we stayed at a nice hotel.'", OptionsJson = "[\"visited\", \"visiting\", \"visits\", \"had visited\"]", CorrectAnswerJson = "\"visited\"", Explanation = "Dùng thì quá khứ đơn cho hành động đã hoàn tất trong quá khứ.", Instruction = "Chọn dạng đúng của động từ", Difficulty = 3, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.B1, "Chương 2: Life Experiences & Storytelling", 
+                "Discuss memorable life experiences and learn to construct narratives.", "Narrative",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Which connector is best to show a sequence of events?", OptionsJson = "[\"First of all\", \"Because\", \"Although\", \"However\"]", CorrectAnswerJson = "\"First of all\"", Explanation = "'First of all' dùng để chỉ thứ tự bắt đầu của chuỗi hành động.", Instruction = "Chọn liên từ chỉ trình tự", Difficulty = 3, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "I have ______ (live) here for five years. (lived/living/live)", CorrectAnswerJson = "\"lived\"", Explanation = "Thì hiện tại hoàn thành sử dụng 'have + V3/V-ed'.", Instruction = "Điền dạng đúng của động từ", Difficulty = 3, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.B1, "Chương 3: Consumer Society & Money", 
+                "Talk about spending habits, saving money, and online shopping.", "Money",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "To buy something on credit means to paying ______.", OptionsJson = "[\"later\", \"immediately\", \"with cash only\", \"nothing\"]", CorrectAnswerJson = "\"later\"", Explanation = "Mua trả góp/tín dụng có nghĩa là thanh toán sau.", Instruction = "Chọn ý nghĩa chính xác", Difficulty = 3, XpReward = 20 },
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu sau:", TargetText = "Saving money is a good habit that provides security for the future.", CorrectAnswerJson = "\"Saving money is a good habit that provides security for the future.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 3, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.B1, "Chương 4: Rules & Social Issues", 
+                "Discuss school/company regulations and modern social topics.", "Society",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "You ______ wear a seatbelt when driving. It is the law.", OptionsJson = "[\"must\", \"might\", \"should not\", \"could\"]", CorrectAnswerJson = "\"must\"", Explanation = "'Must' thể hiện sự bắt buộc theo pháp luật.", Instruction = "Chọn động từ khuyết thiếu phù hợp", Difficulty = 3, XpReward = 20 },
+                    new() { Type = ExerciseType.Writing, Prompt = "Viết email khoảng 150-200 từ góp ý cải thiện vấn đề rác thải nhựa tại nơi làm việc của bạn.", Instruction = "Viết thư/email kiến nghị", Difficulty = 3, XpReward = 25 }
+                }
+            ),
+            (
+                CefrLevel.B1, "Chương 5: Work-Life Balance", 
+                "Learn to describe workload and stress-relief methods.", "Workplace",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu sau:", TargetText = "Maintaining a healthy work-life balance is crucial for mental well-being.", CorrectAnswerJson = "\"Maintaining a healthy work-life balance is crucial for mental well-being.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 3, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "If you are too stressed, you should ______ some time off. (take/make/give)", CorrectAnswerJson = "\"take\"", Explanation = "'Take time off' nghĩa là xin nghỉ ngơi một thời gian.", Instruction = "Điền động từ đúng cụm từ", Difficulty = 3, XpReward = 20 }
+                }
+            ),
+
+            // === B2 ===
+            (
+                CefrLevel.B2, "Chương 1: Remote Work & Modern Shifts", 
+                "Discuss the evolution, benefits, and challenges of working remotely.", "Career",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu nhận định sau:", TargetText = "The paradigm shift toward remote work has transformed corporate cultures globally.", CorrectAnswerJson = "\"The paradigm shift toward remote work has transformed corporate cultures globally.\"", Instruction = "Đọc to nhận định tiếng Anh", Difficulty = 4, XpReward = 20 },
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "What does the phrase 'paradigm shift' mean?", OptionsJson = "[\"A fundamental change in approach\", \"A temporary trend\", \"A technological error\", \"A minor adjustment\"]", CorrectAnswerJson = "\"A fundamental change in approach\"", Explanation = "'Paradigm shift' nghĩa là một sự thay đổi mang tính nền tảng/bước ngoặt.", Instruction = "Chọn định nghĩa chính xác", Difficulty = 4, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.B2, "Chương 2: Environment & Green Energy", 
+                "Analyze environmental problems, climate change, and alternative energy sources.", "Environment",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "Which energy source is fully renewable?", OptionsJson = "[\"Coal\", \"Solar power\", \"Natural Gas\", \"Petroleum\"]", CorrectAnswerJson = "\"Solar power\"", Explanation = "Năng lượng mặt trời là nguồn năng lượng tái tạo hoàn toàn.", Instruction = "Chọn đáp án đúng", Difficulty = 4, XpReward = 20 },
+                    new() { Type = ExerciseType.Writing, Prompt = "Write an essay (150-200 words) debating whether nuclear energy is a viable solution to combat global warming.", Instruction = "Viết bài luận nghị luận", Difficulty = 4, XpReward = 25 }
+                }
+            ),
+            (
+                CefrLevel.B2, "Chương 3: Technology & AI", 
+                "Explore the rise of artificial intelligence, machine learning, and its impact on jobs.", "Technology",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu sau:", TargetText = "Artificial intelligence raises ethical concerns regarding data privacy and automation.", CorrectAnswerJson = "\"Artificial intelligence raises ethical concerns regarding data privacy and automation.\"", Instruction = "Đọc to câu tiếng Anh mẫu", Difficulty = 4, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "AI systems rely on massive datasets to ______ predictions. (generate/destroy/ignore)", CorrectAnswerJson = "\"generate\"", Explanation = "Hệ thống AI dựa trên dữ liệu lớn để tạo ra các dự đoán.", Instruction = "Điền động từ thích hợp", Difficulty = 4, XpReward = 20 }
+                }
+            ),
+            (
+                CefrLevel.B2, "Chương 4: Media & Advertising", 
+                "Deconstruct the strategies behind modern advertisements and media outlets.", "Media",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.MultipleChoice, Prompt = "What is the primary goal of persuasive advertising?", OptionsJson = "[\"To convince consumers to buy a product\", \"To provide technical data sheets\", \"To entertain the target audience\", \"To decrease manufacturing costs\"]", CorrectAnswerJson = "\"To convince consumers to buy a product\"", Explanation = "Mục đích chính của quảng cáo thuyết phục là thuyết phục người tiêu dùng mua hàng.", Instruction = "Chọn mục tiêu chính xác", Difficulty = 4, XpReward = 20 },
+                    new() { Type = ExerciseType.Writing, Prompt = "Write a review (150-200 words) of an advertisement campaign that you found highly effective or controversial.", Instruction = "Viết bài review phân tích", Difficulty = 4, XpReward = 25 }
+                }
+            ),
+            (
+                CefrLevel.B2, "Chương 5: Culture & Global Citizenship", 
+                "Understand cultural diversity, migration, and the concept of global citizenship.", "Culture",
+                new List<Exercise>
+                {
+                    new() { Type = ExerciseType.Speaking, Prompt = "Đọc to câu nhận định sau:", TargetText = "Embracing cultural diversity promotes tolerance and enriches global cooperation.", CorrectAnswerJson = "\"Embracing cultural diversity promotes tolerance and enriches global cooperation.\"", Instruction = "Đọc to nhận định tiếng Anh", Difficulty = 4, XpReward = 20 },
+                    new() { Type = ExerciseType.FillBlank, Prompt = "A global citizen feels a sense of ______ to the world community. (belonging/loneliness/isolation)", CorrectAnswerJson = "\"belonging\"", Explanation = "'belonging' nghĩa là sự thuộc về, sự gắn kết.", Instruction = "Điền danh từ phù hợp", Difficulty = 4, XpReward = 20 }
+                }
+            )
+        };
+
+        var existingLessons = await context.Lessons.ToListAsync();
+        int baseOrderIndex = 20;
+
+        foreach (var def in chapterDefinitions)
+        {
+            var alreadyExists = existingLessons.Any(l => l.Title == def.Title && l.CefrLevel == def.Level);
+            if (!alreadyExists)
+            {
+                var lesson = new Lesson
+                {
+                    Id = Guid.NewGuid(),
+                    CefrLevel = def.Level,
+                    TargetLanguageCode = "en",
+                    SourceLanguageCode = "vi",
+                    Title = def.Title,
+                    Description = def.Description,
+                    Skill = def.Level == CefrLevel.A1 || def.Level == CefrLevel.A2 ? SkillType.Vocabulary : SkillType.Writing,
+                    Topic = def.Topic,
+                    ContentSource = ContentSource.Curated,
+                    OrderIndex = baseOrderIndex++,
+                    EstimatedMinutes = 20,
+                    XpReward = 60,
+                    IsPublished = true,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+
+                context.Lessons.Add(lesson);
+
+                int exerciseOrderIndex = 1;
+                foreach (var ex in def.Exercises)
+                {
+                    ex.Id = Guid.NewGuid();
+                    ex.LessonId = lesson.Id;
+                    ex.OrderIndex = exerciseOrderIndex++;
+                    ex.IsAiGenerated = false;
+                    ex.CreatedAt = DateTime.UtcNow;
+                    
+                    context.Exercises.Add(ex);
+                }
+            }
+        }
+
+        await context.SaveChangesAsync();
     }
 }

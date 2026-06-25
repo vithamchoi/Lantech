@@ -40,6 +40,11 @@ public class OpenRouterAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 
     protected override async Task<string> CallChatCompletionsAsync(string systemPrompt, string userPrompt, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(_options.OpenRouterApiKey))
+        {
+            throw new InvalidOperationException("OpenRouter API key is not configured.");
+        }
+
         // 1. Gather all models to try in sequence: Default model -> Fallback models
         var modelsToTry = new List<string>();
         if (!string.IsNullOrEmpty(_options.OpenRouterDefaultModel))

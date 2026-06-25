@@ -46,7 +46,10 @@ public class LessonService : ILessonService
 
         return lessons.Select(l =>
         {
-            var p = progressList.FirstOrDefault(pr => pr.LessonId == l.Id);
+            var p = progressList
+                .Where(pr => pr.LessonId == l.Id)
+                .OrderByDescending(pr => pr.Status)
+                .FirstOrDefault();
             return MapToDto(l, p);
         });
     }
@@ -57,7 +60,9 @@ public class LessonService : ILessonService
         if (lesson == null) return null;
 
         var progress = await _context.LessonProgress
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == lessonId, cancellationToken);
+            .Where(p => p.UserId == userId && p.LessonId == lessonId)
+            .OrderByDescending(p => p.Status)
+            .FirstOrDefaultAsync(cancellationToken);
 
         return MapToDto(lesson, progress);
     }
@@ -68,7 +73,9 @@ public class LessonService : ILessonService
         if (lesson == null) throw new KeyNotFoundException("Lesson not found");
 
         var progress = await _context.LessonProgress
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == lessonId, cancellationToken);
+            .Where(p => p.UserId == userId && p.LessonId == lessonId)
+            .OrderByDescending(p => p.Status)
+            .FirstOrDefaultAsync(cancellationToken);
 
         if (progress == null)
         {
@@ -103,7 +110,9 @@ public class LessonService : ILessonService
         if (user == null) throw new KeyNotFoundException("User not found");
 
         var progress = await _context.LessonProgress
-            .FirstOrDefaultAsync(p => p.UserId == userId && p.LessonId == lessonId, cancellationToken);
+            .Where(p => p.UserId == userId && p.LessonId == lessonId)
+            .OrderByDescending(p => p.Status)
+            .FirstOrDefaultAsync(cancellationToken);
 
         bool firstTimeCompleted = false;
 

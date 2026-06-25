@@ -32,12 +32,55 @@ export default function AssessmentRoom() {
   const [recordingTime, setRecordingTime] = useState(0);
   const [timeLeft, setTimeLeft] = useState(45 * 60); // 45 minutes
   const [sectionDone, setSectionDone] = useState<Section[]>([]);
+  
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const handleSubmitAll = async () => {
+    if (!assessment) return;
+
+    setIsSubmitting(true);
+    try {
+      const sectionsList: Section[] = ["listening", "reading", "writing", "speaking"];
+      for (const sec of sectionsList) {
+        const sectionQuestions = assessment.questions.filter(q => q.skill.toLowerCase() === sec.toLowerCase());
+        const sectionAnswers = sectionQuestions.map(q => {
+          if (sec === 'writing') {
+            return { questionId: q.id, answerText: essayText };
+          }
+          if (sec === 'speaking') {
+            return { questionId: q.id, transcriptText: "Mock transcript from FE", targetText: q.speakingPrompt };
+          }
+          return { questionId: q.id, answer: answers[q.id] || "" };
+        });
+
+        await assessmentService.submitSection(assessment.id, sec, sectionAnswers);
+      }
+
+      const finalResult = await assessmentService.completeAssessment(assessment.id);
+      toast.success("Nộp bài thi thành công!");
+      navigate("/assessment-results", { state: { result: finalResult } });
+    } catch (error: any) {
+      toast.error(error.response?.data?.message || t("failedSubmitSection"));
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     if (!started) return;
     const timer = setInterval(() => setTimeLeft(t => Math.max(0, t - 1)), 1000);
     return () => clearInterval(timer);
   }, [started]);
+
+  useEffect(() => {
+    if (started && timeLeft === 0 && !isSubmitting) {
+      toast.info("Hết thời gian! Hệ thống đang tự động nộp bài...");
+      handleSubmitAll();
+    }
+  }, [timeLeft, started, isSubmitting]);
 
   useEffect(() => {
     if (!isRecording) return;
@@ -58,42 +101,7 @@ export default function AssessmentRoom() {
     }
   };
 
-  const handleSectionComplete = async () => {
-    if (!assessment) return;
-
-    setIsSubmitting(true);
-    try {
-      const sectionQuestions = assessment.questions.filter(q => q.skill.toLowerCase() === currentSection.toLowerCase());
-      const sectionAnswers: AssessmentAnswerItem[] = sectionQuestions.map(q => {
-        if (currentSection === 'writing') {
-          return { questionId: q.id, answerText: essayText };
-        }
-        if (currentSection === 'speaking') {
-          return { questionId: q.id, transcriptText: "Mock transcript from FE", targetText: q.speakingPrompt };
-        }
-        return { questionId: q.id, answer: answers[q.id] };
-      });
-
-      await assessmentService.submitSection(assessment.id, currentSection, sectionAnswers);
-      
-      setSectionDone(prev => [...prev, currentSection]);
-      const sections: Section[] = ["listening", "reading", "writing", "speaking"];
-      const next = sections[sections.indexOf(currentSection) + 1];
-      
-      if (next) {
-        setCurrentSection(next);
-      } else {
-        const finalResult = await assessmentService.completeAssessment(assessment.id);
-        navigate("/assessment-results", { state: { result: finalResult } });
-      }
-    } catch (error: any) {
-      toast.error(error.response?.data?.message || t("failedSubmitSection"));
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
+  const formatTime = (s: number) => `${Math.floor(s / 60).toString().padStart(2, "0")}:${Math.floor(s % 60).toString().padStart(2, "0")}`;
 
   const currentQuestions = assessment?.questions.filter(q => q.skill.toLowerCase() === currentSection.toLowerCase()) || [];
 
@@ -157,35 +165,57 @@ export default function AssessmentRoom() {
         style={{ background: "#fff", borderColor: "rgba(0,0,0,0.08)" }}
       >
         <div className="flex items-center gap-2 flex-wrap">
-          {SECTIONS.map(s => (
-            <div
-              key={s.id}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border"
-              style={{
-                background: sectionDone.includes(s.id) ? "var(--brand-light)" : currentSection === s.id ? s.color + "22" : "#f3f4f6",
-                borderColor: sectionDone.includes(s.id) ? "var(--brand)" : currentSection === s.id ? s.color : "#e5e7eb",
-              }}
-            >
-              <span style={{ fontSize: 13 }}>{s.emoji}</span>
-              <span style={{ fontSize: 12, fontWeight: 700, color: sectionDone.includes(s.id) ? "var(--brand-dark)" : currentSection === s.id ? s.color : "#aaa" }}>
-                {t(s.labelKey)}
-              </span>
-              {sectionDone.includes(s.id) && <span style={{ color: "var(--brand)" }}>✓</span>}
-            </div>
-          ))}
+          {SECTIONS.map(s => {
+            const hasAnsweredAny = assessment?.questions
+              .filter(q => q.skill.toLowerCase() === s.id)
+              .some(q => {
+                if (s.id === 'writing') return essayText.trim().length > 0;
+                if (s.id === 'speaking') return recordingTime > 0;
+                return !!answers[q.id];
+              });
+            return (
+              <div
+                key={s.id}
+                onClick={() => setCurrentSection(s.id)}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border cursor-pointer hover:opacity-80 transition-all"
+                style={{
+                  background: currentSection === s.id ? s.color + "22" : "#f3f4f6",
+                  borderColor: currentSection === s.id ? s.color : "#e5e7eb",
+                }}
+              >
+                <span style={{ fontSize: 13 }}>{s.emoji}</span>
+                <span style={{ fontSize: 12, fontWeight: 700, color: currentSection === s.id ? s.color : "#666" }}>
+                  {t(s.labelKey)}
+                </span>
+                {hasAnsweredAny && <span style={{ color: "var(--brand)", fontSize: 12, marginLeft: 2 }}>●</span>}
+              </div>
+            );
+          })}
         </div>
 
-        <div
-          className="flex items-center gap-2 px-4 py-2 rounded-full border"
-          style={{
-            background: timeLeft < 300 ? "#fee2e2" : "#fff7ed",
-            borderColor: timeLeft < 300 ? "#fca5a5" : "#fed7aa",
-          }}
-        >
-          <Clock size={14} style={{ color: timeLeft < 300 ? "#dc2626" : "#f97316" }} />
-          <span style={{ fontWeight: 800, fontSize: 14, color: timeLeft < 300 ? "#dc2626" : "#92400e", fontVariantNumeric: "tabular-nums" }}>
-            {formatTime(timeLeft)}
-          </span>
+        <div className="flex items-center gap-3">
+          <div
+            className="flex items-center gap-2 px-4 py-2 rounded-full border"
+            style={{
+              background: timeLeft < 300 ? "#fee2e2" : "#fff7ed",
+              borderColor: timeLeft < 300 ? "#fca5a5" : "#fed7aa",
+            }}
+          >
+            <Clock size={14} style={{ color: timeLeft < 300 ? "#dc2626" : "#f97316" }} />
+            <span style={{ fontWeight: 800, fontSize: 14, color: timeLeft < 300 ? "#dc2626" : "#92400e", fontVariantNumeric: "tabular-nums" }}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+
+          <button
+            onClick={handleSubmitAll}
+            disabled={isSubmitting}
+            type="button"
+            className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm rounded-full transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
+          >
+            {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
+            Nộp bài
+          </button>
         </div>
       </div>
 
@@ -215,25 +245,63 @@ export default function AssessmentRoom() {
             
             {currentQuestions.map((q, qi) => (
               <div key={q.id} className="mb-8">
-                {q.audioUrl && (
+                {q.audioUrl && qi === 0 && (
                   <div
-                    className="rounded-2xl px-5 py-4 mb-6 flex items-center gap-4 border"
+                    className="rounded-2xl px-6 py-5 mb-6 flex flex-col gap-3 border shadow-sm"
                     style={{ background: "#eff6ff", borderColor: "#bfdbfe" }}
                   >
-                    <div
-                      className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer shrink-0"
-                      style={{ background: "#1CB0F6" }}
-                      onClick={() => {
-                        const audio = new Audio(q.audioUrl);
-                        audio.play();
+                    <audio
+                      ref={audioRef}
+                      src={q.audioUrl}
+                      onPlay={() => setIsPlaying(true)}
+                      onPause={() => setIsPlaying(false)}
+                      onTimeUpdate={(e) => setCurrentTime(e.currentTarget.currentTime)}
+                      onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)}
+                    />
+                    <div className="flex items-center gap-4">
+                      <button
+                        onClick={() => {
+                          if (audioRef.current) {
+                            if (isPlaying) {
+                              audioRef.current.pause();
+                            } else {
+                              audioRef.current.play();
+                            }
+                          }
+                        }}
+                        type="button"
+                        className="w-12 h-12 rounded-full flex items-center justify-center cursor-pointer shrink-0 border-none text-white font-bold transition-all shadow-md hover:scale-105"
+                        style={{ background: "#1CB0F6" }}
+                      >
+                        {isPlaying ? (
+                          <span style={{ fontSize: 14, fontWeight: 900 }}>||</span>
+                        ) : (
+                          <span style={{ fontSize: 20, marginLeft: 3 }}>▶</span>
+                        )}
+                      </button>
+                      <div className="flex-1">
+                        <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>Phần nghe</div>
+                        <div style={{ fontSize: 12, color: "#60a5fa" }}>Conversation 1-4</div>
+                      </div>
+                      <div style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>
+                        {formatTime(currentTime)} / {formatTime(duration || 0)}
+                      </div>
+                    </div>
+                    <input
+                      type="range"
+                      min={0}
+                      max={duration || 0}
+                      value={currentTime}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value);
+                        setCurrentTime(val);
+                        if (audioRef.current) {
+                          audioRef.current.currentTime = val;
+                        }
                       }}
-                    >
-                      <span style={{ fontSize: 22, color: "#fff", marginLeft: 4 }}>▶</span>
-                    </div>
-                    <div className="flex-1">
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#1d4ed8" }}>{t("listenToQuestion", { index: String(qi + 1) })}</div>
-                      <p style={{ fontSize: 12, color: "#60a5fa" }}>{q.instruction || t("clickPlayToListen")}</p>
-                    </div>
+                      className="w-full h-1.5 rounded-lg bg-blue-200 appearance-none cursor-pointer accent-blue-600 outline-none"
+                      style={{ margin: 0 }}
+                    />
                   </div>
                 )}
                 
@@ -272,14 +340,12 @@ export default function AssessmentRoom() {
             ))}
 
             <button
-              onClick={handleSectionComplete}
-              disabled={isSubmitting}
+              onClick={() => setCurrentSection("reading")}
               type="button"
               className="mt-4 px-8 py-3 rounded-2xl cursor-pointer border-none outline-none font-bold text-white flex items-center gap-2"
-              style={{ background: "var(--brand)", opacity: isSubmitting ? 0.7 : 1 }}
+              style={{ background: "var(--brand)" }}
             >
-              {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              {t("submitListening")} <ChevronRight size={14} />
+              Chuyển sang phần Đọc <ChevronRight size={14} />
             </button>
           </div>
         )}
@@ -339,14 +405,12 @@ export default function AssessmentRoom() {
                 </div>
               ))}
               <button
-                onClick={handleSectionComplete}
-                disabled={isSubmitting}
+                onClick={() => setCurrentSection("writing")}
                 type="button"
                 className="w-full mt-4 px-8 py-3 rounded-2xl cursor-pointer border-none outline-none font-bold text-white flex items-center justify-center gap-2"
-                style={{ background: "#8b5cf6", opacity: isSubmitting ? 0.7 : 1 }}
+                style={{ background: "#8b5cf6" }}
               >
-                {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {t("submitReading")} <ChevronRight size={14} />
+                Chuyển sang phần Viết <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -374,7 +438,17 @@ export default function AssessmentRoom() {
 
             <textarea
               value={essayText}
-              onChange={(e) => setEssayText(e.target.value)}
+              onChange={(e) => {
+                const text = e.target.value;
+                const matches = [...text.matchAll(/\S+/g)];
+                if (matches.length > 200) {
+                  const lastMatch = matches[199];
+                  const endPosition = lastMatch.index + lastMatch[0].length;
+                  setEssayText(text.substring(0, endPosition));
+                  return;
+                }
+                setEssayText(text);
+              }}
               placeholder={t("writingPlaceholder")}
               className="w-full h-64 rounded-2xl p-6 border outline-none transition-all resize-none"
               style={{
@@ -391,17 +465,14 @@ export default function AssessmentRoom() {
                 {t("wordCountLabel", { count: String(essayText.trim() === "" ? 0 : essayText.trim().split(/\s+/).length) })}
               </span>
               <button
-                onClick={handleSectionComplete}
-                disabled={isSubmitting || essayText.trim().length < 50}
+                onClick={() => setCurrentSection("speaking")}
                 type="button"
                 className="px-8 py-3 rounded-2xl cursor-pointer border-none outline-none font-bold text-white flex items-center gap-2"
                 style={{
                   background: "#f97316",
-                  opacity: (isSubmitting || essayText.trim().length < 50) ? 0.7 : 1,
                 }}
               >
-                {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-                {t("submitWriting")} <ChevronRight size={14} />
+                Chuyển sang phần Nói <ChevronRight size={14} />
               </button>
             </div>
             {essayText.trim().length < 50 && !isSubmitting && (
@@ -459,14 +530,14 @@ export default function AssessmentRoom() {
             </div>
 
             <button
-              onClick={handleSectionComplete}
-              disabled={isSubmitting || recordingTime === 0}
+              onClick={handleSubmitAll}
+              disabled={isSubmitting}
               type="button"
               className="mt-12 px-10 py-4 rounded-2xl cursor-pointer border-none outline-none font-bold text-white shadow-lg flex items-center justify-center gap-2 mx-auto"
-              style={{ background: "var(--brand)", opacity: (isSubmitting || recordingTime === 0) ? 0.7 : 1 }}
+              style={{ background: "var(--brand)", opacity: isSubmitting ? 0.7 : 1 }}
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              {t("submitSpeaking")} <ChevronRight size={14} />
+              Nộp bài thi <ChevronRight size={14} />
             </button>
           </div>
         )}

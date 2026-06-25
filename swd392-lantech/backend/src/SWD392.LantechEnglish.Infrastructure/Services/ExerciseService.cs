@@ -12,11 +12,19 @@ public class ExerciseService : IExerciseService
 {
     private readonly AppDbContext _context;
     private readonly IGamificationService _gamificationService;
+    private readonly ISpeechAssessmentProvider _speechProvider;
+    private readonly IAIProvider _aiProvider;
 
-    public ExerciseService(AppDbContext context, IGamificationService gamificationService)
+    public ExerciseService(
+        AppDbContext context, 
+        IGamificationService gamificationService,
+        ISpeechAssessmentProvider speechProvider,
+        IAIProvider aiProvider)
     {
         _context = context;
         _gamificationService = gamificationService;
+        _speechProvider = speechProvider;
+        _aiProvider = aiProvider;
     }
 
     public async Task<ExerciseDto?> GetExerciseByIdAsync(Guid exerciseId, CancellationToken cancellationToken = default)
@@ -43,16 +51,74 @@ public class ExerciseService : IExerciseService
         var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
         if (user == null) throw new KeyNotFoundException("User not found");
 
-        string cleanCorrect = CleanAnswer(exercise.CorrectAnswerJson);
-        string cleanUser = request.Answer.Trim().ToLower();
+        bool isCorrect = false;
+        double score = 0.0;
+        string feedback = string.Empty;
 
-        bool isCorrect = cleanUser == cleanCorrect;
-        double score = isCorrect ? 100.0 : 0.0;
-        
-        string feedback = isCorrect 
-            ? "Correct! Great job." 
-            : $"Incorrect. The correct answer was: '{cleanCorrect.ToUpper()}'." + 
-              (string.IsNullOrEmpty(exercise.Explanation) ? "" : $" Explanation: {exercise.Explanation}");
+        if (exercise.Type == ExerciseType.Speaking)
+        {
+            byte[] audioBytes;
+            try
+            {
+                audioBytes = Convert.FromBase64String(request.Answer);
+            }
+            catch (FormatException)
+            {
+                throw new ArgumentException("Audio is not in valid Base64 format.");
+            }
+
+            var targetText = !string.IsNullOrEmpty(exercise.TargetText) ? exercise.TargetText : CleanAnswer(exercise.CorrectAnswerJson);
+            var result = await _speechProvider.AssessPronunciationAsync(targetText, audioBytes, cancellationToken);
+
+            isCorrect = result.Score >= 60;
+            score = result.Score;
+
+            var feedbackObj = new
+            {
+                score = result.Score,
+                accuracy = result.Accuracy,
+                fluency = result.Fluency,
+                completeness = result.Completeness,
+                feedback = result.Feedback,
+                transcriptText = result.TranscriptText,
+                wordLevelFeedback = string.IsNullOrEmpty(result.WordLevelFeedbackJson)
+                    ? null
+                    : JsonSerializer.Deserialize<object>(result.WordLevelFeedbackJson)
+            };
+            feedback = JsonSerializer.Serialize(feedbackObj);
+        }
+        else if (exercise.Type == ExerciseType.Writing)
+        {
+            var (rawScore, aiFeedback) = await _aiProvider.GradeWritingAsync(exercise.Prompt, request.Answer, user.SourceLanguageCode ?? "vi", cancellationToken);
+            
+            // Map 0-100 to a 10-point scale: convert rawScore (0-100) to 1-10
+            score = Math.Round(rawScore / 10.0, 1);
+            if (score < 1.0) score = 1.0;
+            if (score > 10.0) score = 10.0;
+
+            isCorrect = score >= 5.0;
+
+            var feedbackObj = new
+            {
+                score = score,
+                rawScore = rawScore,
+                feedback = aiFeedback
+            };
+            feedback = JsonSerializer.Serialize(feedbackObj);
+        }
+        else
+        {
+            string cleanCorrect = CleanAnswer(exercise.CorrectAnswerJson);
+            string cleanUser = request.Answer.Trim().ToLower();
+
+            isCorrect = cleanUser == cleanCorrect;
+            score = isCorrect ? 100.0 : 0.0;
+
+            feedback = isCorrect
+                ? "Correct! Great job."
+                : $"Incorrect. The correct answer was: '{cleanCorrect.ToUpper()}'." +
+                  (string.IsNullOrEmpty(exercise.Explanation) ? "" : $" Explanation: {exercise.Explanation}");
+        }
 
         var attempt = new ExerciseAttempt
         {

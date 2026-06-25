@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { useAppStore } from '../store/appStore';
 
 const API_BASE_URL = 'http://localhost:5131/api';
 
@@ -61,6 +62,8 @@ apiClient.interceptors.response.use(
             // Cập nhật Header Authorization cho request cũ và gửi lại
             originalRequest.headers.Authorization = `Bearer ${result.accessToken}`;
             return apiClient(originalRequest);
+          } else {
+            throw new Error('Refresh token code is not 200');
           }
         } catch (refreshError) {
           console.error("Token refresh failed:", refreshError);
@@ -70,6 +73,7 @@ apiClient.interceptors.response.use(
       // Nếu không có refresh token hoặc gọi API refresh thất bại, xóa token và đăng xuất
       localStorage.removeItem('access_token');
       localStorage.removeItem('refresh_token');
+      useAppStore.getState().logout();
       window.location.href = '/auth';
     }
     

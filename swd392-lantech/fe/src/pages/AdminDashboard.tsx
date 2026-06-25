@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import apiClient from "../api/apiClient";
 import { motion, AnimatePresence } from "motion/react";
 import CustomSelect from "../components/CustomSelect";
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip } from "recharts";
 
 type AdminSection = "overview" | "questions" | "lessons" | "vocabulary" | "users" | "badges" | "pronunciation";
 
@@ -949,6 +950,69 @@ export default function AdminDashboard() {
                 <div style={{ fontSize: 11.5, color: "var(--muted-foreground)", marginTop: 1, opacity: 0.8 }}>{s.sub}</div>
               </div>
             ))}
+          </div>
+
+          {/* Biểu đồ học viên mới tham gia */}
+          <div className="mb-7 rounded-2xl p-5 border border-solid text-left" style={{ background: "var(--card)", borderColor: "var(--border)" }}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 style={{ fontWeight: 800, fontSize: 14, color: "var(--foreground)", margin: 0 }}>Học viên mới tham gia theo từng tháng</h3>
+                <p style={{ fontSize: 11.5, color: "var(--muted-foreground)", margin: "2px 0 0 0" }}>Số lượng học viên đăng ký mới</p>
+              </div>
+              <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-indigo-50 dark:bg-indigo-950/40">
+                <Users size={16} className="text-indigo-500" />
+              </div>
+            </div>
+            <div style={{ width: "100%", height: 300 }}>
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={stats.monthlySignups} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <defs>
+                    <linearGradient id="colorSignups" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.9} />
+                      <stop offset="100%" stopColor="#6366f1" stopOpacity={0.15} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" opacity={0.4} vertical={false} />
+                  <XAxis 
+                    dataKey="month" 
+                    tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                  />
+                  <YAxis 
+                    tick={{ fill: "var(--muted-foreground)", fontSize: 11, fontWeight: 500 }} 
+                    axisLine={false} 
+                    tickLine={false} 
+                    allowDecimals={false} 
+                  />
+                  <RechartsTooltip
+                    cursor={{ fill: "rgba(99, 102, 241, 0.05)", radius: 6 }}
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        return (
+                          <div 
+                            className="p-3 rounded-xl border shadow-lg backdrop-blur-md"
+                            style={{ 
+                              background: "var(--card)", 
+                              borderColor: "var(--border)",
+                            }}
+                          >
+                            <p style={{ fontSize: 11, fontWeight: 800, color: "var(--muted-foreground)", margin: "0 0 4px 0", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                              {payload[0].payload.month}
+                            </p>
+                            <p style={{ fontSize: 13.5, fontWeight: 900, color: "#6366f1", margin: 0 }}>
+                              {payload[0].value} học viên mới
+                            </p>
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                  <Bar dataKey="count" fill="url(#colorSignups)" radius={[6, 6, 0, 0]} barSize={32} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">

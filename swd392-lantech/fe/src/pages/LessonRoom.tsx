@@ -1,12 +1,142 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { ChevronLeft, ChevronRight, CheckCircle, XCircle } from "lucide-react";
+import { ChevronLeft, ChevronRight, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { useAppStore } from "../store/appStore";
 import { useTranslation } from "../hooks/useTranslation";
+import { learningService, LessonDto } from "../services/learningService";
 import { motion, AnimatePresence } from "motion/react";
 import confetti from "canvas-confetti";
+import { toast } from "sonner";
 
-const SLIDES = [
+const CHAPTER1_SLIDES = [
+  {
+    type: "rule" as const,
+    title: "Daily Communications — Greetings",
+    content: "When greeting people in English, we use formal or informal greetings depending on the relationship.",
+    examples: [
+      "Formal: **Hello**, **Good morning/afternoon/evening**.",
+      "Informal: **Hi**, **Hey**, **What's up?**.",
+    ],
+    structure: "Greeting phrase + Name / Status",
+    emoji: "👋",
+  },
+  {
+    type: "rule" as const,
+    title: "Introducing Yourself",
+    content: "To introduce yourself, state your name, where you are from, and what you do.",
+    examples: [
+      "\"Hello, **my name is** Nguyen.\"",
+      "\"I am **from** Vietnam.\"",
+      "\"I **am studying** English to improve my career.\"",
+    ],
+    structure: "My name is... + I am from... + I am...",
+    emoji: "💬",
+  },
+  {
+    type: "exercise" as const,
+    title: "Short Answer",
+    question: "Complete the self-introduction: \"Hello! My _____ is Nguyen, and I am learning English.\"",
+    answer: "name",
+    emoji: "✏️",
+  },
+  {
+    type: "matching" as const,
+    title: "Match the Greetings",
+    pairs: [
+      { left: "Good morning", right: "Formal greeting" },
+      { left: "What's up?", right: "Informal greeting" },
+      { left: "Nice to meet you", right: "After introducing" },
+    ],
+    emoji: "🔗",
+  },
+];
+
+const CHAPTER2_SLIDES = [
+  {
+    type: "rule" as const,
+    title: "Hobbies and Leisure — Likes & Dislikes",
+    content: "We use verbs like **like**, **enjoy**, **love**, and **prefer** followed by a gerund (verb + -ing) or an infinitive (to + verb) to talk about hobbies.",
+    examples: [
+      "I **enjoy reading** books on weekends.",
+      "She **likes to play** soccer with her friends.",
+      "We **prefer hiking** in the mountains.",
+    ],
+    structure: "Subject + enjoy/like/prefer + Verb-ing / to-Verb",
+    emoji: "⚽",
+  },
+  {
+    type: "rule" as const,
+    title: "Vocabulary for Free Time Activities",
+    content: "Common hobbies include outdoor and indoor activities.",
+    examples: [
+      "Outdoor: **hiking**, **cycling**, **playing sports**.",
+      "Indoor: **reading**, **cooking**, **listening to music**.",
+    ],
+    structure: "Common activities: play / read / do / watch",
+    emoji: "🎨",
+  },
+  {
+    type: "exercise" as const,
+    title: "Short Answer",
+    question: "Complete the sentence: \"I prefer (do) _____ outdoor activities like hiking on weekends.\"",
+    answer: "doing",
+    emoji: "✏️",
+  },
+  {
+    type: "matching" as const,
+    title: "Match the Hobbies with Verbs",
+    pairs: [
+      { left: "_____ books", right: "read" },
+      { left: "_____ soccer", right: "play" },
+      { left: "_____ healthy meals", right: "cook" },
+    ],
+    emoji: "🔗",
+  },
+];
+
+const CHAPTER3_SLIDES = [
+  {
+    type: "rule" as const,
+    title: "Travel and Exploration — Asking for Directions",
+    content: "When traveling, we often ask polite questions to find our way around.",
+    examples: [
+      "\"Could you please tell me how to get to the nearest train station?\"",
+      "\"Excuse me, where is the main lobby?\"",
+    ],
+    structure: "Could you please tell me + how to get to + Location?",
+    emoji: "✈️",
+  },
+  {
+    type: "rule" as const,
+    title: "Past Actions in Travel",
+    content: "We use the **Past Simple** for completed actions in the past, and the **Past Perfect** for actions completed *before* another action in the past.",
+    examples: [
+      "\"Last year, when we **visited** London, we **decided** to stay in a hotel.\"",
+      "\"We **had already booked** our tickets before leaving.\"",
+    ],
+    structure: "Past Simple (visited, decided) vs Past Perfect (had booked)",
+    emoji: "🗺️",
+  },
+  {
+    type: "exercise" as const,
+    title: "Short Answer",
+    question: "Complete the travel sentence: \"We (book) _____ already our tickets before we left.\"",
+    answer: "had booked",
+    emoji: "✏️",
+  },
+  {
+    type: "matching" as const,
+    title: "Match Verb Forms",
+    pairs: [
+      { left: "Last year, we (visit) London.", right: "visited" },
+      { left: "We (already book) before leaving.", right: "had already booked" },
+      { left: "We (decide) to stay in a hotel.", right: "decided" },
+    ],
+    emoji: "🔗",
+  },
+];
+
+const DEFAULT_SLIDES = [
   {
     type: "rule" as const,
     title: "Daily Routines — Present Continuous",
@@ -60,9 +190,38 @@ export default function LessonRoom() {
   const [isCorrect, setIsCorrect] = useState(false);
   const [matchAnswers, setMatchAnswers] = useState<Record<number, string>>({});
   const [completed, setCompleted] = useState(false);
+  const [lesson, setLesson] = useState<LessonDto | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const slide = SLIDES[slideIndex];
-  const progress = ((slideIndex + 1) / SLIDES.length) * 100;
+  useEffect(() => {
+    const fetchLesson = async () => {
+      if (!id) return;
+      try {
+        const data = await learningService.getLessonById(id);
+        setLesson(data);
+      } catch (error) {
+        console.error("Failed to load lesson", error);
+        toast.error("Không thể tải thông tin bài học.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchLesson();
+  }, [id]);
+
+  let activeSlides = DEFAULT_SLIDES;
+  if (lesson) {
+    if (lesson.title.toLowerCase().includes("chương 1")) {
+      activeSlides = CHAPTER1_SLIDES;
+    } else if (lesson.title.toLowerCase().includes("chương 2")) {
+      activeSlides = CHAPTER2_SLIDES;
+    } else if (lesson.title.toLowerCase().includes("chương 3")) {
+      activeSlides = CHAPTER3_SLIDES;
+    }
+  }
+
+  const slide = activeSlides[slideIndex];
+  const progress = ((slideIndex + 1) / activeSlides.length) * 100;
 
   const handleSubmit = () => {
     if (slide.type === "exercise") {
@@ -73,7 +232,7 @@ export default function LessonRoom() {
   };
 
   const handleNext = () => {
-    if (slideIndex < SLIDES.length - 1) {
+    if (slideIndex < activeSlides.length - 1) {
       setSlideIndex(i => i + 1);
       setAnswer("");
       setSubmitted(false);
@@ -93,6 +252,14 @@ export default function LessonRoom() {
       setCompleted(true);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="h-screen w-full flex items-center justify-center bg-background">
+        <Loader2 className="animate-spin text-brand" size={48} />
+      </div>
+    );
+  }
 
   if (completed) {
     return (
@@ -163,10 +330,10 @@ export default function LessonRoom() {
           className="px-3 py-1.5 rounded-full"
           style={{ background: "var(--brand-light)", color: "var(--brand-dark)", fontWeight: 700, fontSize: 13 }}
         >
-          ⏰ Daily Routines
+          {lesson ? lesson.title : "Daily Routines"}
         </div>
         <div style={{ fontSize: 13, color: "var(--muted-foreground)", fontWeight: 600 }}>
-          {slideIndex + 1} / {SLIDES.length}
+          {slideIndex + 1} / {activeSlides.length}
         </div>
       </div>
 
@@ -377,7 +544,7 @@ export default function LessonRoom() {
               </button>
 
               <div className="flex gap-1.5">
-                {SLIDES.map((_, i) => (
+                {activeSlides.map((_, i) => (
                   <div
                     key={i}
                     className="rounded-full transition-all"

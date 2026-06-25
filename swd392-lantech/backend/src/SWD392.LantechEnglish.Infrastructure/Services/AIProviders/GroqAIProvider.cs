@@ -37,6 +37,11 @@ public class GroqAIProvider : BaseAIProvider, ISpeechAssessmentProvider
 
     protected override async Task<string> CallChatCompletionsAsync(string systemPrompt, string userPrompt, CancellationToken cancellationToken)
     {
+        if (string.IsNullOrEmpty(_options.GroqApiKey))
+        {
+            throw new InvalidOperationException("Groq API key is not configured.");
+        }
+
         _logger.LogInformation("Attempting Groq call using Llama-3-70b");
 
         var payload = new

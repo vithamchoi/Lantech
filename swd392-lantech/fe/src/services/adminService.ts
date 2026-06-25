@@ -68,12 +68,18 @@ export interface VocabularyDto {
   translations: VocabularyTranslationDto[];
 }
 
+export interface MonthlySignupDto {
+  month: string;
+  count: number;
+}
+
 export interface AdminStatsDto {
   totalUsers: number;
   activeUsers: number;
   totalLessons: number;
   totalQuestions: number;
   totalBadges: number;
+  monthlySignups: MonthlySignupDto[];
 }
 
 export interface AdminUserDto {

@@ -28,13 +28,37 @@ public class AdminService : IAdminService
         var totalQuestions = await _context.Exercises.CountAsync(cancellationToken);
         var totalBadges = await _context.Badges.CountAsync(cancellationToken);
 
+        var students = await _context.Users
+            .Where(u => u.Role == UserRole.User)
+            .Select(u => u.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var monthlySignups = students
+            .Where(d => d.Year >= 2020)
+            .GroupBy(d => new { d.Year, d.Month })
+            .OrderBy(g => g.Key.Year)
+            .ThenBy(g => g.Key.Month)
+            .Select(g => new MonthlySignupDto
+            {
+                Month = $"T{g.Key.Month}/{g.Key.Year}",
+                Count = g.Count()
+            })
+            .ToList();
+
+        // If empty, supply a default/placeholder for design completeness so the chart isn't empty
+        if (monthlySignups.Count == 0)
+        {
+            monthlySignups.Add(new MonthlySignupDto { Month = $"T{DateTime.UtcNow.Month}/{DateTime.UtcNow.Year}", Count = 0 });
+        }
+
         return new AdminStatsDto
         {
             TotalUsers = totalUsers,
             ActiveUsers = activeUsers,
             TotalLessons = totalLessons,
             TotalQuestions = totalQuestions,
-            TotalBadges = totalBadges
+            TotalBadges = totalBadges,
+            MonthlySignups = monthlySignups
         };
     }
 

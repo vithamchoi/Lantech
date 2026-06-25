@@ -41,14 +41,22 @@ public class AssessmentService : IAssessmentService
         var user = await _context.Users.FindAsync(new object[] { userId }, cancellationToken);
         if (user == null) throw new KeyNotFoundException("User not found");
 
-        // Check if there is an active assessment
+        // Remove existing active assessment and answers to start fresh with new static questions
         var activeAssessment = await _context.Assessments
             .Where(a => a.UserId == userId && a.Status == AssessmentStatus.InProgress)
             .FirstOrDefaultAsync(cancellationToken);
 
         if (activeAssessment != null)
         {
-            return await GetAssessmentDetailAsync(activeAssessment.Id, cancellationToken);
+            var activeAnswers = await _context.AssessmentAnswers
+                .Where(a => a.AssessmentId == activeAssessment.Id)
+                .ToListAsync(cancellationToken);
+            if (activeAnswers.Any())
+            {
+                _context.AssessmentAnswers.RemoveRange(activeAnswers);
+            }
+            _context.Assessments.Remove(activeAssessment);
+            await _context.SaveChangesAsync(cancellationToken);
         }
 
         // Create new assessment
@@ -71,6 +79,460 @@ public class AssessmentService : IAssessmentService
         var tasks = skills.Select(async skill =>
         {
             var skillQuestions = new List<AssessmentQuestion>();
+            if (skill == SkillType.Listening)
+            {
+                var staticListeningQuestions = new List<AssessmentQuestion>
+                {
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 1",
+                        QuestionText = "What is true about Beth?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. She is a new teacher.", "B. Today is her first day at school.", "C. She is from a small town.", "D. She is Tony's sister." }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. Today is her first day at school."),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 1",
+                        QuestionText = "Where is Beth from?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. Mexico", "B. Costa Rica", "C. New York", "D. A small town" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. New York"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 1",
+                        QuestionText = "Where was Tony born and raised?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. New York", "B. In the small town", "C. Mexico", "D. Costa Rica" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. In the small town"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 2",
+                        QuestionText = "How does Beth feel about her new school?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. It is great.", "B. It is too small.", "C. It is boring.", "D. It is not very good." }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("A. It is great."),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 2",
+                        QuestionText = "Who is Beth's English teacher?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. Mrs. Garcia", "B. Mr. Antonio", "C. Mr. Wong", "D. Mrs. Beth" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. Mr. Wong"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 3",
+                        QuestionText = "What is Beth's favorite class?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. English", "B. Spanish", "C. Computer science", "D. History" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. Spanish"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 3",
+                        QuestionText = "What language is Tony's first language?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. English", "B. Spanish", "C. French", "D. Vietnamese" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. Spanish"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 3",
+                        QuestionText = "Where is Tony's dad from?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. New York", "B. Costa Rica", "C. Mexico", "D. Spain" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. Mexico"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 4",
+                        QuestionText = "Where is Beth's Spanish class tomorrow?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. Online at home", "B. In the classroom", "C. In the computer lab", "D. In the hallway" }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. In the computer lab"),
+                        AudioUrl = "/audio/listening.mp3"
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Listening,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Conversation 4",
+                        QuestionText = "Why does Beth not have internet at home yet?",
+                        OptionsJson = JsonSerializer.Serialize(new[] { "A. She is still new in town.", "B. It is too expensive.", "C. She prefers online classes at school.", "D. The internet is broken." }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("A. She is still new in town."),
+                        AudioUrl = "/audio/listening.mp3"
+                    }
+                };
+
+                return staticListeningQuestions;
+            }
+
+            if (skill == SkillType.Reading)
+            {
+                var staticReadingQuestions = new List<AssessmentQuestion>
+                {
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 1: What is the main idea of the reading passage?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. Why tech startups are better at managing remote workers than traditional companies.",
+                            "B. The benefits and challenges of the shift toward remote and hybrid work models.",
+                            "C. The historical background of how the traditional 9-to-5 office environment was created.",
+                            "D. How to avoid burning out when working from home for long periods."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. The benefits and challenges of the shift toward remote and hybrid work models.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 2: According to paragraph 1, how was remote work viewed in the past?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. It was an essential requirement for all major global industries.",
+                            "B. It was widely disliked by most modern employees.",
+                            "C. It was an uncommon benefit limited to specific types of workers.",
+                            "D. It was considered a highly unproductive way to manage a business."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. It was an uncommon benefit limited to specific types of workers.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 3: What is mentioned in paragraph 2 as a reason for higher productivity among remote workers?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. They have access to better technology at home than in the office.",
+                            "B. They work longer hours without taking any lunch breaks.",
+                            "C. They experience fewer daily distractions compared to a busy office.",
+                            "D. They are strictly monitored by their managers through software."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. They experience fewer daily distractions compared to a busy office.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 4: The word \"reclaim\" in paragraph 2 is closest in meaning to:",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. waste",
+                            "B. gain back",
+                            "C. request",
+                            "D. exchange"
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. gain back")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 5: According to paragraph 3, why do some remote workers suffer from burnout?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. They are forced to commute during peak traffic hours.",
+                            "B. They find it hard to stop working because their home is also their office.",
+                            "C. Their salaries are lower than those of traditional office workers.",
+                            "D. They do not know how to use modern collaboration tools properly."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. They find it hard to stop working because their home is also their office.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 6: What does the word \"It\" in paragraph 3 refer to?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. The lack of face-to-face interaction",
+                            "B. An individual's living room",
+                            "C. A strong collaborative culture",
+                            "D. Professional responsibility"
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("A. The lack of face-to-face interaction")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 7: According to the passage, how does a hybrid model solve the problems of remote work?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. By cutting down the salary of employees who choose to stay at home.",
+                            "B. By forcing all employees to return to the physical office full-time.",
+                            "C. By offering completely free internet and computer equipment at home.",
+                            "D. By mixing office days for social connection with remote days for independence."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("D. By mixing office days for social connection with remote days for independence.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 8: The word \"autonomy\" in paragraph 4 is closest in meaning to:",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. discipline",
+                            "B. independence",
+                            "C. teamwork",
+                            "D. technology"
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. independence")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 9: What does the author predict about companies that refuse to adapt to flexible work models?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. They will save a lot of money on office rent.",
+                            "B. They will fail to attract and keep highly skilled employees.",
+                            "C. They will automatically become more competitive in the market.",
+                            "D. They will be forced to shut down by global regulations."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("B. They will fail to attract and keep highly skilled employees.")
+                    },
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Reading,
+                        Level = CefrLevel.B2,
+                        IsAiGenerated = false,
+                        Instruction = "READING PASSAGE",
+                        PassageText = @"READING PASSAGE
+The Evolution of Remote Work: A Modern Shift
+
+In recent years, the global workforce has experienced a significant transformation, primarily driven by the rapid rise of remote work. Once considered a rare perk reserved for tech startups and freelancers, working from home has now become a mainstream employment model across various industries. This shift has not only redefined the traditional office environment but has also profoundly impacted the daily lives of millions of employees worldwide.
+
+One of the most notable advantages of remote work is the flexibility it offers. Employees no longer face the daily stress of long commutes, allowing them to reclaim valuable hours each week. This extra time is frequently redirected toward personal well-being, family activities, or hobbies, resulting in a more balanced lifestyle. Furthermore, many remote workers report increased productivity. Without the frequent interruptions typical of a bustling office, such as impromptu meetings or loud conversations, individuals can create a customized environment that fosters deeper focus and concentration.
+
+However, this transition is not without its challenges. The lines between professional responsibilities and personal life can easily become blurred. When an individual's living room also functions as their workspace, disconnecting at the end of the day becomes surprisingly difficult. This constant connection to work often leads to longer hours and, consequently, higher rates of burnout. Additionally, the lack of face-to-face interaction can foster feelings of isolation and detachment from colleagues. It can weaken team cohesion, making it harder for companies to maintain a strong collaborative culture.
+
+To address these concerns, many organizations are now adopting a hybrid model. This approach combines the benefits of both worlds by requiring employees to spend a few days in the physical office while allowing them to work remotely for the remainder of the week. Hybrid setups aim to preserve the social bonds and spontaneous collaboration of office life while maintaining the autonomy that employees have come to value.
+
+Ultimately, remote work is no longer just a temporary response to global events; it is a permanent evolution of how we view employment. As technology continues to advance, companies that adapt to these changing employee expectations will likely attract and retain top talent. Conversely, those that rigidly cling to outdated structures may find themselves struggling to compete in the modern job market.",
+                        QuestionText = "Question 10: Which of the following statements would the author most likely agree with?",
+                        OptionsJson = JsonSerializer.Serialize(new[] {
+                            "A. Remote work was just a temporary trend that will completely disappear soon.",
+                            "B. Traditional offices are the only places where true productivity can happen.",
+                            "C. The future of employment relies heavily on flexibility and modern adaptation.",
+                            "D. Working from home has no negative impacts on teamwork or mental health."
+                        }),
+                        CorrectAnswerJson = JsonSerializer.Serialize("C. The future of employment relies heavily on flexibility and modern adaptation.")
+                    }
+                };
+
+                return staticReadingQuestions;
+            }
+
+            if (skill == SkillType.Writing)
+            {
+                var staticWritingQuestions = new List<AssessmentQuestion>
+                {
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Writing,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Topic: Daily Activities and Plans\nWord count: Around 150 – 200 words (Khoảng 150 - 200 từ)",
+                        QuestionText = "You have received an email from your English-speaking friend, Chris, who wants to know about your daily life. Read Chris's email below.\n\nSubject: Hello from Chris!\nHi,\nHow have you been? I'd love to hear about your daily routine. What do you usually do on weekdays and weekends? Also, what are your plans for the upcoming months?\nLooking forward to hearing from you!\nBest,\nChris",
+                        WritingPrompt = "You have received an email from your English-speaking friend, Chris, who wants to know about your daily life. Read Chris's email below.\n\nSubject: Hello from Chris!\nHi,\nHow have you been? I'd love to hear about your daily routine. What do you usually do on weekdays and weekends? Also, what are your plans for the upcoming months?\nLooking forward to hearing from you!\nBest,\nChris"
+                    }
+                };
+                return staticWritingQuestions;
+            }
+
+            if (skill == SkillType.Speaking)
+            {
+                var staticSpeakingQuestions = new List<AssessmentQuestion>
+                {
+                    new AssessmentQuestion
+                    {
+                        Id = Guid.NewGuid(),
+                        Skill = SkillType.Speaking,
+                        Level = CefrLevel.B1,
+                        IsAiGenerated = false,
+                        Instruction = "Topic: Personal Introduction and Future Aspirations\nTime limit: Exactly 1 minute (60 seconds)",
+                        QuestionText = "Introduce yourself to the examiner. Briefly talk about who you are, what you are currently focused on, and what your main aspirations or goals are for the future.",
+                        SpeakingPrompt = "Introduce yourself to the examiner. Briefly talk about who you are, what you are currently focused on, and what your main aspirations or goals are for the future."
+                    }
+                };
+                return staticSpeakingQuestions;
+            }
+
             try
             {
                 var json = await _aiProvider.GenerateAssessmentQuestionsAsync(skill, CefrLevel.B1, request.SourceLanguageCode, 2, cancellationToken);
@@ -120,7 +582,6 @@ public class AssessmentService : IAssessmentService
                             q.SpeakingPrompt = sp.GetString();
 
                         skillQuestions.Add(q);
-                        _context.AssessmentQuestions.Add(q); // Save AI generated question to DB
                     }
                 }
             }
@@ -144,7 +605,6 @@ public class AssessmentService : IAssessmentService
                         mockQ.CorrectAnswerJson = JsonSerializer.Serialize("Option A");
                     }
                     skillQuestions.Add(mockQ);
-                    _context.AssessmentQuestions.Add(mockQ);
                 }
             }
             return skillQuestions;
@@ -155,6 +615,9 @@ public class AssessmentService : IAssessmentService
         {
             selectedQuestions.AddRange(res);
         }
+
+        // Add all questions to DbContext safely on the main thread to avoid thread safety issues
+        _context.AssessmentQuestions.AddRange(selectedQuestions);
 
         // Insert blank answers to log selected questions
         foreach (var q in selectedQuestions)
@@ -182,6 +645,7 @@ public class AssessmentService : IAssessmentService
 
         var blankAnswers = await _context.AssessmentAnswers
             .Where(a => a.AssessmentId == assessmentId)
+            .OrderBy(a => a.CreatedAt)
             .ToListAsync(cancellationToken);
 
         var questionIds = blankAnswers.Select(a => a.AssessmentQuestionId).ToList();
@@ -190,7 +654,13 @@ public class AssessmentService : IAssessmentService
             .Where(q => questionIds.Contains(q.Id))
             .ToListAsync(cancellationToken);
 
-        var questionDtos = questions.Select(q => MapToQuestionDto(q)).ToList();
+        // Sort in memory to preserve original seeding order
+        var orderedQuestions = questionIds
+            .Select(id => questions.FirstOrDefault(q => q.Id == id))
+            .Where(q => q != null)
+            .ToList();
+
+        var questionDtos = orderedQuestions.Select(q => MapToQuestionDto(q)).ToList();
 
         return new AssessmentDetailDto
         {
@@ -347,11 +817,11 @@ public class AssessmentService : IAssessmentService
         // Determine levels
         CefrLevel GetCefrLevel(double score) => score switch
         {
-            >= 85 => CefrLevel.C1,
-            >= 70 => CefrLevel.B2,
-            >= 50 => CefrLevel.B1,
-            >= 30 => CefrLevel.A2,
-            _ => CefrLevel.A1
+            < 20 => CefrLevel.A1,
+            < 40 => CefrLevel.A2,
+            < 60 => CefrLevel.B1,
+            < 80 => CefrLevel.B2,
+            _ => CefrLevel.C1
         };
 
         var resultLevel = GetCefrLevel(overallScore);

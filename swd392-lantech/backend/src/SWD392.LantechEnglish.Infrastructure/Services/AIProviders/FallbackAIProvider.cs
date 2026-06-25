@@ -58,7 +58,20 @@ public class FallbackAIProvider : IAIProvider, ISpeechAssessmentProvider
         }
         catch (Exception ex)
         {
-            _logger.LogWarning(ex, "Groq failed for {MethodName}. Throwing error.", methodName);
+            _logger.LogWarning(ex, "Groq failed for {MethodName}. Falling back to Mock.", methodName);
+            errors.Add(ex);
+        }
+
+        // 4. Try Mock
+        try
+        {
+            var mock = _serviceProvider.GetRequiredKeyedService<IAIProvider>("Mock");
+            _logger.LogInformation("Using Mock for {MethodName}", methodName);
+            return await action(mock);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Mock failed for {MethodName}.", methodName);
             errors.Add(ex);
         }
 
@@ -68,7 +81,7 @@ public class FallbackAIProvider : IAIProvider, ISpeechAssessmentProvider
     private async IAsyncEnumerable<string> ExecuteWithFallbackStreamAsync(Func<IAIProvider, IAsyncEnumerable<string>> action, string methodName)
     {
         var errors = new List<Exception>();
-        var providers = new[] { "ZenMux", "OpenRouter", "Groq" };
+        var providers = new[] { "ZenMux", "OpenRouter", "Groq", "Mock" };
 
         foreach (var providerName in providers)
         {

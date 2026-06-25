@@ -108,7 +108,10 @@ public class GamificationService : IGamificationService
         int streak = user.StreakCount;
         
         int completedLessons = await _context.LessonProgress
-            .CountAsync(lp => lp.UserId == userId && lp.Status == ProgressStatus.Completed, cancellationToken);
+            .Where(lp => lp.UserId == userId && lp.Status == ProgressStatus.Completed)
+            .Select(lp => lp.LessonId)
+            .Distinct()
+            .CountAsync(cancellationToken);
 
         int flashcardReviews = await _context.FlashcardReviews
             .CountAsync(fr => fr.UserId == userId, cancellationToken);
