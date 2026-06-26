@@ -201,7 +201,7 @@ export default function LessonRoom() {
         setLesson(data);
       } catch (error) {
         console.error("Failed to load lesson", error);
-        toast.error("Không thể tải thông tin bài học.");
+        toast.error(t("failedToLoadLesson"));
       } finally {
         setIsLoading(false);
       }
@@ -296,7 +296,7 @@ export default function LessonRoom() {
               className="px-8 py-3.5 rounded-2xl cursor-pointer border-none outline-none font-bold text-white btn-3d"
               style={{ background: "var(--brand)" }}
             >
-              {id ? (t("startPractice") || "Bắt đầu luyện tập") : t("backToTrail")}
+              {id ? t("startPracticeBtn") : t("backToTrail")}
             </button>
             <button
               onClick={() => { setSlideIndex(0); setCompleted(false); setAnswer(""); setSubmitted(false); }}

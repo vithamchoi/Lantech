@@ -25,6 +25,8 @@ import ProfileCabin from '../pages/ProfileCabin';
 import AdminDashboard from '../pages/AdminDashboard';
 import SystemGateways from '../pages/SystemGateways';
 
+import { useTranslation } from '../hooks/useTranslation';
+
 // Route guard for Students
 function StudentGuard({ children }: { children: React.ReactNode }) {
   const { role, user } = useAppStore();
@@ -47,21 +49,23 @@ function StudentGuard({ children }: { children: React.ReactNode }) {
 // Route guard for Admin
 function AdminGuard({ children }: { children: React.ReactNode }) {
   const { role } = useAppStore();
+  const { t } = useTranslation();
+
   if (role !== 'Admin') {
     return (
       <div className="max-w-md mx-auto py-12 text-center space-y-4">
         <div className="w-16 h-16 bg-rose-50 text-rose-600 flex items-center justify-center rounded-full mx-auto text-2xl font-bold">
           🛡️
         </div>
-        <h2 className="text-xl font-bold text-slate">Truy Cập Bị Từ Chối</h2>
+        <h2 className="text-xl font-bold text-slate">{t("accessDeniedTitle")}</h2>
         <p className="text-sm text-slate-500">
-          Khu vực này chỉ dành riêng cho Quản Trị Viên Ranger.
+          {t("accessDeniedDesc")}
         </p>
         <button 
           onClick={() => window.history.back()}
           className="px-4 py-2 bg-slate text-white text-xs font-semibold rounded-control cursor-pointer"
         >
-          Quay Lại
+          {t("btnBack")}
         </button>
       </div>
     );

@@ -32,10 +32,10 @@ export default function AssessmentResults() {
   );
 
   const SKILL_SCORES = [
-    { name: "Listening (Nghe)", score: Math.round(listening), color: "#1CB0F6" },
-    { name: "Reading (Đọc)", score: Math.round(reading), color: "#8b5cf6" },
-    { name: "Writing (Viết)", score: Math.round(writing), color: "#f97316" },
-    { name: "Speaking (Nói)", score: Math.round(speaking), color: "#10b981" },
+    { name: t("skillListening"), score: Math.round(listening), color: "#1CB0F6" },
+    { name: t("skillReading"), score: Math.round(reading), color: "#8b5cf6" },
+    { name: t("skillWriting"), score: Math.round(writing), color: "#f97316" },
+    { name: t("skillSpeaking"), score: Math.round(speaking), color: "#10b981" },
   ];
 
   // Map average score to standard levels
@@ -50,11 +50,11 @@ export default function AssessmentResults() {
   const RECOMMENDED_LEVEL = result.cefrLevel ?? result.CefrLevel ?? result.resultLevel ?? getRecommendedLevel(avgScore);
 
   const LEVELS = [
-    { key: "A1", range: "Dưới 20 điểm", title: "A1 - Beginner (Cơ bản)", desc: "Phù hợp cho người bắt đầu làm quen với Tiếng Anh." },
-    { key: "A2", range: "20 - 39 điểm", title: "A2 - Elementary (Sơ cấp)", desc: "Có thể hiểu và giao tiếp những thông tin đơn giản." },
-    { key: "B1", range: "40 - 59 điểm", title: "B1 - Intermediate (Trung cấp)", desc: "Đủ khả năng diễn đạt ý kiến và hiểu các nội dung phổ biến." },
-    { key: "B2", range: "60 - 79 điểm", title: "B2 - Upper Intermediate (Khá)", desc: "Có thể tự tin giao tiếp và viết các văn bản phức tạp." },
-    { key: "C1", range: "80 - 100 điểm", title: "C1 - Advanced (Lưu loát)", desc: "Sử dụng ngôn ngữ linh hoạt cho các mục đích học tập và công việc." },
+    { key: "A1", range: t("lvlA1Range"), title: t("lvlA1Title"), desc: t("lvlA1Desc") },
+    { key: "A2", range: t("lvlA2Range"), title: t("lvlA2Title"), desc: t("lvlA2Desc") },
+    { key: "B1", range: t("lvlB1Range"), title: t("lvlB1Title"), desc: t("lvlB1Desc") },
+    { key: "B2", range: t("lvlB2Range"), title: t("lvlB2Title"), desc: t("lvlB2Desc") },
+    { key: "C1", range: t("lvlC1Range"), title: t("lvlC1Title"), desc: t("lvlC1Desc") },
   ];
 
   // Track the user's custom chosen level (Default to RECOMMENDED_LEVEL)
@@ -92,10 +92,10 @@ export default function AssessmentResults() {
         <div className="text-center mb-10">
           <div style={{ fontSize: 64, marginBottom: 12 }}>🎉</div>
           <h1 style={{ fontSize: 32, fontWeight: 900, color: "#1e293b", marginBottom: 8 }}>
-            Kết Quả Đánh Giá Năng Lực
+            {t("assessmentResultsTitle")}
           </h1>
           <p style={{ fontSize: 16, color: "#64748b", lineHeight: 1.7 }}>
-            Chúc mừng bạn đã hoàn thành bài thi chẩn đoán 4 kỹ năng! Dưới đây là phân tích kết quả chi tiết của bạn.
+            {t("resultsDescription")}
           </p>
         </div>
 
@@ -103,12 +103,12 @@ export default function AssessmentResults() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Average Score Card */}
           <div className="bg-white rounded-3xl p-6 flex flex-col justify-center items-center text-center shadow-sm border border-slate-100">
-            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">Điểm Trung Bình</span>
+            <span className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-2">{t("averageScoreLabel")}</span>
             <div className="relative flex items-center justify-center">
               <span className="text-6xl font-black text-slate-800">{avgScore}</span>
               <span className="text-lg font-bold text-slate-400 ml-1">/100</span>
             </div>
-            <p className="text-xs text-slate-400 mt-3">Trung bình cộng của cả 4 bài thi kỹ năng</p>
+            <p className="text-xs text-slate-400 mt-3">{t("averageScoreDesc")}</p>
           </div>
 
           {/* Recommended CEFR Card */}
@@ -116,7 +116,7 @@ export default function AssessmentResults() {
                style={{ background: "linear-gradient(135deg, #10b981 0%, #059669 100%)" }}>
             <div>
               <span className="text-xs font-bold uppercase tracking-wider opacity-90">
-                {selectedLevel === RECOMMENDED_LEVEL ? "Trình Độ Khuyên Dùng" : "Trình Độ Bạn Đã Chọn"}
+                {selectedLevel === RECOMMENDED_LEVEL ? t("recommendedLevelLabel") : t("chosenLevelLabel")}
               </span>
               <h2 className="text-5xl font-black mt-2 leading-none">{selectedLevel}</h2>
               <p className="text-sm font-semibold mt-2 opacity-95">
@@ -125,8 +125,8 @@ export default function AssessmentResults() {
             </div>
             <p className="text-xs opacity-90 mt-4 leading-relaxed">
               {selectedLevel === RECOMMENDED_LEVEL 
-                ? "Dựa trên điểm trung bình của bạn, hệ thống khuyên nghị bạn nên bắt đầu lộ trình học tập ở trình độ này để đạt hiệu quả tốt nhất."
-                : `Bạn đã tự chọn bắt đầu lộ trình học tập ở trình độ ${selectedLevel} (Trình độ gốc được chẩn đoán là ${RECOMMENDED_LEVEL}).`}
+                ? t("recommendedLevelDesc")
+                : t("chosenLevelDesc", { selectedLevel, recommendedLevel: RECOMMENDED_LEVEL })}
             </p>
           </div>
         </div>
@@ -135,7 +135,7 @@ export default function AssessmentResults() {
         <div className="bg-white rounded-3xl p-7 mb-8 border border-slate-100 shadow-sm">
           <h3 className="text-lg font-black text-slate-800 mb-5 flex items-center gap-2">
             <Award size={20} className="text-emerald-500" />
-            Khung Đánh Giá Năng Lực (5 Cấp Độ)
+            {t("cefrFrameworkTitle")}
           </h3>
           <div className="flex flex-col gap-4">
             {LEVELS.map(lvl => {
@@ -173,7 +173,7 @@ export default function AssessmentResults() {
                     </span>
                     {isGradedLevel && (
                       <span className="flex items-center gap-1 text-xs font-bold text-emerald-600">
-                        <CheckCircle2 size={14} /> Trình độ của bạn
+                        <CheckCircle2 size={14} /> {t("yourLevelLabel")}
                       </span>
                     )}
                   </div>
@@ -187,7 +187,7 @@ export default function AssessmentResults() {
         <div className="bg-white rounded-3xl p-7 mb-8 border border-slate-100 shadow-sm">
           <h3 className="text-lg font-black text-slate-800 mb-6 flex items-center gap-2">
             <BarChart2 size={20} className="text-emerald-500" />
-            Chi Tiết Điểm Số Từng Kỹ Năng
+            {t("skillScoreDetails")}
           </h3>
           <div className="flex flex-col gap-6">
             {SKILL_SCORES.map(s => (
@@ -211,11 +211,10 @@ export default function AssessmentResults() {
         <div className="bg-white rounded-3xl p-7 mb-8 border border-slate-100 shadow-sm">
           <h3 className="text-lg font-black text-slate-800 mb-2 flex items-center gap-2">
             <BookOpen size={20} className="text-emerald-500" />
-            Tự Chọn Trình Độ Học Tập Của Bạn
+            {t("chooseYourLevelHeader")}
           </h3>
           <p className="text-xs text-slate-500 mb-6">
-            Hệ thống đánh giá trình độ của bạn là <strong className="text-emerald-600">{RECOMMENDED_LEVEL}</strong>. 
-            Bạn được phép tự chọn trình độ bắt đầu học (chênh lệch tối đa 1 bậc so với kết quả chấm):
+            {t("chooseYourLevelDesc", { level: RECOMMENDED_LEVEL })}
           </p>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {allowedLevels.map(lvlKey => {
@@ -239,11 +238,11 @@ export default function AssessmentResults() {
                   <div className="w-full">
                     <div className="flex items-center justify-between w-full mb-1">
                       <span className={`text-lg font-black ${isSelected ? "text-emerald-700" : "text-slate-700"}`}>
-                        Trình độ {lvlKey}
+                        {t("levelLabelDetail", { level: lvlKey })}
                       </span>
                       {isGraded && (
                         <span className="text-[10px] font-bold bg-amber-100 text-amber-800 px-2 py-0.5 rounded-full">
-                          Được chấm
+                          {t("gradedLabel")}
                         </span>
                       )}
                     </div>
@@ -252,7 +251,7 @@ export default function AssessmentResults() {
                   </div>
                   {isSelected && (
                     <div className="mt-3 flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                      <CheckCircle2 size={13} /> Đang chọn học
+                      <CheckCircle2 size={13} /> {t("selectingLabel")}
                     </div>
                   )}
                 </button>
@@ -267,7 +266,7 @@ export default function AssessmentResults() {
           className="w-full py-5 rounded-2xl cursor-pointer border-none outline-none font-black text-white text-lg shadow-md hover:brightness-105 transition-all flex items-center justify-center gap-2"
           style={{ background: "#10b981" }}
         >
-          Nhận lộ trình học tập và Bắt đầu <ChevronRight size={18} />
+          {t("btnGetRouteAndStart")} <ChevronRight size={18} />
         </button>
       </div>
     </div>

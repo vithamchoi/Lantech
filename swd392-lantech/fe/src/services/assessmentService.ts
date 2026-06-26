@@ -36,15 +36,15 @@ export interface AssessmentAnswerItem {
 
 export const assessmentService = {
   getLatestInfo: async (): Promise<any> => {
-    return await apiClient.get<any>('/assessments/info');
+    return await apiClient.get<any>('/assessments/info') as any;
   },
 
   startAssessment: async (sourceLanguageCode: string = 'vi'): Promise<AssessmentDetailDto> => {
-    return await apiClient.post<any>('/assessments/start', { sourceLanguageCode });
+    return await apiClient.post<any>('/assessments/start', { sourceLanguageCode }) as any;
   },
 
   getAssessment: async (id: string): Promise<AssessmentDetailDto> => {
-    return await apiClient.get(`/assessments/${id}`);
+    return await apiClient.get(`/assessments/${id}`) as any;
   },
 
   submitSection: async (id: string, section: string, answers: any[]): Promise<void> => {
@@ -52,10 +52,10 @@ export const assessmentService = {
   },
 
   completeAssessment: async (id: string): Promise<AssessmentDetailDto> => {
-    return await apiClient.post(`/assessments/${id}/complete`);
+    return await apiClient.post(`/assessments/${id}/complete`) as any;
   },
 
   getHistory: async (): Promise<AssessmentDetailDto[]> => {
-    return await apiClient.get('/assessments/history');
+    return await apiClient.get('/assessments/history') as any;
   }
 };

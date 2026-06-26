@@ -284,35 +284,31 @@ export default function LandingPage() {
             whileTap={{ scale: 0.95 }}
             className="px-6 py-2.5 bg-[#45d300] hover:bg-[#3db800] text-white rounded-full cursor-pointer border-none outline-none font-extrabold text-base hidden sm:block shadow-sm"
           >
-            Đăng ký học
+            {t("landingJoinTrail")}
           </motion.button>
         </div>
       </nav>
-
+ 
       {/* Hero Section */}
       <div className="hero">
         {/* Left Column (Content) */}
         <div className="flex flex-col items-start text-left">
           {/* Pill Badge */}
           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#E7F9D4] text-[#45d300] text-sm font-black tracking-wider uppercase mb-6 shadow-sm">
-            <span>🌱</span> HỌC • LUYỆN TẬP • TIẾN BỘ
+            <span>🌱</span> {t("landingPillBadge")}
           </div>
-
+ 
           {/* Headline */}
           <h1 className="hero-title">
-            Nuôi dưỡng
-            <br />
-            Tiếng Anh của bạn
+            {t("landingHeroHeaderMain")}
             <span className="accent">
-              Theo từng nhiệm vụ
-              <br />
-              mỗi ngày
+              {t("landingHeroHeaderSub")}
             </span>
           </h1>
-
+ 
           {/* Description */}
           <p className="hero-description">{t("landingHeroDesc")}</p>
-
+ 
           {/* Action Buttons */}
           <div className="hero-actions">
             {/* Primary Button */}
@@ -322,7 +318,7 @@ export default function LandingPage() {
             >
               {t("landingCtaJoin")}
             </motion.button>
-
+ 
             {/* Secondary Button */}
             <motion.button
               onClick={() => handleEnterAuth("login")}
@@ -331,14 +327,14 @@ export default function LandingPage() {
               <span>▶</span> {t("landingCtaLogin")}
             </motion.button>
           </div>
-
+ 
           {/* Guarantee Text */}
           <div className="flex items-center gap-6 mt-6 text-[#22c55e] font-extrabold text-base">
             <div className="flex items-center gap-1.5">
-              <span>✓</span> 100% Miễn phí bắt đầu
+              <span>✓</span> {t("landingFreeStart")}
             </div>
             <div className="flex items-center gap-1.5">
-              <span>🛡️</span> Không cần thẻ tín dụng
+              <span>🛡️</span> {t("landingNoCard")}
             </div>
           </div>
         </div>

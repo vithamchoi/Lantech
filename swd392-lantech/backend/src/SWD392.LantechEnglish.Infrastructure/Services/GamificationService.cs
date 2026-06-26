@@ -10,10 +10,12 @@ namespace SWD392.LantechEnglish.Infrastructure.Services;
 public class GamificationService : IGamificationService
 {
     private readonly AppDbContext _context;
+    private readonly INotificationService _notificationService;
 
-    public GamificationService(AppDbContext context)
+    public GamificationService(AppDbContext context, INotificationService notificationService)
     {
         _context = context;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<BadgeDto>> GetBadgesAsync(CancellationToken cancellationToken = default)
@@ -197,6 +199,27 @@ public class GamificationService : IGamificationService
         {
             _context.UserBadges.AddRange(newEarnedBadges);
             await _context.SaveChangesAsync(cancellationToken);
+
+            foreach (var userBadge in newEarnedBadges)
+            {
+                var badge = badges.First(b => b.Id == userBadge.BadgeId);
+                try
+                {
+                    await _notificationService.CreateNotificationAsync(
+                        userId,
+                        "Đã mở khóa thành tích mới! 🏆",
+                        $"Bạn nhận được huy hiệu \"{badge.Name}\" cho: {badge.Description}.",
+                        "Trophy",
+                        "#f59e0b",
+                        "#fef9c3",
+                        cancellationToken
+                    );
+                }
+                catch
+                {
+                    // Fail-safe: do not fail badge award if notification fails
+                }
+            }
         }
     }
 

@@ -65,7 +65,7 @@ export default function AICabin() {
           return [
             {
               id: "default",
-              title: "Cuộc trò chuyện mới",
+              title: t("newChatTitle"),
               messages: oldMsgs,
               createdAt: new Date().toISOString()
             }
@@ -80,7 +80,7 @@ export default function AICabin() {
     return [
       {
         id: "default",
-        title: "Cuộc trò chuyện mới",
+        title: t("newChatTitle"),
         messages: [
           {
             id: "0",
@@ -180,7 +180,9 @@ export default function AICabin() {
               s.title === "새로운 채팅" ||
               s.title === t("newChatTitle") ||
               s.title.startsWith("Cuộc trò chuyện mới") ||
-              s.title.startsWith("New Chat");
+              s.title.startsWith("New Chat") ||
+              s.title.startsWith("新しいチャット") ||
+              s.title.startsWith("새로운 채팅");
 
             if (isDefault) {
               newTitle = firstUserMsg.text.length > 25 
@@ -204,7 +206,7 @@ export default function AICabin() {
     const newId = Date.now().toString();
     const newSession: ChatSession = {
       id: newId,
-      title: t("newChatTitle") || "Cuộc trò chuyện mới",
+      title: t("newChatTitle"),
       messages: [
         {
           id: "0",
@@ -222,21 +224,21 @@ export default function AICabin() {
   const handleDeleteSession = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (sessions.length <= 1) {
-      toast.error(t("cannotDeleteLastChat") || "Không thể xóa cuộc trò chuyện duy nhất");
+      toast.error(t("cannotDeleteLastChat"));
       return;
     }
     
     setDeleteConfirm({
       isOpen: true,
-      title: t("deleteChatConfirmTitle") || "Xóa cuộc trò chuyện",
-      message: t("deleteChatConfirm") || "Bạn có chắc chắn muốn xóa cuộc trò chuyện này?",
+      title: t("deleteChatConfirmTitle"),
+      message: t("deleteChatConfirm"),
       onConfirm: () => {
         const remaining = sessions.filter(s => s.id !== id);
         setSessions(remaining);
         if (activeSessionId === id) {
           setActiveSessionId(remaining[0].id);
         }
-        toast.success(t("chatDeleted") || "Đã xóa cuộc trò chuyện");
+        toast.success(t("chatDeleted"));
       }
     });
   };
@@ -362,7 +364,7 @@ export default function AICabin() {
               }}
             >
               <Plus size={16} />
-              {t("newChatBtn") || "Cuộc trò chuyện mới"}
+              {t("newChatBtn")}
             </motion.button>
           </div>
 
@@ -371,11 +373,19 @@ export default function AICabin() {
             {sessions.map(s => {
               const isActive = s.id === activeSessionId;
               const firstUserMsg = s.messages.find(m => m.role === "user");
+              const isDefaultTitle = !s.title || 
+                s.title === "default" ||
+                s.title === "Cuộc trò chuyện mới" ||
+                s.title === "New Chat" ||
+                s.title === "新しいチャット" ||
+                s.title === "새로운 채팅" ||
+                s.title === "New Chat Session";
+
               const displayTitle = firstUserMsg 
                 ? (firstUserMsg.text.length > 25 
                     ? firstUserMsg.text.slice(0, 22) + "..." 
                     : firstUserMsg.text)
-                : (s.title || t("newChatTitle") || "Cuộc trò chuyện mới");
+                : (isDefaultTitle ? t("newChatTitle") : s.title);
 
               return (
                 <div
@@ -439,7 +449,7 @@ export default function AICabin() {
                 whileTap={{ scale: 0.95 }}
                 type="button"
                 className="cursor-pointer border-none outline-none bg-transparent p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-                title={isHistoryOpen ? "Ẩn lịch sử trò chuyện" : "Hiện lịch sử trò chuyện"}
+                title={isHistoryOpen ? t("hideHistory") : t("showHistory")}
               >
                 {isHistoryOpen ? <PanelLeftClose size={18} /> : <PanelLeftOpen size={18} />}
               </motion.button>
@@ -533,20 +543,20 @@ export default function AICabin() {
               onClick={() => {
                 setDeleteConfirm({
                   isOpen: true,
-                  title: t("clearChatConfirmTitle") || "Xóa lịch sử trò chuyện",
-                  message: t("refreshChatConfirm") || "Bạn có chắc chắn muốn xóa lịch sử cuộc trò chuyện?",
+                  title: t("clearChatConfirmTitle"),
+                  message: t("refreshChatConfirm"),
                   onConfirm: () => {
                     setSessions(prev => prev.map(s => {
                       if (s.id === activeSessionId) {
                         return {
                           ...s,
-                          title: t("newChatTitle") || "Cuộc trò chuyện mới",
+                          title: t("newChatTitle"),
                           messages: [{ id: "0", role: "tutor", text: t("aiCabinWelcome"), time: "now" }]
                         };
                       }
                       return s;
                     }));
-                    toast.success(t("chatCleared") || "Đã xóa lịch sử cuộc trò chuyện");
+                    toast.success(t("chatCleared"));
                   }
                 });
               }}
@@ -850,7 +860,7 @@ export default function AICabin() {
                 className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none transition-all hover:bg-neutral-200 dark:hover:bg-neutral-800"
                 style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
               >
-                {t("btnCancel") || "Hủy bỏ"}
+                {t("btnCancel")}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -863,7 +873,7 @@ export default function AICabin() {
                 className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none text-white transition-all hover:brightness-95"
                 style={{ background: "var(--destructive)" }}
               >
-                {t("btnDelete") || "Xóa"}
+                {t("btnDelete")}
               </motion.button>
             </div>
           </div>

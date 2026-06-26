@@ -14,12 +14,14 @@ public class AssessmentService : IAssessmentService
     private readonly AppDbContext _context;
     private readonly IAIProvider _aiProvider;
     private readonly IGamificationService _gamificationService;
+    private readonly INotificationService _notificationService;
 
-    public AssessmentService(AppDbContext context, IAIProvider aiProvider, IGamificationService gamificationService)
+    public AssessmentService(AppDbContext context, IAIProvider aiProvider, IGamificationService gamificationService, INotificationService notificationService)
     {
         _context = context;
         _aiProvider = aiProvider;
         _gamificationService = gamificationService;
+        _notificationService = notificationService;
     }
 
     public Task<AssessmentAvailableDto> GetAvailableAssessmentAsync(CancellationToken cancellationToken = default)
@@ -884,6 +886,24 @@ Ultimately, remote work is no longer just a temporary response to global events;
             Reason = "Completed diagnostic assessment",
             CreatedAt = DateTime.UtcNow
         });
+
+        // Send Notification
+        try
+        {
+            await _notificationService.CreateNotificationAsync(
+                userId,
+                "Đánh giá năng lực hoàn tất! 🎯",
+                $"Chúc mừng! Bạn đã hoàn thành bài đánh giá năng lực với kết quả xếp lớp: {resultLevel}. Nhận 150 XP.",
+                "Zap",
+                "#eab308",
+                "#fef9c3",
+                cancellationToken
+            );
+        }
+        catch
+        {
+            // Fail-safe
+        }
 
         await _context.SaveChangesAsync(cancellationToken);
 

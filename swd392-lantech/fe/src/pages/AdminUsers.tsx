@@ -3,9 +3,11 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Search, UserCheck, ShieldAlert, Award, Flame, Loader2 } from 'lucide-react';
 import { adminService, AdminUserDto } from '../services/adminService';
 import { toast } from 'sonner';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function AdminUsers() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [accounts, setAccounts] = useState<AdminUserDto[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -18,13 +20,13 @@ export default function AdminUsers() {
         setAccounts(data || []);
       } catch (error) {
         console.error("Failed to fetch users", error);
-        toast.error("Không thể tải danh sách người dùng");
+        toast.error(t("toastUsersLoadError"));
       } finally {
         setIsLoading(false);
       }
     };
     fetchUsers();
-  }, []);
+  }, [t]);
 
   const handleRoleToggle = async (id: string, currentRole: string) => {
     const newRole = currentRole.toLowerCase() === 'admin' ? 'student' : 'admin';
@@ -39,10 +41,10 @@ export default function AdminUsers() {
         }
         return acc;
       }));
-      toast.success(`Đã cập nhật vai trò người dùng thành ${newRole}`);
+      toast.success(t("toastUsersRoleUpdateSuccess", { role: newRole }));
     } catch (error) {
       console.error("Failed to update user role", error);
-      toast.error("Cập nhật vai trò thất bại");
+      toast.error(t("toastUsersRoleUpdateError"));
     }
   };
 
@@ -63,8 +65,8 @@ export default function AdminUsers() {
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Kiểm Duyệt</span>
-            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Quản Lý Tài Khoản Người Dùng</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">{t("adminUsersHeader")}</span>
+            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">{t("adminUsersTitle")}</h1>
           </div>
         </div>
       </div>
@@ -75,7 +77,7 @@ export default function AdminUsers() {
           <Search className="absolute left-3 top-3 w-4.5 h-4.5 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm tên tài khoản hoặc email..."
+            placeholder={t("adminUsersSearchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-cream-50 border border-sage rounded-control text-xs focus:outline-none focus:border-meadow transition-all"
@@ -89,12 +91,12 @@ export default function AdminUsers() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream-300 border-b border-sage text-xs font-bold text-slate-700 uppercase tracking-wider">
-                <th className="px-6 py-4">Tên Tài Khoản</th>
-                <th className="px-6 py-4">Địa chỉ Email</th>
-                <th className="px-6 py-4">CEFR</th>
-                <th className="px-6 py-4">Chuỗi Ngày & XP</th>
-                <th className="px-6 py-4">Vai Trò Truy Cập</th>
-                <th className="px-6 py-4 text-right">Thao Tác</th>
+                <th className="px-6 py-4">{t("adminUsersColUsername")}</th>
+                <th className="px-6 py-4">{t("adminUsersColEmail")}</th>
+                <th className="px-6 py-4">{t("adminUsersColCefr")}</th>
+                <th className="px-6 py-4">{t("adminUsersColStreakXp")}</th>
+                <th className="px-6 py-4">{t("adminUsersColRole")}</th>
+                <th className="px-6 py-4 text-right">{t("adminUsersColActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sage text-sm font-semibold">
@@ -110,15 +112,15 @@ export default function AdminUsers() {
                   <td className="px-6 py-4 text-slate-500 font-mono text-xs">{acc.email}</td>
                   <td className="px-6 py-4">
                     <span className="px-2.5 py-0.5 bg-slate-900 text-white text-xs font-bold rounded">
-                      Không có
+                      {t("adminUsersNone")}
                     </span>
                   </td>
                   <td className="px-6 py-4 space-y-1">
                     <div className="flex items-center gap-1.5 text-xs text-ochre">
-                      <Flame className="w-3.5 h-3.5 fill-current" /> Không Có
+                      <Flame className="w-3.5 h-3.5 fill-current" /> {t("adminUsersNone")}
                     </div>
                     <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
-                      Tích lũy {acc.xp} XP
+                      {t("adminUsersXpEarned", { xp: acc.xp.toString() })}
                     </div>
                   </td>
                   <td className="px-6 py-4">
@@ -134,7 +136,7 @@ export default function AdminUsers() {
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-cream-200 hover:bg-cream-300 text-slate text-xs font-bold rounded-control transition-all cursor-pointer"
                     >
                       {acc.role.toLowerCase() === 'admin' ? <UserCheck className="w-3.5 h-3.5" /> : <ShieldAlert className="w-3.5 h-3.5" />}
-                      Đổi Vai Trò
+                      {t("adminUsersChangeRole")}
                     </button>
                   </td>
                 </tr>

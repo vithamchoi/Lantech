@@ -46,7 +46,7 @@ export default function Dashboard() {
     if (isLocked) {
       setShakingNodeId(nodeId);
       setTimeout(() => setShakingNodeId(null), 400);
-      toast.warning(t("completePreviousLesson") || "Hãy hoàn thành bài học trước để mở khóa!");
+      toast.warning(t("completePreviousLesson"));
       return;
     }
     navigate(`/lesson/${nodeId}`);

@@ -4,6 +4,7 @@ import { Flame, Sprout, Bell, CheckCheck, Trophy, Zap, BookOpen, Mic, Sun, Moon 
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
 import { notificationService, NotificationDto } from "../services/notificationService";
+import { toast } from "sonner";
 
 const LEVEL_COLORS: Record<string, string> = {
   A1: "#60a5fa",
@@ -27,25 +28,47 @@ export default function AppHeader() {
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationDto[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
+  const prevNotificationsRef = useRef<NotificationDto[]>([]);
+  const isInitialMount = useRef(true);
 
   if (!user) return null;
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = async (showToasts = false) => {
     try {
       const data = await notificationService.getNotifications();
+      if (showToasts && !isInitialMount.current) {
+        // Find new unread notifications that were not in prevNotificationsRef
+        const newUnread = data.filter(
+          (n) => !n.isRead && !prevNotificationsRef.current.some((prev) => prev.id === n.id)
+        );
+        newUnread.forEach((n) => {
+          const Icon = ICON_MAP[n.icon] || Bell;
+          toast(n.title, {
+            description: n.body,
+            icon: <Icon size={16} style={{ color: n.iconColor }} />,
+            duration: 5000,
+          });
+        });
+      }
+      prevNotificationsRef.current = data;
       setNotifications(data);
+      isInitialMount.current = false;
     } catch (err) {
       console.error("Failed to fetch notifications", err);
     }
   };
 
   useEffect(() => {
-    fetchNotifications();
+    fetchNotifications(false); // Initial load
+    const interval = setInterval(() => {
+      fetchNotifications(true); // Poll and show toasts for new ones
+    }, 15000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     if (notifOpen) {
-      fetchNotifications();
+      fetchNotifications(false);
     }
   }, [notifOpen]);
 
@@ -99,7 +122,7 @@ export default function AppHeader() {
       return isVi ? `${diffMins} phút trước` : isJa ? `${diffMins}分前` : isKo ? `${diffMins}분 전` : `${diffMins}m ago`;
     }
     if (diffHours < 24) {
-      return isVi ? `${diffHours} giờ trước` : isJa ? `${diffHours}時間前` : isKo ? `${diffHours}時間 전` : `${diffHours}h ago`;
+      return isVi ? `${diffHours} giờ trước` : isJa ? `${diffHours}時間前` : isKo ? `${diffHours}시간 전` : `${diffHours}h ago`;
     }
     return isVi ? `${diffDays} ngày trước` : isJa ? `${diffDays}日前` : isKo ? `${diffDays}일 전` : `${diffDays}d ago`;
   };
