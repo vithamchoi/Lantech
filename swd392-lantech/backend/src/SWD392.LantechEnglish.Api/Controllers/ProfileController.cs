@@ -119,6 +119,23 @@ public class ProfileController : ControllerBase
         }
     }
 
+    /// <summary>
+    /// Get streak calendar (last 30 days of study activities)
+    /// </summary>
+    /// <param name="offsetMinutes">Timezone offset in minutes (e.g., -420 for UTC+7)</param>
+    /// <param name="cancellationToken">Cancellation token</param>
+    /// <returns>Streak calendar list</returns>
+    [HttpGet("streak-calendar")]
+    [ProducesResponseType(typeof(ApiResponse<List<StreakCalendarDayDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ApiResponse), StatusCodes.Status401Unauthorized)]
+    public async Task<IActionResult> GetStreakCalendar([FromQuery] int offsetMinutes, CancellationToken cancellationToken)
+    {
+        var id = UserId;
+        if (id == Guid.Empty) return Unauthorized(ApiResponse.ErrorResponse("Invalid token"));
+
+        var calendar = await _userService.GetStreakCalendarAsync(id, offsetMinutes, cancellationToken);
+        return Ok(ApiResponse<List<StreakCalendarDayDto>>.SuccessResponse(calendar, "Streak calendar fetched"));
+    }
 
     /// <summary>Get complete user profile</summary>
     [HttpGet("details")]

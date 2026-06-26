@@ -75,6 +75,7 @@ builder.Services.AddSwaggerGen(options =>
     });
 
     options.DocInclusionPredicate((name, api) => true);
+    options.CustomSchemaIds(type => type.FullName);
 });
 
 // Configure CORS

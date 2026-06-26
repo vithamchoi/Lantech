@@ -15,12 +15,28 @@ export default function ProfileCabin() {
   const [editing, setEditing] = useState(false);
   const [tempName, setTempName] = useState(user?.name || "");
   const [activeTab, setActiveTab] = useState<"achievements" | "xp-log">("achievements");
+
+  const todayStr = (() => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  })();
   
   const [badges, setBadges] = useState<UserBadgeDto[]>([]);
   const [xpHistory, setXpHistory] = useState<XpTransactionDto[]>([]);
   const [streakCalendar, setStreakCalendar] = useState<{ date: string; studied: boolean }[]>([]);
   const [isLoadingData, setIsLoadingData] = useState(true);
   const [isSaving, setIsSubmitting] = useState(false);
+
+  const paddingCount = (() => {
+    if (streakCalendar.length === 0) return 0;
+    const parts = streakCalendar[0].date.split("-");
+    const d = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]));
+    const firstDayOfWeek = d.getDay(); // 0 = Sunday, 1 = Monday, etc.
+    return (firstDayOfWeek + 6) % 7;
+  })();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -197,20 +213,31 @@ export default function ProfileCabin() {
             {t("weekDays").split(",").map((d, i) => (
               <div key={i} className="text-center" style={{ fontSize: 9, fontWeight: 700, color: "#aaa", paddingBottom: 2 }}>{d}</div>
             ))}
-            {streakCalendar.map((day, i) => (
-              <motion.div
-                key={i}
-                initial={{ opacity: 0, scale: 0.5 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ type: "spring", stiffness: 300, damping: 20, delay: (i % 7) * 0.02 }}
-                whileHover={{ scale: 1.15 }}
-                className="aspect-square rounded-md flex items-center justify-center cursor-pointer"
-                style={{
-                  background: day.studied ? "var(--brand-light)" : "var(--muted)",
-                }}
-                title={day.studied ? `${t("studiedLabel")} (${day.date})` : ""}
-              />
+            {Array.from({ length: paddingCount }).map((_, idx) => (
+              <div key={`pad-${idx}`} className="aspect-square" />
             ))}
+            {streakCalendar.map((day, i) => {
+              const isToday = day.date === todayStr;
+              return (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, scale: 0.5 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 300, damping: 20, delay: (i % 7) * 0.02 }}
+                  whileHover={{ scale: 1.15 }}
+                  className="aspect-square rounded-md flex items-center justify-center cursor-pointer"
+                  style={{
+                    background: isToday
+                      ? (day.studied ? "var(--brand)" : "transparent")
+                      : (day.studied ? "var(--brand-light)" : "var(--muted)"),
+                    border: isToday
+                      ? `2px ${day.studied ? "solid" : "dashed"} var(--brand)`
+                      : "none",
+                  }}
+                  title={day.studied ? `${t("studiedLabel")} (${day.date})` : (isToday ? `${t("todayLabel")} (${day.date})` : "")}
+                />
+              );
+            })}
           </div>
           <div className="flex items-center gap-3 mt-3">
             <div className="flex items-center gap-1">
