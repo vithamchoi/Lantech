@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Plus, Search, Edit2, Trash2, Check, Globe } from 'lucide-react';
 import CustomSelect from '../components/CustomSelect';
+import { useTranslation } from '../hooks/useTranslation';
 
 interface TranslationItem {
   id: string;
@@ -14,6 +15,7 @@ interface TranslationItem {
 
 export default function AdminTranslations() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [items, setItems] = useState<TranslationItem[]>([
     { id: '1', key: 'lesson.sapling.title', english: 'Oak Sapling', translation: 'Cây Sồi Con', lang: 'Vietnamese', status: 'Đã Duyệt' },
@@ -55,8 +57,8 @@ export default function AdminTranslations() {
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Trình Biên Tập Cơ Sở Dữ Liệu</span>
-            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Cơ Sở Dữ Liệu Dịch Thuật</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">{t("adminTransHeader")}</span>
+            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">{t("adminTransSub")}</h1>
           </div>
         </div>
 
@@ -75,7 +77,7 @@ export default function AdminTranslations() {
           }}
           className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all"
         >
-          <Plus className="w-4 h-4" /> Thêm Từ Khóa
+          <Plus className="w-4 h-4" /> {t("adminTransAddKey")}
         </button>
       </div>
 
@@ -85,7 +87,7 @@ export default function AdminTranslations() {
           <Search className="absolute left-3 top-3 w-4.5 h-4.5 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm kiếm từ khóa bản dịch..."
+            placeholder={t("adminTransSearchPlaceholder")}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-2 bg-cream-50 border border-sage rounded-control text-xs focus:outline-none focus:border-meadow transition-all"
@@ -99,12 +101,12 @@ export default function AdminTranslations() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream-300 border-b border-sage text-xs font-bold text-slate-700 uppercase tracking-wider">
-                <th className="px-6 py-4">Từ khóa (Key)</th>
-                <th className="px-6 py-4">Tiếng Anh</th>
-                <th className="px-6 py-4">Bản dịch</th>
-                <th className="px-6 py-4">Ngôn ngữ</th>
-                <th className="px-6 py-4">Trạng thái</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-6 py-4">{t("adminTransColKey")}</th>
+                <th className="px-6 py-4">{t("adminTransColEnglish")}</th>
+                <th className="px-6 py-4">{t("adminTransColTranslation")}</th>
+                <th className="px-6 py-4">{t("adminTransColLang")}</th>
+                <th className="px-6 py-4">{t("adminTransColStatus")}</th>
+                <th className="px-6 py-4 text-right">{t("adminTransColActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sage text-sm font-semibold">
@@ -122,7 +124,7 @@ export default function AdminTranslations() {
                     <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
                       item.status === 'Đã Duyệt' ? 'bg-meadow-50 text-meadow' : 'bg-ochre-50 text-ochre'
                     }`}>
-                      {item.status}
+                      {item.status === 'Đã Duyệt' ? t("adminTransStatusApproved") : t("adminTransStatusDraft")}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-right space-x-2">
@@ -151,7 +153,7 @@ export default function AdminTranslations() {
         <div className="fixed inset-0 bg-slate/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
-              <h3 className="font-outfit font-bold text-lg text-slate">Chỉnh Sửa Từ Khóa Bản Dịch</h3>
+              <h3 className="font-outfit font-bold text-lg text-slate">{t("adminTransEditTitle")}</h3>
               <button 
                 onClick={() => setEditingItem(null)}
                 className="p-1 hover:bg-cream-200 rounded"
@@ -162,7 +164,7 @@ export default function AdminTranslations() {
 
             <div className="space-y-4 text-left">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mã Định Danh Từ Khóa</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminTransKeyLabel")}</label>
                 <input
                   type="text"
                   value={editingItem.key}
@@ -172,7 +174,7 @@ export default function AdminTranslations() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Thuật Ngữ Tiếng Anh</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminTransEnglishLabel")}</label>
                 <input
                   type="text"
                   value={editingItem.english}
@@ -182,7 +184,7 @@ export default function AdminTranslations() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giá Trị Bản Dịch</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminTransValueLabel")}</label>
                 <textarea
                   rows={3}
                   value={editingItem.translation}
@@ -193,7 +195,7 @@ export default function AdminTranslations() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ngôn ngữ</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminTransColLang")}</label>
                   <CustomSelect
                     value={editingItem.lang}
                     onChange={(val) => setEditingItem({ ...editingItem, lang: val })}
@@ -206,13 +208,13 @@ export default function AdminTranslations() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Trạng thái</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminTransColStatus")}</label>
                   <CustomSelect
                     value={editingItem.status}
                     onChange={(val) => setEditingItem({ ...editingItem, status: val as 'Đã Duyệt' | 'Bản Nháp' })}
                     options={[
-                      { value: "Đã Duyệt", label: "Đã Duyệt" },
-                      { value: "Bản Nháp", label: "Bản Nháp" },
+                      { value: "Đã Duyệt", label: t("adminTransStatusApproved") },
+                      { value: "Bản Nháp", label: t("adminTransStatusDraft") },
                     ]}
                   />
                 </div>
@@ -224,13 +226,13 @@ export default function AdminTranslations() {
                 onClick={() => setEditingItem(null)}
                 className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200"
               >
-                Hủy
+                {t("btnCancel")}
               </button>
               <button
                 onClick={handleSave}
                 className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5"
               >
-                <Check className="w-4 h-4" /> Lưu Bản Ghi
+                <Check className="w-4 h-4" /> {t("adminTransSaveRecord")}
               </button>
             </div>
           </div>

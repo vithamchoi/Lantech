@@ -78,6 +78,15 @@ export const useAppStore = create<AppState>()(
         const currentUser = get().user;
         if (currentUser) {
           set({ language: lang, user: { ...currentUser, nativeLang: lang } });
+          import('../services/profileService')
+            .then(({ profileService }) => {
+              profileService.updateSourceLanguage(lang).catch(err => {
+                console.error("Failed to update source language on backend:", err);
+              });
+            })
+            .catch(err => {
+              console.error("Failed to load profileService dynamically:", err);
+            });
         } else {
           set({ language: lang });
         }

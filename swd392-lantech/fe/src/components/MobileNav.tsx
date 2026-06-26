@@ -18,18 +18,18 @@ export default function MobileNav({ onLogout }: MobileNavProps) {
   if (!user) return null;
 
   const studentNavItems = [
-    { path: "/dashboard", label: t("navDashboard") || "Lộ trình", icon: Compass },
-    { path: "/vocabulary", label: t("navVocabulary") || "Từ vựng", icon: BookOpen },
-    { path: "/flashcards", label: t("navFlashcards") || "Flashcards", icon: Layers },
-    { path: "/pronunciation", label: t("navPronunciation") || "Phát âm", icon: Mic },
-    { path: "/ai-cabin", label: t("navAiCabin") || "AI Cabin", icon: Bot },
+    { path: "/dashboard", label: t("navDashboard"), icon: Compass },
+    { path: "/vocabulary", label: t("navVocabulary"), icon: BookOpen },
+    { path: "/flashcards", label: t("navFlashcards"), icon: Layers },
+    { path: "/pronunciation", label: t("navPronunciation"), icon: Mic },
+    { path: "/ai-cabin", label: t("navAiCabin"), icon: Bot },
   ];
 
   const adminNavItems = [
-    { path: "/ranger", label: t("navAdminConsole") || "Console", icon: Compass },
-    { path: "/ranger/translations", label: t("navAdminTranslations") || "Dịch", icon: BookOpen },
-    { path: "/ranger/curriculum", label: t("navAdminCurriculum") || "Khóa học", icon: Layers },
-    { path: "/ranger/users", label: t("navAdminUsers") || "Học viên", icon: User },
+    { path: "/ranger", label: t("navAdminConsole"), icon: Compass },
+    { path: "/ranger/translations", label: t("navAdminTranslations"), icon: BookOpen },
+    { path: "/ranger/curriculum", label: t("navAdminCurriculum"), icon: Layers },
+    { path: "/ranger/users", label: t("navAdminUsers"), icon: User },
   ];
 
   const navItems = role === "Admin" ? adminNavItems : studentNavItems;

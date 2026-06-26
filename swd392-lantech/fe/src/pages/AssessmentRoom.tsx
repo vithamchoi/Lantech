@@ -60,7 +60,7 @@ export default function AssessmentRoom() {
       }
 
       const finalResult = await assessmentService.completeAssessment(assessment.id);
-      toast.success("Nộp bài thi thành công!");
+      toast.success(t("submitAssessmentSuccess"));
       navigate("/assessment-results", { state: { result: finalResult } });
     } catch (error: any) {
       toast.error(error.response?.data?.message || t("failedSubmitSection"));
@@ -77,7 +77,7 @@ export default function AssessmentRoom() {
 
   useEffect(() => {
     if (started && timeLeft === 0 && !isSubmitting) {
-      toast.info("Hết thời gian! Hệ thống đang tự động nộp bài...");
+      toast.info(t("timeOutAutoSubmit"));
       handleSubmitAll();
     }
   }, [timeLeft, started, isSubmitting]);
@@ -214,7 +214,7 @@ export default function AssessmentRoom() {
             className="px-5 py-2.5 bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 disabled:opacity-50 text-white font-bold text-sm rounded-full transition-all cursor-pointer shadow-sm flex items-center gap-1.5"
           >
             {isSubmitting ? <Loader2 size={14} className="animate-spin" /> : null}
-            Nộp bài
+            {t("submitAssessment")}
           </button>
         </div>
       </div>
@@ -280,7 +280,7 @@ export default function AssessmentRoom() {
                         )}
                       </button>
                       <div className="flex-1">
-                        <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>Phần nghe</div>
+                        <div style={{ fontSize: 14, fontWeight: 800, color: "#1d4ed8" }}>{t("listeningSection")}</div>
                         <div style={{ fontSize: 12, color: "#60a5fa" }}>Conversation 1-4</div>
                       </div>
                       <div style={{ fontSize: 12, fontWeight: 700, color: "#1d4ed8" }}>
@@ -345,7 +345,7 @@ export default function AssessmentRoom() {
               className="mt-4 px-8 py-3 rounded-2xl cursor-pointer border-none outline-none font-bold text-white flex items-center gap-2"
               style={{ background: "var(--brand)" }}
             >
-              Chuyển sang phần Đọc <ChevronRight size={14} />
+              {t("goToReading")} <ChevronRight size={14} />
             </button>
           </div>
         )}
@@ -410,7 +410,7 @@ export default function AssessmentRoom() {
                 className="w-full mt-4 px-8 py-3 rounded-2xl cursor-pointer border-none outline-none font-bold text-white flex items-center justify-center gap-2"
                 style={{ background: "#8b5cf6" }}
               >
-                Chuyển sang phần Viết <ChevronRight size={14} />
+                {t("goToWriting")} <ChevronRight size={14} />
               </button>
             </div>
           </div>
@@ -472,7 +472,7 @@ export default function AssessmentRoom() {
                   background: "#f97316",
                 }}
               >
-                Chuyển sang phần Nói <ChevronRight size={14} />
+                {t("goToSpeaking")} <ChevronRight size={14} />
               </button>
             </div>
             {essayText.trim().length < 50 && !isSubmitting && (
@@ -537,7 +537,7 @@ export default function AssessmentRoom() {
               style={{ background: "var(--brand)", opacity: isSubmitting ? 0.7 : 1 }}
             >
               {isSubmitting && <Loader2 size={16} className="animate-spin" />}
-              Nộp bài thi <ChevronRight size={14} />
+              {t("submitAssessment")} <ChevronRight size={14} />
             </button>
           </div>
         )}

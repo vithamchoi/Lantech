@@ -11,11 +11,13 @@ public class LessonService : ILessonService
 {
     private readonly AppDbContext _context;
     private readonly IGamificationService _gamificationService;
+    private readonly INotificationService _notificationService;
 
-    public LessonService(AppDbContext context, IGamificationService gamificationService)
+    public LessonService(AppDbContext context, IGamificationService gamificationService, INotificationService notificationService)
     {
         _context = context;
         _gamificationService = gamificationService;
+        _notificationService = notificationService;
     }
 
     public async Task<IEnumerable<LessonDto>> GetLessonsAsync(string? level, string? skill, int page, int pageSize, Guid userId, CancellationToken cancellationToken = default)
@@ -160,6 +162,24 @@ public class LessonService : ILessonService
 
             // Award Badges
             await _gamificationService.CheckAndAwardBadgesAsync(userId, cancellationToken);
+
+            // Send Notification
+            try
+            {
+                await _notificationService.CreateNotificationAsync(
+                    userId,
+                    "Hoàn thành bài học! 📖",
+                    $"Tuyệt vời! Bạn đã hoàn thành bài học \"{lesson.Title}\" và nhận được {reward} XP.",
+                    "BookOpen",
+                    "#3b82f6",
+                    "#dbeafe",
+                    cancellationToken
+                );
+            }
+            catch
+            {
+                // Fail-safe
+            }
         }
 
         await _context.SaveChangesAsync(cancellationToken);

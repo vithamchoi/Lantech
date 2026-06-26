@@ -145,7 +145,7 @@ export default function ExerciseRoom() {
       setRecordingDone(false);
     } catch (err) {
       console.error(err);
-      toast.error("Không thể truy cập microphone. Vui lòng cấp quyền.");
+      toast.error(t("failedToAccessMic"));
     }
   }
 
@@ -180,7 +180,7 @@ export default function ExerciseRoom() {
     reader.onloadend = () => {
       const base64data = (reader.result as string).split(',')[1];
       setSelectedOpt(base64data);
-      toast.success("Đã ghi âm thành công. Hãy nhấn nút kiểm tra kết quả!");
+      toast.success(t("recordingSuccess"));
     };
   }
 
@@ -410,12 +410,12 @@ export default function ExerciseRoom() {
                     disabled={hasChecked || isSubmitting}
                     value={selectedOpt}
                     onChange={(e) => setSelectedOpt(e.target.value)}
-                    placeholder="Nhập câu trả lời của bạn..."
+                    placeholder={t("typeAnswerPlaceholder")}
                     className="w-full p-4 rounded-control border border-sage dark:border-[#2C3531] bg-white dark:bg-[#1E2522] text-slate-800 dark:text-neutral-200 outline-none focus:border-sky-500 text-sm font-semibold transition-all"
                   />
                   {hasChecked && (
                     <div className="p-4 bg-slate-50 dark:bg-neutral-800/40 rounded-xl border border-sage/60 dark:border-[#2C3531]/60 text-xs text-slate-500 dark:text-neutral-400 mt-2">
-                      <span className="font-bold text-meadow mr-2">Đáp án đúng:</span>
+                      <span className="font-bold text-meadow mr-2">{t("correctAnswerWas")}</span>
                       {exercises[currentIdx].correctAnswer}
                     </div>
                   )}
@@ -429,21 +429,21 @@ export default function ExerciseRoom() {
                     disabled={hasChecked || isSubmitting}
                     value={selectedOpt}
                     onChange={(e) => setSelectedOpt(e.target.value)}
-                    placeholder="Viết bài luận của bạn tại đây (khoảng 200 từ)..."
+                    placeholder={t("writingEssayPlaceholder")}
                     className="w-full p-4 rounded-control border border-sage dark:border-[#2C3531] bg-white dark:bg-[#1E2522] text-slate-800 dark:text-neutral-200 outline-none focus:border-sky-500 text-sm transition-all"
                   />
                   <div className="text-right text-xs text-slate-400 dark:text-slate-500 font-semibold">
-                    Số từ: {selectedOpt ? selectedOpt.trim().split(/\s+/).filter(Boolean).length : 0} từ
+                    {t("wordCountLabel", { count: String(selectedOpt ? selectedOpt.trim().split(/\s+/).filter(Boolean).length : 0) })}
                   </div>
                   
                   {hasChecked && parsedWritingFeedback && (
                     <div className="mt-4 p-5 rounded-2xl border border-sage/80 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/60 space-y-3 text-left">
                       <div className="flex items-center justify-between border-b pb-2 border-sage/40 dark:border-neutral-700">
-                        <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">Điểm AI chấm (Thang điểm 10):</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">{t("aiScoreScale10")}</span>
                         <span className="text-xl font-black text-brand dark:text-meadow-400">{parsedWritingFeedback.score} / 10</span>
                       </div>
                       <div className="space-y-2">
-                        <span className="text-xs uppercase tracking-wider font-extrabold text-slate-400">Nhận xét chi tiết & Lỗi sai:</span>
+                        <span className="text-xs uppercase tracking-wider font-extrabold text-slate-400">{t("detailedFeedbackErrors")}</span>
                         <p className="text-sm text-slate-600 dark:text-neutral-300 whitespace-pre-line leading-relaxed">
                           {parsedWritingFeedback.feedback}
                         </p>
@@ -484,35 +484,35 @@ export default function ExerciseRoom() {
                       {isRecording ? <MicOff className="w-6 h-6" /> : <Mic className="w-6 h-6" />}
                     </motion.button>
                     <span className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
-                      {isRecording ? "Đang ghi âm (nhấn lại để hoàn thành)..." : "Nhấn để bắt đầu nói"}
+                      {isRecording ? t("recordingPressToStop") : t("pressToTalk")}
                     </span>
                   </div>
 
                   {hasChecked && parsedSpeakingFeedback && (
                     <div className="mt-6 p-6 rounded-2xl border border-sage/80 dark:border-neutral-700 bg-neutral-50 dark:bg-neutral-800/60 text-left space-y-4">
                       <div className="flex items-center justify-between border-b pb-3 border-sage/40 dark:border-neutral-700">
-                        <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">Điểm Phát Âm:</span>
+                        <span className="text-sm font-bold text-slate-700 dark:text-neutral-300">{t("pronunciationScore")}:</span>
                         <span className="text-xl font-black text-meadow dark:text-meadow-400">{parsedSpeakingFeedback.score}%</span>
                       </div>
                       
                       <div className="grid grid-cols-3 gap-2 text-center">
                         <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-sage/50 dark:border-neutral-700">
-                          <div className="text-[10px] uppercase font-bold text-slate-400">Độ chính xác</div>
+                          <div className="text-[10px] uppercase font-bold text-slate-400">{t("accuracyLabel")}</div>
                           <div className="text-sm font-bold text-slate-700 dark:text-neutral-300">{parsedSpeakingFeedback.accuracy}%</div>
                         </div>
                         <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-sage/50 dark:border-neutral-700">
-                          <div className="text-[10px] uppercase font-bold text-slate-400">Độ trôi chảy</div>
+                          <div className="text-[10px] uppercase font-bold text-slate-400">{t("fluencyLabel")}</div>
                           <div className="text-sm font-bold text-slate-700 dark:text-neutral-300">{parsedSpeakingFeedback.fluency}%</div>
                         </div>
                         <div className="bg-white dark:bg-neutral-800 p-2.5 rounded-xl border border-sage/50 dark:border-neutral-700">
-                          <div className="text-[10px] uppercase font-bold text-slate-400">Độ hoàn thiện</div>
+                          <div className="text-[10px] uppercase font-bold text-slate-400">{t("completenessLabel")}</div>
                           <div className="text-sm font-bold text-slate-700 dark:text-neutral-300">{parsedSpeakingFeedback.completeness}%</div>
                         </div>
                       </div>
 
                       {parsedSpeakingFeedback.wordLevelFeedback && parsedSpeakingFeedback.wordLevelFeedback.length > 0 && (
                         <div className="space-y-2">
-                          <div className="text-xs uppercase font-bold text-slate-400">Phân tích chi tiết từng từ:</div>
+                          <div className="text-xs uppercase font-bold text-slate-400">{t("wordByWordAnalysis")}:</div>
                           <div className="flex flex-wrap gap-2 pt-1">
                             {parsedSpeakingFeedback.wordLevelFeedback.map((w: any, idx: number) => {
                               const score = w.accuracyScore;
@@ -534,7 +534,7 @@ export default function ExerciseRoom() {
 
                       {parsedSpeakingFeedback.feedback && (
                         <div className="space-y-1">
-                          <div className="text-xs uppercase font-bold text-slate-400">Nhận xét:</div>
+                          <div className="text-xs uppercase font-bold text-slate-400">{t("feedbackLabel")}</div>
                           <p className="text-sm text-slate-600 dark:text-neutral-300 italic">{parsedSpeakingFeedback.feedback}</p>
                         </div>
                       )}
@@ -561,7 +561,7 @@ export default function ExerciseRoom() {
                     </span>
                     <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 break-words font-medium">
                       {parsedSpeakingFeedback || parsedWritingFeedback
-                        ? "Bài tập đã được đánh giá thành công."
+                        ? t("exerciseAssessedSuccess")
                         : isCorrect
                           ? t("xpAwardedLabel", { xp: String(exercises[currentIdx].xpReward) })
                           : feedback || t("correctAnswerWasMsg", { answer: exercises[currentIdx].correctAnswer || "" })}

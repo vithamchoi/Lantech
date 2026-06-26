@@ -5,9 +5,11 @@ import { adminService, AdminVocabularyDto, AdminBadgeDto } from '../services/adm
 import { toast } from 'sonner';
 import { motion } from 'motion/react';
 import CustomSelect from '../components/CustomSelect';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function AdminVocabularyBadges() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'vocab' | 'badges'>('vocab');
   
   const [vocab, setVocab] = useState<AdminVocabularyDto[]>([]);
@@ -27,13 +29,13 @@ export default function AdminVocabularyBadges() {
         }
       } catch (error) {
         console.error("Failed to load data", error);
-        toast.error("Không thể tải dữ liệu");
+        toast.error(t("toastVocabLoadError"));
       } finally {
         setIsLoading(false);
       }
     };
     fetchData();
-  }, [activeTab]);
+  }, [activeTab, t]);
 
   const [editingVocab, setEditingVocab] = useState<AdminVocabularyDto | null>(null);
   const [editingBadge, setEditingBadge] = useState<AdminBadgeDto | null>(null);
@@ -52,11 +54,11 @@ export default function AdminVocabularyBadges() {
   const handleSaveVocab = async () => {
     if (!editingVocab) return;
     if (!editingVocab.word.trim()) {
-      toast.error("Word is required");
+      toast.error(t("toastVocabWordRequired"));
       return;
     }
     if (!editingVocab.definition.trim()) {
-      toast.error("Translation is required");
+      toast.error(t("toastVocabMeaningRequired"));
       return;
     }
 
@@ -90,7 +92,7 @@ export default function AdminVocabularyBadges() {
           definition: editingVocab.definition,
           added: v.added
         } : v));
-        toast.success("Vocabulary updated successfully");
+        toast.success(t("toastVocabSaveSuccess"));
       } else {
         // Create mode
         const created = await adminService.createVocabulary(payload);
@@ -103,12 +105,12 @@ export default function AdminVocabularyBadges() {
           added: new Date().toISOString().split('T')[0]
         };
         setVocab([newAdminVocab, ...vocab]);
-        toast.success("Vocabulary created successfully");
+        toast.success(t("toastVocabSaveSuccess"));
       }
       setEditingVocab(null);
     } catch (error) {
       console.error("Failed to save vocabulary", error);
-      toast.error("Failed to save vocabulary");
+      toast.error(t("toastVocabSaveError"));
     } finally {
       setIsLoading(false);
     }
@@ -117,17 +119,17 @@ export default function AdminVocabularyBadges() {
   const handleDeleteVocab = (id: string) => {
     setDeleteConfirm({
       isOpen: true,
-      title: "Xóa từ vựng",
-      message: "Bạn có chắc chắn muốn xóa từ vựng này?",
+      title: t("dialogDeleteVocabTitle"),
+      message: t("dialogDeleteVocabMsg"),
       onConfirm: async () => {
         setIsLoading(true);
         try {
           await adminService.deleteVocabulary(id);
           setVocab(vocab.filter(v => v.id !== id));
-          toast.success("Vocabulary deleted successfully");
+          toast.success(t("toastVocabDeleteSuccess"));
         } catch (error) {
           console.error("Failed to delete vocabulary", error);
-          toast.error("Failed to delete vocabulary");
+          toast.error(t("toastVocabDeleteError"));
         } finally {
           setIsLoading(false);
         }
@@ -138,17 +140,17 @@ export default function AdminVocabularyBadges() {
   const handleDeleteBadge = (id: string) => {
     setDeleteConfirm({
       isOpen: true,
-      title: "Xóa huy hiệu",
-      message: "Bạn có chắc chắn muốn xóa huy hiệu này?",
+      title: t("dialogDeleteBadgeTitle"),
+      message: t("dialogDeleteBadgeMsg"),
       onConfirm: async () => {
         setIsLoading(true);
         try {
           await adminService.deleteBadge(id);
           setBadges(badges.filter(b => b.id !== id));
-          toast.success("Xóa huy hiệu thành công");
+          toast.success(t("toastBadgeDeleteSuccess"));
         } catch (error) {
           console.error("Failed to delete badge", error);
-          toast.error("Không thể xóa huy hiệu");
+          toast.error(t("toastBadgeDeleteError"));
         } finally {
           setIsLoading(false);
         }
@@ -159,11 +161,11 @@ export default function AdminVocabularyBadges() {
   const handleSaveBadge = async () => {
     if (!editingBadge) return;
     if (!editingBadge.code.trim()) {
-      toast.error("Mã Code không được để trống");
+      toast.error(t("toastBadgeCodeRequired"));
       return;
     }
     if (!editingBadge.title.trim()) {
-      toast.error("Tên Huy hiệu không được để trống");
+      toast.error(t("toastBadgeTitleRequired"));
       return;
     }
 
@@ -185,17 +187,17 @@ export default function AdminVocabularyBadges() {
           ...updated,
           holders: editingBadge.holders
         } : b));
-        toast.success("Cập nhật huy hiệu thành công");
+        toast.success(t("toastBadgeSaveSuccess"));
       } else {
         // Create mode
         const created = await adminService.createBadge(payload);
         setBadges([created, ...badges]);
-        toast.success("Thêm mới huy hiệu thành công");
+        toast.success(t("toastBadgeSaveSuccess"));
       }
       setEditingBadge(null);
     } catch (error) {
       console.error("Failed to save badge", error);
-      toast.error("Không thể lưu huy hiệu");
+      toast.error(t("toastBadgeSaveError"));
     } finally {
       setIsLoading(false);
     }
@@ -213,8 +215,8 @@ export default function AdminVocabularyBadges() {
             <ArrowLeft className="w-5 h-5 text-slate-500" />
           </button>
           <div>
-            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">Điều Phối Nội Dung</span>
-            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">Quản Lý Từ Vựng & Huy Hiệu</h1>
+            <span className="text-xs uppercase tracking-wider font-bold text-slate-400">{t("adminVocabBadgesHeader")}</span>
+            <h1 className="text-2xl font-bold text-slate font-outfit mt-0.5">{t("adminVocabBadgesSub")}</h1>
           </div>
         </div>
 
@@ -233,7 +235,7 @@ export default function AdminVocabularyBadges() {
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Thêm Từ
+              <Plus className="w-4 h-4" /> {t("adminVocabBadgesAddWord")}
             </button>
           ) : (
             <button
@@ -252,7 +254,7 @@ export default function AdminVocabularyBadges() {
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-meadow hover:bg-meadow-600 text-white font-semibold rounded-control text-xs shadow-diffuse transition-all cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Thêm Huy Hiệu
+              <Plus className="w-4 h-4" /> {t("adminVocabBadgesAddBadge")}
             </button>
           )}
         </div>
@@ -266,7 +268,7 @@ export default function AdminVocabularyBadges() {
             activeTab === 'vocab' ? 'border-meadow text-meadow' : 'border-transparent text-slate-500 hover:text-slate'
           }`}
         >
-          Danh sách Từ vựng ({vocab.length})
+          {t("adminVocabBadgesWordList", { count: vocab.length.toString() })}
         </button>
         <button
           onClick={() => setActiveTab('badges')}
@@ -274,7 +276,7 @@ export default function AdminVocabularyBadges() {
             activeTab === 'badges' ? 'border-meadow text-meadow' : 'border-transparent text-slate-500 hover:text-slate'
           }`}
         >
-          Huy hiệu & Thành tích ({badges.length})
+          {t("adminVocabBadgesBadgeList", { count: badges.length.toString() })}
         </button>
       </div>
 
@@ -284,11 +286,11 @@ export default function AdminVocabularyBadges() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-cream-300 border-b border-sage text-xs font-bold text-slate-700 uppercase tracking-wider">
-                <th className="px-6 py-4">Từ</th>
-                <th className="px-6 py-4">Phiên âm (IPA)</th>
-                <th className="px-6 py-4">Dịch nghĩa</th>
-                <th className="px-6 py-4">Cấp độ (CEFR)</th>
-                <th className="px-6 py-4 text-right">Thao tác</th>
+                <th className="px-6 py-4">{t("adminVocabBadgesColWord")}</th>
+                <th className="px-6 py-4">{t("adminVocabBadgesColIpa")}</th>
+                <th className="px-6 py-4">{t("adminVocabBadgesColMeaning")}</th>
+                <th className="px-6 py-4">{t("adminVocabBadgesColLevel")}</th>
+                <th className="px-6 py-4 text-right">{t("adminVocabBadgesColActions")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-sage text-sm font-semibold">
@@ -366,20 +368,20 @@ export default function AdminVocabularyBadges() {
               <div className="pt-4 border-t border-sage flex flex-col gap-2 text-left">
                 <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 rounded-full bg-meadow" />
-                  <span>Yêu cầu: </span>
+                  <span>{t("adminVocabBadgesRequirement")}</span>
                   <span className="font-bold text-meadow">
-                    {badge.conditionType?.toUpperCase() === 'XP' && `Tích lũy ${badge.conditionValue} XP`}
-                    {badge.conditionType?.toUpperCase() === 'STREAK' && `Học liên tục ${badge.conditionValue} ngày`}
-                    {badge.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `Hoàn thành ${badge.conditionValue} bài học`}
-                    {badge.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `Ôn tập ${badge.conditionValue} flashcard`}
-                    {badge.conditionType?.toUpperCase() === 'PERFECTLESSON' && `Đạt 100% ${badge.conditionValue} bài học`}
-                    {badge.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `Làm ${badge.conditionValue} bài đánh giá`}
-                    {badge.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `Tự chọn trình độ đầu vào`}
+                    {badge.conditionType?.toUpperCase() === 'XP' && `${t("adminVocabBadgesCondXp")} (${badge.conditionValue} XP)`}
+                    {badge.conditionType?.toUpperCase() === 'STREAK' && `${t("adminVocabBadgesCondStreak")} (${badge.conditionValue})`}
+                    {badge.conditionType?.toUpperCase() === 'LESSONCOMPLETED' && `${t("adminVocabBadgesCondLesson")} (${badge.conditionValue})`}
+                    {badge.conditionType?.toUpperCase() === 'FLASHCARDREVIEWED' && `${t("adminVocabBadgesCondFlashcard")} (${badge.conditionValue})`}
+                    {badge.conditionType?.toUpperCase() === 'PERFECTLESSON' && `${t("adminVocabBadgesCondPerfect")} (${badge.conditionValue})`}
+                    {badge.conditionType?.toUpperCase() === 'ASSESSMENTCOMPLETED' && `${t("adminVocabBadgesCondAssessment")} (${badge.conditionValue})`}
+                    {badge.conditionType?.toUpperCase() === 'SELFLEVELSELECTED' && `${t("adminVocabBadgesCondLevel")}`}
                     {!['XP', 'STREAK', 'LESSONCOMPLETED', 'FLASHCARDREVIEWED', 'PERFECTLESSON', 'ASSESSMENTCOMPLETED', 'SELFLEVELSELECTED'].includes(badge.conditionType?.toUpperCase() || '') && `${badge.conditionType}: ${badge.conditionValue}`}
                   </span>
                 </div>
                 <div className="flex justify-between items-center text-[11px] font-bold text-slate-400">
-                  <span>{badge.holders} học viên sở hữu</span>
+                  <span>{t("adminVocabBadgesHolders", { count: badge.holders.toString() })}</span>
                 </div>
               </div>
             </div>
@@ -393,7 +395,7 @@ export default function AdminVocabularyBadges() {
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
               <h3 className="font-outfit font-bold text-lg text-slate">
-                {editingVocab.id ? "Chỉnh Sửa Từ Vựng" : "Thêm Từ Vựng Mới"}
+                {editingVocab.id ? t("adminVocabBadgesEditWordTitle") : t("adminVocabBadgesAddWordTitle")}
               </h3>
               <button 
                 onClick={() => setEditingVocab(null)}
@@ -405,7 +407,7 @@ export default function AdminVocabularyBadges() {
 
             <div className="space-y-4 text-left">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Từ</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesWordLabel")}</label>
                 <input
                   type="text"
                   value={editingVocab.word}
@@ -415,7 +417,7 @@ export default function AdminVocabularyBadges() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phiên âm (IPA)</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesIpaLabel")}</label>
                 <input
                   type="text"
                   value={editingVocab.phoneme}
@@ -425,7 +427,7 @@ export default function AdminVocabularyBadges() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Dịch nghĩa</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesMeaningLabel")}</label>
                 <input
                   type="text"
                   value={editingVocab.definition}
@@ -435,7 +437,7 @@ export default function AdminVocabularyBadges() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Phân loại CEFR</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesLevelLabel")}</label>
                 <CustomSelect
                   value={editingVocab.level}
                   onChange={(val) => setEditingVocab({ ...editingVocab, level: val })}
@@ -452,15 +454,15 @@ export default function AdminVocabularyBadges() {
             <div className="flex gap-4">
               <button
                 onClick={() => setEditingVocab(null)}
-                className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200"
+                className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200 shadow-sm cursor-pointer"
               >
-                Hủy
+                {t("btnCancelAlt")}
               </button>
               <button
                 onClick={handleSaveVocab}
-                className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Check className="w-4 h-4" /> Lưu Từ Vựng
+                <Check className="w-4 h-4" /> {t("adminVocabBadgesSaveWord")}
               </button>
             </div>
           </div>
@@ -473,7 +475,7 @@ export default function AdminVocabularyBadges() {
           <div className="bg-white max-w-md w-full p-6 rounded-card border border-sage shadow-diffuse-md space-y-6">
             <div className="flex justify-between items-start">
               <h3 className="font-outfit font-bold text-lg text-slate">
-                {editingBadge.id && !editingBadge.id.startsWith("new_") ? "Chỉnh Sửa Huy Chương" : "Thêm Huy Chương Mới"}
+                {editingBadge.id && !editingBadge.id.startsWith("new_") ? t("adminVocabBadgesEditBadgeTitle") : t("adminVocabBadgesAddBadgeTitle")}
               </h3>
               <button 
                 onClick={() => setEditingBadge(null)}
@@ -485,10 +487,10 @@ export default function AdminVocabularyBadges() {
 
             <div className="space-y-4 text-left">
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mã Code (Không dấu, không khoảng trắng)</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeCodeLabel")}</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: XP_1000"
+                  placeholder={t("adminVocabBadgesPlaceholderCode")}
                   value={editingBadge.code}
                   onChange={(e) => setEditingBadge({ ...editingBadge, code: e.target.value })}
                   className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs font-semibold"
@@ -496,10 +498,10 @@ export default function AdminVocabularyBadges() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Tên Huy Chương</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeNameLabel")}</label>
                 <input
                   type="text"
-                  placeholder="Ví dụ: Chiến Binh XP"
+                  placeholder={t("adminVocabBadgesPlaceholderName")}
                   value={editingBadge.title}
                   onChange={(e) => setEditingBadge({ ...editingBadge, title: e.target.value })}
                   className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs font-semibold"
@@ -507,9 +509,9 @@ export default function AdminVocabularyBadges() {
               </div>
 
               <div className="space-y-1">
-                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Mô Tả Huy Chương</label>
+                <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeDescLabel")}</label>
                 <textarea
-                  placeholder="Mô tả cách đạt huy chương..."
+                  placeholder={t("adminVocabBadgesPlaceholderDesc")}
                   value={editingBadge.description}
                   onChange={(e) => setEditingBadge({ ...editingBadge, description: e.target.value })}
                   className="w-full px-4 py-2.5 bg-cream-50 border border-sage rounded-control text-xs min-h-[60px] font-semibold"
@@ -518,7 +520,7 @@ export default function AdminVocabularyBadges() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Biểu Tượng (Emoji)</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeIconLabel")}</label>
                   <input
                     type="text"
                     placeholder="🏅"
@@ -529,18 +531,18 @@ export default function AdminVocabularyBadges() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Loại Điều Kiện</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeConditionLabel")}</label>
                   <CustomSelect
                     value={editingBadge.conditionType}
                     onChange={(val) => setEditingBadge({ ...editingBadge, conditionType: val })}
                     options={[
-                      { value: "XP", label: "Tích Lũy XP" },
-                      { value: "STREAK", label: "Học Liên Tục (Streak)" },
-                      { value: "LESSONCOMPLETED", label: "Hoàn Thành Bài Học" },
-                      { value: "FLASHCARDREVIEWED", label: "Ôn Tập Flashcard" },
-                      { value: "PERFECTLESSON", label: "Bài Học Đạt 100%" },
-                      { value: "ASSESSMENTCOMPLETED", label: "Làm Bài Khảo Sát" },
-                      { value: "SELFLEVELSELECTED", label: "Đã Chọn Trình Độ" },
+                      { value: "XP", label: t("adminVocabBadgesCondXp") },
+                      { value: "STREAK", label: t("adminVocabBadgesCondStreak") },
+                      { value: "LESSONCOMPLETED", label: t("adminVocabBadgesCondLesson") },
+                      { value: "FLASHCARDREVIEWED", label: t("adminVocabBadgesCondFlashcard") },
+                      { value: "PERFECTLESSON", label: t("adminVocabBadgesCondPerfect") },
+                      { value: "ASSESSMENTCOMPLETED", label: t("adminVocabBadgesCondAssessment") },
+                      { value: "SELFLEVELSELECTED", label: t("adminVocabBadgesCondLevel") },
                     ]}
                   />
                 </div>
@@ -548,7 +550,7 @@ export default function AdminVocabularyBadges() {
 
               {editingBadge.conditionType !== 'SELFLEVELSELECTED' && (
                 <div className="space-y-1">
-                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Giá Trị Cần Đạt</label>
+                  <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">{t("adminVocabBadgesBadgeValueLabel")}</label>
                   <input
                     type="number"
                     min={1}
@@ -565,13 +567,13 @@ export default function AdminVocabularyBadges() {
                 onClick={() => setEditingBadge(null)}
                 className="flex-1 py-2.5 border border-sage text-slate rounded-control text-xs font-bold hover:bg-cream-200 cursor-pointer"
               >
-                Hủy
+                {t("btnCancelAlt")}
               </button>
               <button
                 onClick={handleSaveBadge}
                 className="flex-1 py-2.5 bg-meadow text-white rounded-control text-xs font-bold hover:bg-meadow-600 shadow-diffuse flex items-center justify-center gap-1.5 cursor-pointer"
               >
-                <Check className="w-4 h-4" /> Lưu Huy Chương
+                <Check className="w-4 h-4" /> {t("adminVocabBadgesSaveBadge")}
               </button>
             </div>
           </div>
@@ -593,7 +595,7 @@ export default function AdminVocabularyBadges() {
                 className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none transition-all hover:bg-neutral-200 dark:hover:bg-neutral-800"
                 style={{ background: "var(--muted)", color: "var(--muted-foreground)" }}
               >
-                Hủy bỏ
+                {t("btnCancelAlt")}
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
@@ -606,7 +608,7 @@ export default function AdminVocabularyBadges() {
                 className="px-4 py-2 rounded-lg cursor-pointer text-sm font-semibold border-none text-white transition-all hover:brightness-95"
                 style={{ background: "var(--destructive)" }}
               >
-                Xóa
+                {t("btnDelete")}
               </motion.button>
             </div>
           </div>
