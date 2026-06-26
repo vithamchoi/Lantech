@@ -21,20 +21,20 @@ public static class AiServiceRegistration
         {
             var url = string.IsNullOrEmpty(aiOptions.OpenRouterBaseUrl) ? "https://openrouter.ai/api/v1" : aiOptions.OpenRouterBaseUrl;
             client.BaseAddress = new Uri(url.EndsWith("/") ? url : url + "/");
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(3);
         });
-
+ 
         services.AddHttpClient("GroqClient", client =>
         {
             client.BaseAddress = new Uri("https://api.groq.com/openai/v1/");
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(3);
         });
-
+ 
         services.AddHttpClient("ZenMuxClient", client =>
         {
             var url = string.IsNullOrEmpty(aiOptions.ZenMuxBaseUrl) ? "https://zenmux.ai/api/v1" : aiOptions.ZenMuxBaseUrl;
             client.BaseAddress = new Uri(url.EndsWith("/") ? url : url + "/");
-            client.Timeout = TimeSpan.FromSeconds(30);
+            client.Timeout = TimeSpan.FromSeconds(3);
         });
 
         // 2. Keyed scoped mappings for fallback sequence

@@ -182,7 +182,7 @@ public class AdminService : IAdminService
                 Title = l.Title,
                 Level = l.CefrLevel.ToString(),
                 Exercises = _context.Exercises.Count(e => e.LessonId == l.Id),
-                Students = 0, // Placeholder
+                Students = _context.LessonProgress.Count(lp => lp.LessonId == l.Id),
                 Order = l.OrderIndex,
                 Description = l.Description,
                 Skill = l.Skill.ToString(),

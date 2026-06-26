@@ -177,21 +177,8 @@ public class OnboardingService : IOnboardingService
             curatedLessons.Add("Present Simple Tense");
         }
 
-        // Generate AI explanation / enrichment layer
+        // Generate AI explanation / enrichment layer (Bypassed to avoid AI timeouts and ensure instant navigation)
         string description = $"Personalized roadmap for {level} level English acquisition.";
-        try
-        {
-            var aiText = await _aiProvider.GenerateLearningPathAsync(level, user.SourceLanguageCode, weakSkills, cancellationToken);
-            var aiData = JsonSerializer.Deserialize<Dictionary<string, object>>(aiText);
-            if (aiData != null && aiData.TryGetValue("description", out var descVal))
-            {
-                description = descVal.ToString() ?? description;
-            }
-        }
-        catch
-        {
-            // Fallback gracefully
-        }
 
         var path = new LearningPath
         {

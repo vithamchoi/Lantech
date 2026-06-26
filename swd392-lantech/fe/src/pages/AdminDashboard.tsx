@@ -101,10 +101,12 @@ export default function AdminDashboard() {
   const darkMode = useAppStore(state => state.darkMode);
 
   const [currentPage, setCurrentPage] = useState(1);
+  const [popularPage, setPopularPage] = useState(1);
   const ITEMS_PER_PAGE = 8;
 
   useEffect(() => {
     setCurrentPage(1);
+    setPopularPage(1);
   }, [activeSection, search]);
 
   const renderPagination = (totalPages: number, totalItems: number) => {
@@ -356,6 +358,8 @@ export default function AdminDashboard() {
           });
           const usersData = await adminService.getUsers();
           setUsers(usersData || []);
+          const lessonsData = await adminService.getLessons();
+          setLessons(lessonsData || []);
         } else if (activeSection === "users") {
           const data = await adminService.getUsers();
           setUsers(data || []);
@@ -924,6 +928,11 @@ export default function AdminDashboard() {
     }
 
     if (activeSection === "overview" && stats) {
+      const sortedPopularLessons = [...lessons].sort((a, b) => b.students - a.students);
+      const POPULAR_ITEMS_PER_PAGE = 7;
+      const totalPopularPages = Math.ceil(sortedPopularLessons.length / POPULAR_ITEMS_PER_PAGE);
+      const paginatedPopular = sortedPopularLessons.slice((popularPage - 1) * POPULAR_ITEMS_PER_PAGE, popularPage * POPULAR_ITEMS_PER_PAGE);
+
       return (
         <div className="p-6 text-left">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-7">
@@ -1048,7 +1057,7 @@ export default function AdminDashboard() {
                 <button onClick={() => handleTabClick("lessons")} style={{ fontSize: 12, fontWeight: 700, color: "#ec4899", background: "none", border: "none", cursor: "pointer" }}>Xem tất cả →</button>
               </div>
               <div className="px-5 py-4 flex flex-col gap-4">
-                {lessons.map(l => (
+                {paginatedPopular.map(l => (
                   <div key={l.id} className="flex items-center gap-3">
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1.5">
@@ -1061,6 +1070,33 @@ export default function AdminDashboard() {
                     </div>
                   </div>
                 ))}
+
+                {/* Popular Lessons Pagination Controls */}
+                {totalPopularPages > 1 && (
+                  <div className="flex items-center justify-between pt-3 border-t mt-2" style={{ borderColor: "var(--border)" }}>
+                    <button
+                      type="button"
+                      disabled={popularPage === 1}
+                      onClick={() => setPopularPage(p => Math.max(p - 1, 1))}
+                      className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all duration-150"
+                      style={{ borderColor: "var(--border)", color: "var(--foreground)", background: "transparent" }}
+                    >
+                      Trước
+                    </button>
+                    <span style={{ fontSize: 11.5, color: "var(--muted-foreground)", fontWeight: 600 }}>
+                      Trang {popularPage} / {totalPopularPages}
+                    </span>
+                    <button
+                      type="button"
+                      disabled={popularPage === totalPopularPages}
+                      onClick={() => setPopularPage(p => Math.min(p + 1, totalPopularPages))}
+                      className="px-3 py-1.5 rounded-lg border text-xs font-semibold hover:bg-neutral-100 dark:hover:bg-neutral-800 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all duration-150"
+                      style={{ borderColor: "var(--border)", color: "var(--foreground)", background: "transparent" }}
+                    >
+                      Sau
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>

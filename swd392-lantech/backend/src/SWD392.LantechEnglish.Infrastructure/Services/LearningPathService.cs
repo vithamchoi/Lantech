@@ -58,20 +58,8 @@ public class LearningPathService : ILearningPathService
             curatedLessons.Add("Present Simple Tense");
         }
 
+        // Generate AI explanation / enrichment layer (Bypassed to avoid AI timeouts and ensure instant navigation)
         string description = $"Personalized roadmap for {level} level English acquisition.";
-        try
-        {
-            var aiText = await _aiProvider.GenerateLearningPathAsync(level, user.SourceLanguageCode, weakSkills, cancellationToken);
-            var aiData = JsonSerializer.Deserialize<Dictionary<string, object>>(aiText);
-            if (aiData != null && aiData.TryGetValue("description", out var descVal))
-            {
-                description = descVal.ToString() ?? description;
-            }
-        }
-        catch
-        {
-            // Fallback gracefully
-        }
 
         var path = new LearningPath
         {
@@ -119,10 +107,10 @@ public class LearningPathService : ILearningPathService
                 .Where(l => l.CefrLevel == level && (titles.Contains(l.Title) || l.Title.StartsWith("Chương ")) && l.IsPublished)
                 .ToListAsync(cancellationToken);
 
-            // Reorder to match the recommended list sequence, putting the chapters first
+            // Reorder to match the recommended list sequence
             lessons = lessons
-                .OrderBy(l => l.Title.StartsWith("Chương ") ? 0 : 1)
-                .ThenBy(l => l.Title.StartsWith("Chương ") ? l.OrderIndex : titles.IndexOf(l.Title))
+                .OrderBy(l => titles.Contains(l.Title) ? titles.IndexOf(l.Title) : int.MaxValue)
+                .ThenBy(l => l.OrderIndex)
                 .ToList();
         }
         else
