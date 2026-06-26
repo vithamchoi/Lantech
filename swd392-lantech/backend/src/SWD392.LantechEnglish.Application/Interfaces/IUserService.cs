@@ -10,4 +10,5 @@ public interface IUserService
     Task<UserDto> UpdateTargetLevelAsync(Guid userId, string currentCefrLevel, CancellationToken cancellationToken = default);
     Task<StudySummaryDto> GetStudySummaryAsync(Guid userId, CancellationToken cancellationToken = default);
     Task<UserDto?> GetUserByIdAsync(Guid userId, CancellationToken cancellationToken = default);
+    Task<List<StreakCalendarDayDto>> GetStreakCalendarAsync(Guid userId, int offsetMinutes, CancellationToken cancellationToken = default);
 }

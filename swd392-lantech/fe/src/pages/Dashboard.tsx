@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAppStore } from "../store/appStore";
 import { Lock, CheckCircle, Play, ChevronRight, Zap, TrendingUp, AlertCircle, Loader2 } from "lucide-react";
 import { learningService, LessonDto } from "../services/learningService";
+import { gamificationService } from "../services/gamificationService";
 import { toast } from "sonner";
 import { useTranslation } from "../hooks/useTranslation";
 import { motion, AnimatePresence } from "motion/react";
@@ -15,12 +16,27 @@ export default function Dashboard() {
   const [lessons, setLessons] = useState<LessonDto[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [shakingNodeId, setShakingNodeId] = useState<string | null>(null);
+  const [weeklyXp, setWeeklyXp] = useState<number>(0);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const recommendedLessons = await learningService.getRecommendedLessons();
+        const [recommendedLessons, xpTransactions] = await Promise.all([
+          learningService.getRecommendedLessons(),
+          gamificationService.getMyXpTransactions()
+        ]);
         setLessons(recommendedLessons);
+
+        // Sum XP earned in the last 7 days (today and past 6 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        sevenDaysAgo.setHours(0, 0, 0, 0);
+
+        const weeklySum = xpTransactions
+          .filter(tx => new Date(tx.createdAt) >= sevenDaysAgo)
+          .reduce((sum, tx) => sum + tx.amount, 0);
+
+        setWeeklyXp(weeklySum);
       } catch (error) {
         console.error("Failed to fetch dashboard data", error);
         toast.error(t("noPathFound"));
@@ -146,7 +162,7 @@ export default function Dashboard() {
               <div style={{ fontSize: 22 }}>⚡</div>
               <span style={{ fontSize: 12.5, fontWeight: 700, color: darkMode ? "#fdba74" : "#b45309" }}>{t("weeklyXp")}</span>
             </div>
-            <div style={{ fontSize: 26, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{user.xp} XP</div>
+            <div style={{ fontSize: 26, fontWeight: 900, color: darkMode ? "#f59e0b" : "#92400e" }}>{weeklyXp.toLocaleString()} XP</div>
             <div style={{ fontSize: 12, color: darkMode ? "#fdba74" : "#b45309", fontWeight: 600, marginTop: 6 }}>{t("keepItUp")}</div>
           </motion.div>
 

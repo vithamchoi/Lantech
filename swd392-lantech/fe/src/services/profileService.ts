@@ -16,7 +16,8 @@ export const profileService = {
 
   getStreakCalendar: async (): Promise<{ date: string; studied: boolean }[]> => {
     try {
-      return await apiClient.get('/profile/streak-calendar');
+      const offsetMinutes = new Date().getTimezoneOffset();
+      return await apiClient.get(`/profile/streak-calendar?offsetMinutes=${offsetMinutes}`);
     } catch (error) {
       console.warn("Failed to get streak calendar from backend, returning mock calendar.", error);
       const mockCalendar: { date: string; studied: boolean }[] = [];

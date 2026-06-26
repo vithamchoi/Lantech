@@ -120,6 +120,61 @@ public class UserService : IUserService
         return user == null ? null : MapToUserDto(user);
     }
 
+    public async Task<List<StreakCalendarDayDto>> GetStreakCalendarAsync(Guid userId, int offsetMinutes, CancellationToken cancellationToken = default)
+    {
+        var localNow = DateTime.UtcNow.AddMinutes(-offsetMinutes);
+        var startDateLocal = localNow.AddDays(-29).Date;
+        var startDateUtc = startDateLocal.AddMinutes(offsetMinutes);
+
+        var lessonDates = await _context.LessonProgress
+            .Where(p => p.UserId == userId && p.UpdatedAt >= startDateUtc)
+            .Select(p => p.UpdatedAt)
+            .ToListAsync(cancellationToken);
+
+        var exerciseDates = await _context.ExerciseAttempts
+            .Where(a => a.UserId == userId && a.CreatedAt >= startDateUtc)
+            .Select(a => a.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var xpDates = await _context.XpTransactions
+            .Where(t => t.UserId == userId && t.CreatedAt >= startDateUtc)
+            .Select(t => t.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var flashcardDates = await _context.FlashcardReviews
+            .Where(r => r.UserId == userId && r.ReviewedAt >= startDateUtc)
+            .Select(r => r.ReviewedAt)
+            .ToListAsync(cancellationToken);
+
+        var pronunciationDates = await _context.PronunciationAttempts
+            .Where(a => a.UserId == userId && a.CreatedAt >= startDateUtc)
+            .Select(a => a.CreatedAt)
+            .ToListAsync(cancellationToken);
+
+        var allUtcTimestamps = lessonDates
+            .Concat(exerciseDates)
+            .Concat(xpDates)
+            .Concat(flashcardDates)
+            .Concat(pronunciationDates);
+
+        var studiedDates = allUtcTimestamps
+            .Select(ts => ts.AddMinutes(-offsetMinutes).Date)
+            .ToHashSet();
+
+        var calendar = new List<StreakCalendarDayDto>();
+        for (int i = 29; i >= 0; i--)
+        {
+            var targetDate = startDateLocal.AddDays(29 - i);
+            calendar.Add(new StreakCalendarDayDto
+            {
+                Date = targetDate.ToString("yyyy-MM-dd"),
+                Studied = studiedDates.Contains(targetDate)
+            });
+        }
+
+        return calendar;
+    }
+
     private static UserDto MapToUserDto(User user) => new()
     {
         Id = user.Id,
