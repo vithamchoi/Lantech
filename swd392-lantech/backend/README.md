@@ -247,3 +247,6 @@ The immediate next steps are:
 - Mock AI provider will be used initially, optional providers can be added later
 - All API endpoints will follow RESTful conventions
 - Standard response wrapper will be implemented for consistent API responses
+
+# Khi nào bạn muốn đăng nhập hay tham gia vào đường link hay đăng nhập và kết nối vào database sau khi lấy code của chúng tôi từ github về thì bạn có thể thêm dòng lệnh này vào file .env của bạn để từ đó có thể xem được các trang bài học mà chúng tôi đã lưu vào trang database trên supbase nhé : 
+# "ConnectionStrings__DefaultConnection=Host=aws-1-ap-southeast-1.pooler.supabase.com;Port=5432;Database=postgres;Username=postgres.bbizmhdqcsclxzxgnzvz;Password=MQWajXodZyS66oCx;SslMode=Require;Trust Server Certificate=true"
